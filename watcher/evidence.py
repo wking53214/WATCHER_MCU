@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
+from cns.run import RunRecord
+
 
 @dataclass(frozen=True)
 class Citation:
@@ -136,6 +138,10 @@ def load(path: Path, target: Optional[Path] = None) -> Evidence:
         raise UnreadableRecord(f"{path} cannot be read as JSON: {type(err).__name__}: {err}") from err
     if not isinstance(run, Mapping) or "decision" not in run:
         raise UnreadableRecord(f"{path} is not a Warden run record (no 'decision')")
+    try:
+        RunRecord.from_dict(run)  # the contract: cns.run/1, from the CNS repository
+    except ValueError as err:
+        raise UnreadableRecord(f"{path} is not a cns.run/1 record: {err}") from err
     return Evidence(run=run, citations=index(run), forbidden_paths=forbidden_paths(run, target))
 
 

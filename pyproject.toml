@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "watcher-mcu"
-version = "0.1.0"
+version = "0.2.0"
 description = "The Watcher: an AI entity that sees every run of the circuit and is sworn not to interfere. It narrates Warden's run record for a person; every sentence cites a measurement or is dropped."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -22,7 +22,8 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 # The official SDK only. The Watcher imports nothing of the circuit (tests/test_charter.py reads the source).
-dependencies = ["anthropic>=1.14,<2"]
+# The run record contract (cns.run/1) comes from the CNS repository. Pinned to its release tag.
+dependencies = ["anthropic>=1.14,<2", "cns @ git+https://github.com/wking53214/CNS.git@v1.6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff==0.15.22"]

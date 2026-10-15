@@ -9,7 +9,7 @@ every sentence it keeps cites a measurement in the record by id. A sentence that
 cites something that is not there, or makes a status claim of its own is dropped before anyone reads
 it, and the account says how many were dropped and why.
 
-Version `0.1.0`. Apache-2.0. Copyright 2026 William N. King.
+Version `0.2.0` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
@@ -30,7 +30,10 @@ watcher narrate run.json --out account.md
 watcher narrate run.json --no-model          # the template account, no model, no credentials
 ```
 
-`run.json` is the JSON `warden tagteam` prints. The account is Markdown:
+`run.json` is the JSON `warden tagteam` prints. It must be a `cns.run/1` record: the contract is
+`RunRecord` in the CNS repository, and a record that predates it, names another version, or has a
+field the contract refuses (a null reason, an unknown decision) is refused with the reason, not read
+in part. The account is Markdown:
 
 1. **The account.** The kept sentences. Each carries at least one id in square brackets: `[R]` the
    decision, `[V]` the Judge's verdict, `[N7]` a note, `[C1]` a cycle, `[ghost-1b3766cb418b]` a

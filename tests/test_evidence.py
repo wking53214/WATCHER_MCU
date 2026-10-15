@@ -70,3 +70,26 @@ def test_load_gives_the_record_its_index_and_its_forbidden_paths(tmp_path):
     e = load(FIXTURE, tmp_path)
     assert e.run["decision"] == "ACCEPT_UNVERIFIED" and e.cited("R") is not None and e.cited("nope") is None
     assert tmp_path.resolve() in e.forbidden_paths
+
+
+def test_a_record_is_read_only_through_the_cns_contract(tmp_path):
+    """The Watcher reads the run record as cns.run/1 says it is, and refuses what it cannot read."""
+    good = _run()
+    (tmp_path / "good.json").write_text(json.dumps(good), encoding="utf-8")
+    assert load(tmp_path / "good.json").run["schema"] == "cns.run/1"
+    cases = [
+        ("predates the contract", None, "missing schema"),
+        ("another version", {"schema": "cns.run/0"}, "schema is 'cns.run/0'"),
+        ("null reason", {"reason": None}, "reason is missing or null"),
+        ("unknown decision", {"decision": "PROBABLY_FINE"}, "not one Warden ends a run with"),
+    ]
+    for label, change, message in cases:
+        record = dict(good)
+        if change is None:
+            del record["schema"]
+        else:
+            record.update(change)
+        path = tmp_path / (label.replace(" ", "_") + ".json")
+        path.write_text(json.dumps(record), encoding="utf-8")
+        with pytest.raises(UnreadableRecord, match=message):
+            load(path)
