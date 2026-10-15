@@ -82,6 +82,7 @@
   "ghost-d3e0c3ba5ccc",
   "ghost-007a04b3b5e0"
  ],
+ "schema": "cns.run/1",
  "swizzle_sound": true,
  "unmeasured": [],
  "verdict": {
