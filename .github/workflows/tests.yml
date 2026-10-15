@@ -1,0 +1,21 @@
+name: tests
+on:
+  push:
+  pull_request:
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: python -m ruff check .
+      - run: pytest -q
+      # The template account on a real record, without a model and without credentials: the Watcher
+      # must work where no key exists, and must refuse to write into any folder the record names.
+      - run: python -m watcher.cli narrate tests/fixtures/swizzle_joined_run.json --no-model --out /tmp/account.md

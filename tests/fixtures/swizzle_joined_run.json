@@ -1,0 +1,181 @@
+{
+ "contract": "1",
+ "converged": true,
+ "cycles": [
+  {
+   "number": 1,
+   "observed": 213,
+   "outcome": "NOTHING_TO_PROPOSE"
+  }
+ ],
+ "decision": "ACCEPT_UNVERIFIED",
+ "drafter_skipped": [
+  "skipped ghost-908a8251eb9f: Ghost says a computed lookup is possible here (dynamic_lookup_possible: 'yes'), so 'unused' cannot be trusted",
+  "skipped ghost-a07ca333f83c: Ghost says a computed lookup is possible here (dynamic_lookup_possible: 'yes'), so 'unused' cannot be trusted",
+  "skipped ghost-38778e1d8394: Ghost says a computed lookup is possible here (dynamic_lookup_possible: 'yes'), so 'unused' cannot be trusted"
+ ],
+ "finished": true,
+ "ghost_baseline": {
+  "after": {
+   "path": null,
+   "suppressed": 0
+  },
+  "before": {
+   "path": null,
+   "suppressed": 0
+  }
+ },
+ "ghost_scan": {
+  "baseline": {
+   "path": null,
+   "suppressed": 0
+  },
+  "declined": [
+   "mutate",
+   "kernel",
+   "structure",
+   "tests",
+   "project",
+   "secrets",
+   "correlate"
+  ],
+  "files_scanned": 217,
+  "files_skipped": 0,
+  "files_unparsable": 0,
+  "gaps": [],
+  "gaps_not_shown": 0,
+  "status": "ok"
+ },
+ "held_digest": "a5344b6f3556f92f2efa6cba08223bfc2cda23168540a3654b4a6d606b0507c2",
+ "informational": [],
+ "notes": [
+  "SWIZZLE proofs: 12 of 12 proofs hold.",
+  "ASSAY: Ghost caught 5 of 7 known failure modes (60/60 manifest claims hold)",
+  "Ghost Tools observed 213 finding(s).",
+  "Drafter is out of proposals but Ghost still reports 213 finding(s). Converged means no proposals left, not zero findings.",
+  "SWIZZLE proofs: 12 of 12 proofs hold.",
+  "Rule 7 suite converged: 1117 passed, 0 failed, 0 errors, 5 skipped, 0 xfailed, 0 xpassed.",
+  "Rule 7 suite cycle 0 before: 1117 passed, 0 failed, 0 errors, 5 skipped, 0 xfailed, 0 xpassed.",
+  "Cycle 0: transformation applied under granted authorization.",
+  "Rule 7 suite cycle 0 after: 1117 passed, 0 failed, 0 errors, 5 skipped, 0 xfailed, 0 xpassed.",
+  "Ghost re-inspected: 213 finding(s); closed=[] new=[]",
+  "SWIZZLE attacks on the governor: 0 of 28 violated",
+  "Rule 7 suite final state, for the Judge: 1117 passed, 0 failed, 0 errors, 5 skipped, 0 xfailed, 0 xpassed.",
+  "Loop converged and the finishing change stands. Judge: INSUFFICIENT (some tests did not run, so a code change cannot be shown safe). The changes are held, unjudged.",
+  "The tree was put back as it was found because the run did not finish accepted."
+ ],
+ "observed": [
+  "ghost-99878f200174",
+  "ghost-418a4e4548ee",
+  "ghost-358d29bc76e2",
+  "ghost-a6295692176d",
+  "ghost-d3e0c3ba5ccc",
+  "ghost-007a04b3b5e0"
+ ],
+ "put_back": true,
+ "reason": "Loop converged and the finishing change stands. Judge: INSUFFICIENT (some tests did not run, so a code change cannot be shown safe). The changes are held, unjudged.",
+ "reobserved": [
+  "ghost-99878f200174",
+  "ghost-418a4e4548ee",
+  "ghost-358d29bc76e2",
+  "ghost-a6295692176d",
+  "ghost-d3e0c3ba5ccc",
+  "ghost-007a04b3b5e0"
+ ],
+ "swizzle_sound": true,
+ "unmeasured": [],
+ "verdict": {
+  "decision": "INSUFFICIENT",
+  "judge": "judge 0.3",
+  "reasons": [
+   "some tests did not run, so a code change cannot be shown safe"
+  ]
+ },
+ "versions": {
+  "assay": {
+   "commit": "e68f8a0705168d0029fd55491759628d5778103a",
+   "dirty": false,
+   "path": "/home/user/ASSAY",
+   "version": null
+  },
+  "ghost_tools": {
+   "commit": "466e75a5f83ce05e0356d2c4d494466898ed8f18",
+   "dirty": false,
+   "path": "/home/user/ghost_tools",
+   "version": "1.9.1"
+  },
+  "joins": [
+   {
+    "commit": "466e75a5f83ce05e0356d2c4d494466898ed8f18",
+    "dirty": false,
+    "path": "/home/user/ghost_tools",
+    "version": "1.9.1"
+   },
+   {
+    "commit": "e68f8a0705168d0029fd55491759628d5778103a",
+    "dirty": false,
+    "path": "/home/user/ASSAY",
+    "version": null
+   },
+   {
+    "commit": "86e9362b4aa7533b3e8d49ed29c771cfb8c5d160",
+    "dirty": false,
+    "path": "/home/user/DRAFTER",
+    "version": "0.1.0"
+   },
+   {
+    "commit": "c6ebaf1ebd7e9981122f0bbbc6f9b95ee1ce80db",
+    "dirty": false,
+    "path": "/home/user/JUDGE",
+    "version": "0.3.0"
+   },
+   {
+    "commit": "f972862d32d4a4982448a3aee2ed61eb28d68939",
+    "dirty": false,
+    "path": "/home/user/BURNISH",
+    "version": "0.2.0"
+   },
+   {
+    "commit": "e80d3bb8cad922a5bfd67e91aa04c8afe3db20fe",
+    "dirty": false,
+    "path": "/home/user/WARDEN",
+    "version": "0.11.2"
+   }
+  ],
+  "seats": {
+   "drafter": {
+    "commit": "86e9362b4aa7533b3e8d49ed29c771cfb8c5d160",
+    "dirty": false,
+    "requires_contract": "1",
+    "spec": "drafter.seat:Drafter",
+    "version": "0.1.0"
+   },
+   "finisher": {
+    "commit": "f972862d32d4a4982448a3aee2ed61eb28d68939",
+    "dirty": false,
+    "requires_contract": "1",
+    "spec": "burnish.finisher:Burnish",
+    "version": "0.2.0"
+   },
+   "judge": {
+    "commit": "c6ebaf1ebd7e9981122f0bbbc6f9b95ee1ce80db",
+    "dirty": false,
+    "requires_contract": "1",
+    "spec": "judge.seat:Judge",
+    "version": "0.3.0"
+   }
+  },
+  "swizzle": {
+   "commit": "4e4dc065f1403ef8192d0c5d8775edae23475eb7",
+   "dirty": false,
+   "path": "/home/user/SWIZZLE",
+   "version": "0.7.1"
+  },
+  "warden": {
+   "commit": "e80d3bb8cad922a5bfd67e91aa04c8afe3db20fe",
+   "contract": "1",
+   "dirty": false,
+   "version": "0.11.2"
+  }
+ }
+}
