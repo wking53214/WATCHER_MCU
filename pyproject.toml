@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "watcher-mcu"
+version = "0.1.0"
+description = "The Watcher: an AI entity that sees every run of the circuit and is sworn not to interfere. It narrates Warden's run record for a person; every sentence cites a measurement or is dropped."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "William N. King" }]
+keywords = ["code-quality", "change-control", "narration", "claude"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+# The official SDK only. The Watcher imports nothing of the circuit (tests/test_charter.py reads the source).
+dependencies = ["anthropic>=1.14,<2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff==0.15.22"]
+
+[project.scripts]
+watcher = "watcher.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/wking53214/WATCHER_MCU"
+
+[tool.setuptools.packages.find]
+include = ["watcher*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]

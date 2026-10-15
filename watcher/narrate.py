@@ -1,0 +1,135 @@
+"""The narrator: Claude, asked to describe a run and told the oath.
+
+The model sees the citation index and nothing else: no files, no diff, no instrument, no seat. It
+is asked for plain prose where every sentence carries an id in square brackets. What it says is
+then put through `watcher.oath.enforce`; the model is trusted to write well, never to be right.
+
+Without a model (no credentials, or `--no-model`) `template()` writes the same kind of account from
+the index alone, one cited bullet per fact. That path is deterministic and is what the tests use.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Optional, Protocol
+
+from .evidence import Evidence
+
+#: The model that wrote the Watcher. Any current Claude model id works; pass --model to choose.
+DEFAULT_MODEL = "claude-fable-5-1"
+DEFAULT_EFFORT = "high"
+
+SYSTEM = """You are the Watcher for a code-governance circuit. You see the record of one run and you \
+are sworn not to interfere: you describe, you never grade. Nothing you write reaches the governor, \
+the judge or the scanner. A person reads it to understand what happened.
+
+Rules you must follow, because a filter enforces them after you write:
+1. Every sentence must cite at least one id from the record, in square brackets, like [N3] or \
+[ghost-1b3766cb418b]. A sentence without a citation is deleted. A citation that is not in the record \
+deletes the sentence.
+2. Never make a status claim of your own. Do not write "production ready", "battle-tested", "fully \
+tested", "enterprise grade" or "100% coverage" in any form, even to deny them.
+3. Do not say that the run passed, failed, is safe or is approved in your own voice. Say what the \
+record says and cite it: the decision [R], the Judge's verdict [V], the suite lines, the unmeasured \
+list [U].
+4. Prefer short sentences. Lead with what happened, then why, then what a person could do next, each \
+cited. Use a heading per section if you like (headings need no citation).
+5. Say what was NOT measured as plainly as what was."""
+
+
+class Refused(RuntimeError):
+    """The model declined the request (a safety classifier), so there is no account."""
+
+
+class Narrator(Protocol):
+    def narrate(self, system: str, prompt: str, model: str, effort: str) -> str: ...
+
+
+def prompt_for(evidence: Evidence) -> str:
+    """The record as a list of citable lines. This is everything the model is shown."""
+    lines = ["The record of the run, one citable thing per line as [id] kind: text.", ""]
+    for cid, c in evidence.citations.items():
+        lines.append(f"[{cid}] {c.kind}: {c.text}")
+    lines += ["", "Write the Watcher's account of this run for a person. Cite an id in every sentence."]
+    return "\n".join(lines)
+
+
+class AnthropicNarrator:
+    """Claude through the official SDK. Thinking is the model's default; depth is `effort`."""
+
+    def __init__(self, client=None) -> None:
+        self._client = client
+
+    def _get(self):
+        if self._client is None:
+            import anthropic  # imported here so `--no-model` needs no SDK
+            self._client = anthropic.Anthropic()
+        return self._client
+
+    def narrate(self, system: str, prompt: str, model: str, effort: str) -> str:
+        response = self._get().beta.messages.create(
+            model=model,
+            max_tokens=16000,
+            system=system,
+            messages=[{"role": "user", "content": prompt}],
+            output_config={"effort": effort},
+            betas=["server-side-fallback-2026-07-01"],
+            fallbacks="default",
+        )
+        if getattr(response, "stop_reason", None) == "refusal":
+            details = getattr(response, "stop_details", None)
+            raise Refused(f"the model declined ({getattr(details, 'category', None)})")
+        return "\n".join(block.text for block in response.content if getattr(block, "type", "") == "text")
+
+
+def credentials_present() -> bool:
+    """Whether the SDK has something to authenticate with, without making a request."""
+    if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"):
+        return True
+    profile = os.path.expanduser("~/.config/anthropic")
+    return os.path.isdir(profile) and any(os.scandir(profile))
+
+
+def template(evidence: Evidence) -> str:
+    """A cited account written from the index alone. Deterministic; no model. Each fact is one bullet,
+    which the oath reads as one unit however many sentences the record's text holds."""
+    c = evidence.citations
+    run = evidence.run
+
+    def fact(cid: str) -> str:
+        return f"- [{cid}] {c[cid].text}"
+
+    out = ["## What happened", f"- [R] The run ended {run.get('decision')}."]
+    if "V" in c:
+        out.append(f"- [V] The Judge said {run['verdict'].get('decision')}.")
+    out += [fact(cid) for cid in ("C1", "C2", "C3") if cid in c]
+    out.append("## What was measured")
+    out += [fact(cid) for cid, cit in c.items()
+            if cit.kind == "note" and ("suite" in cit.text.lower() or "observed" in cit.text.lower())]
+    if "G" in c:
+        out.append(fact("G"))
+    out.append("## What was not")
+    if "U" in c:
+        out.append(fact("U"))
+    out += [fact(cid) for cid, cit in c.items()
+            if cit.kind == "note" and ("gap" in cit.text.lower() or "not measured" in cit.text.lower())]
+    joins = [cid for cid, cit in c.items() if cit.kind == "join"]
+    if joins:
+        out.append("## What was joined")
+        out += [fact(cid) for cid in joins]
+    out.append("## Who took part")
+    if "W" in c:
+        out.append(fact("W"))
+    return "\n".join(out)
+
+
+def narrate(evidence: Evidence, narrator: Optional[Narrator], model: str = DEFAULT_MODEL,
+            effort: str = DEFAULT_EFFORT) -> str:
+    """The raw account: from the narrator when one is given, else from the template."""
+    if narrator is None:
+        return template(evidence)
+    return narrator.narrate(SYSTEM, prompt_for(evidence), model, effort)
+
+
+__all__ = ["AnthropicNarrator", "DEFAULT_EFFORT", "DEFAULT_MODEL", "Narrator", "Refused", "SYSTEM",
+           "credentials_present", "narrate", "prompt_for", "template"]
