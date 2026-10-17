@@ -46,6 +46,11 @@ class Refused(RuntimeError):
     """The model declined the request (a safety classifier), so there is no account."""
 
 
+class ModelResponseError(RuntimeError):
+    """The API answered, but the answer cannot be used: the body did not decode (a 200 with text that is not
+    JSON, a proxy's error page) or it has not the shape of a message. Treated like any other API failure."""
+
+
 class Narrator(Protocol):
     def narrate(self, system: str, prompt: str, model: str, effort: str) -> str: ...
 
@@ -72,19 +77,32 @@ class AnthropicNarrator:
         return self._client
 
     def narrate(self, system: str, prompt: str, model: str, effort: str) -> str:
-        response = self._get().beta.messages.create(
-            model=model,
-            max_tokens=16000,
-            system=system,
-            messages=[{"role": "user", "content": prompt}],
-            output_config={"effort": effort},
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
-        )
+        try:
+            response = self._get().beta.messages.create(
+                model=model,
+                max_tokens=16000,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+                output_config={"effort": effort},
+                betas=["server-side-fallback-2026-07-01"],
+                fallbacks="default",
+            )
+        except ValueError as err:  # the SDK lets a body that does not decode (json.JSONDecodeError) escape
+            raise ModelResponseError(f"the response could not be decoded ({type(err).__name__}: {err})") from err
         if getattr(response, "stop_reason", None) == "refusal":
             details = getattr(response, "stop_details", None)
             raise Refused(f"the model declined ({getattr(details, 'category', None)})")
-        return "\n".join(block.text for block in response.content if getattr(block, "type", "") == "text")
+        blocks = getattr(response, "content", None)
+        if not isinstance(blocks, (list, tuple)):  # a plain string comes back for a body that was not JSON
+            raise ModelResponseError(f"the response is not a message ({type(response).__name__})")
+        texts: list[str] = []
+        for block in blocks:
+            if getattr(block, "type", "") == "text":
+                text = getattr(block, "text", None)
+                if not isinstance(text, str):
+                    raise ModelResponseError("a text block of the response has no text")
+                texts.append(text)
+        return "\n".join(texts)
 
 
 def credentials_present() -> bool:
@@ -144,6 +162,7 @@ __all__ = [
     "DEFAULT_MODEL",
     "SYSTEM",
     "AnthropicNarrator",
+    "ModelResponseError",
     "Narrator",
     "Refused",
     "credentials_present",

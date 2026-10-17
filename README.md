@@ -69,7 +69,7 @@ default); `--effort` low to max.
 | 0 | An account was written (or printed). |
 | 1 | An internal error, a bug in the Watcher, reported in one line (`--verbose` adds the traceback). Nothing was written. A malformed record is never this; it is 2. |
 | 2 | Usage: a record that is unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), an `--out` inside a forbidden folder or on top of the record it reads, an `--out` that cannot be written, a bad option. |
-| 3 | No account could be had from a model: no credentials and no `--no-model`, the model could not be reached (connection, timeout, API error) or it declined. Nothing was written. |
+| 3 | No account could be had from a model: no credentials and no `--no-model`, the model could not be reached (connection, timeout, API error, or a response that cannot be decoded as JSON or is not a message) or it declined. Nothing was written. |
 | 4 | The oath dropped every sentence, so there is no account to give. The file is still written and shows what was dropped. |
 
 `tests/test_docs.py` fails if this table and the code disagree.

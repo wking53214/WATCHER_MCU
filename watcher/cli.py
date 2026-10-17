@@ -7,7 +7,8 @@ Exit codes (the README table is tested against this list):
   2  usage: an unreadable or malformed record, an --out inside a forbidden folder or on top of the
      record itself, an --out that cannot be written, a bad option.
   3  no account could be had from a model: no credentials and --no-model was not given, the model
-     could not be reached (connection, timeout, an API error) or it declined. Nothing was written.
+     could not be reached (connection, timeout, an API error, a response that cannot be decoded or is not
+     a message) or it declined. Nothing was written.
   4  the oath dropped every sentence, so there is no account to give (the file still shows what was
      dropped).
 
@@ -25,7 +26,16 @@ from pathlib import Path
 
 from . import __version__
 from .evidence import Evidence, UnreadableRecord, load
-from .narrate import DEFAULT_EFFORT, DEFAULT_MODEL, AnthropicNarrator, Narrator, Refused, credentials_present, narrate
+from .narrate import (
+    DEFAULT_EFFORT,
+    DEFAULT_MODEL,
+    AnthropicNarrator,
+    ModelResponseError,
+    Narrator,
+    Refused,
+    credentials_present,
+    narrate,
+)
 from .oath import enforce
 from .report import render
 
@@ -98,12 +108,13 @@ def _configure_logging(verbose: bool) -> None:
 
 def _model_errors() -> tuple[type[BaseException], ...]:
     """What means "no model could be reached": the SDK's own errors (connection, timeout, status, a missing
-    credential), as a tuple for `except`. Imported here so `--no-model` needs no SDK."""
+    credential) and a response that cannot be decoded or is not a message, as a tuple for `except`. Imported
+    here so `--no-model` needs no SDK."""
     try:
         import anthropic
     except ImportError:  # pragma: no cover - the SDK is a declared dependency
-        return ()
-    return (anthropic.AnthropicError,)
+        return (ModelResponseError,)
+    return (anthropic.AnthropicError, ModelResponseError)
 
 
 def write_account(evidence: Evidence, narrator: Narrator | None, model: str, effort: str) -> tuple[str, int]:

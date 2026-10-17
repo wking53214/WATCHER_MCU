@@ -216,6 +216,61 @@ def test_the_sdk_narrator_with_a_failing_client_is_exit_3(capsys):
     assert "no model could be reached" in capsys.readouterr().err
 
 
+def _client_that(result: Any) -> Any:
+    """A fake SDK client whose request raises `result` if it is an exception, else returns it."""
+
+    class Messages:
+        @staticmethod
+        def create(**kw: Any) -> Any:
+            if isinstance(result, BaseException):
+                raise result
+            return result
+
+    return SimpleNamespace(beta=SimpleNamespace(messages=Messages()))
+
+
+def _block(**kw: Any) -> Any:
+    return SimpleNamespace(**kw)
+
+
+#: What the SDK does with a 200 whose body is not what it expects: json.JSONDecodeError escapes for a JSON content
+#: type with a bad body, and a plain str comes back for any other content type. Others are wrong shapes.
+UNDECODABLE: list[Any] = [
+    json.JSONDecodeError("Expecting value", "<html>oops</html>", 0),
+    ValueError("not JSON"),
+    UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte"),
+    "<html>an error page that came with a 200</html>",
+    None,
+    SimpleNamespace(stop_reason="end_turn"),
+    SimpleNamespace(stop_reason="end_turn", content=None),
+    SimpleNamespace(stop_reason="end_turn", content="text"),
+    SimpleNamespace(stop_reason="end_turn", content=[_block(type="text")]),
+    SimpleNamespace(stop_reason="end_turn", content=[_block(type="text", text=5)]),
+]
+
+
+@pytest.mark.parametrize("result", UNDECODABLE, ids=[type(r).__name__ for r in UNDECODABLE])
+def test_a_200_the_sdk_cannot_decode_is_exit_3_and_nothing_is_written(tmp_path, capsys, result):
+    from watcher.narrate import AnthropicNarrator
+
+    out = tmp_path / "account.md"
+    narrator = AnthropicNarrator(_client_that(result))
+    code = main(["narrate", str(FIXTURE), "--out", str(out)], narrator=narrator)
+    err = capsys.readouterr().err
+    assert code == EXIT_NO_MODEL
+    assert "no model could be reached" in err and "No account was written" in err and "--no-model" in err
+    assert "internal error" not in err and "Traceback" not in err and not out.exists()
+
+
+def test_a_well_formed_response_is_still_an_account(tmp_path):
+    from watcher.narrate import AnthropicNarrator
+
+    response = SimpleNamespace(stop_reason="end_turn", content=[_block(type="text", text="Held [R].")])
+    out = tmp_path / "account.md"
+    assert main(["narrate", str(FIXTURE), "--out", str(out)], narrator=AnthropicNarrator(_client_that(response))) == 0
+    assert "Held [R]." in out.read_text(encoding="utf-8")
+
+
 def test_an_unexpected_failure_is_exit_1_in_one_line_and_verbose_shows_why(capsys):
     boom = Raises(RuntimeError("boom"))
     assert main(["narrate", str(FIXTURE)], narrator=boom) == EXIT_INTERNAL
