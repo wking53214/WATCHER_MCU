@@ -208,7 +208,11 @@ def load(path: Path, target: Path | None = None) -> Evidence:
     exception for a bad record."""
     try:
         run = json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, ValueError, RecursionError) as err:
+    except FileNotFoundError as err:
+        raise UnreadableRecord(f"{path}: file not found") from err
+    except OSError as err:
+        raise UnreadableRecord(f"{path} cannot be read: {type(err).__name__}: {err}") from err
+    except (ValueError, RecursionError) as err:
         raise UnreadableRecord(f"{path} cannot be read as JSON: {type(err).__name__}: {err}") from err
     if not isinstance(run, Mapping) or "decision" not in run:
         raise UnreadableRecord(f"{path} is not a Warden run record (no 'decision')")

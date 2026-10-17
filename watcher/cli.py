@@ -4,8 +4,9 @@ Exit codes (the README table is tested against this list):
   0  an account was written (or printed).
   1  an internal error: a bug in the Watcher, reported in one line (add --verbose for the traceback).
      Nothing was written. A malformed record is never this; it is 2.
-  2  usage: an unreadable or malformed record, an --out inside a forbidden folder or on top of the
-     record itself, an --out that cannot be written, a bad option.
+  2  usage: a record that is missing, unreadable or malformed, an --out inside a forbidden folder or on
+     top of the record itself, an --out whose folder does not exist (unless --create-out-dir is given),
+     an --out that cannot be written, a bad option.
   3  no account could be had from a model: no credentials and --no-model was not given, the model
      could not be reached (connection, timeout, an API error, a response that cannot be decoded or is not
      a message) or it declined. Nothing was written.
@@ -58,6 +59,9 @@ def _parser() -> argparse.ArgumentParser:
     n.add_argument("--out", type=Path, default=None,
                    help="where to write the account (Markdown). Without it, standard output. Never inside "
                         "the governed folder or any checkout the record names")
+    n.add_argument("--create-out-dir", action="store_true",
+                   help="create the folder of --out (and its parents) when it does not exist; without this a "
+                        "missing folder is refused")
     n.add_argument("--target", type=Path, default=None,
                    help="the folder that was governed, so an --out inside it is refused (the record does not "
                         "always name it)")
@@ -142,6 +146,10 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
             print(f"watcher: refused: --out {args.out} is the record it was asked to read ({source}); "
                   "the Watcher never overwrites what it reads", file=sys.stderr)
             return EXIT_USAGE
+        if not args.out.parent.is_dir() and not args.create_out_dir:
+            print(f"watcher: refused: the folder for --out ({args.out.parent}) does not exist; create it, or pass "
+                  "--create-out-dir to have the Watcher create it", file=sys.stderr)
+            return EXIT_USAGE
     if args.no_model:
         narrator = None
     elif narrator is None:
@@ -166,7 +174,8 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
         sys.stdout.write(text)
     else:
         try:
-            args.out.parent.mkdir(parents=True, exist_ok=True)
+            if args.create_out_dir:
+                args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_text(text, encoding="utf-8")
         except OSError as err:
             print(f"watcher: cannot write {args.out}: {type(err).__name__}: {err}", file=sys.stderr)

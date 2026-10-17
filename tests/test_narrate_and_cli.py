@@ -68,7 +68,7 @@ def test_an_account_with_nothing_left_is_exit_4_not_a_pretty_blank():
 
 def test_cli_writes_the_template_account_without_a_model(tmp_path, capsys):
     out = tmp_path / "reports" / "account.md"
-    assert main(["narrate", str(FIXTURE), "--out", str(out), "--no-model"]) == 0
+    assert main(["narrate", str(FIXTURE), "--out", str(out), "--no-model", "--create-out-dir"]) == 0
     assert out.read_text(encoding="utf-8").startswith("# The Watcher's account")
     assert "the template (no model)" in out.read_text(encoding="utf-8")
     assert "account written to" in capsys.readouterr().err

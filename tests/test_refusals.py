@@ -320,3 +320,64 @@ def test_a_different_out_is_still_written_and_the_record_untouched(tmp_path):
     out = tmp_path / "account.md"
     assert main(["narrate", str(path), "--out", str(out), "--no-model"]) == 0
     assert out.is_file() and path.read_bytes() == before
+
+
+# --- --out does not create folders on its own --------------------------------------------------------------------
+
+def test_a_missing_out_folder_is_refused_and_nothing_is_created(tmp_path, capsys):
+    out = tmp_path / "no" / "such" / "account.md"
+    assert main(["narrate", str(FIXTURE), "--out", str(out), "--no-model"]) == EXIT_USAGE
+    err = capsys.readouterr().err
+    assert "does not exist" in err and "--create-out-dir" in err and "Traceback" not in err
+    assert not (tmp_path / "no").exists()
+
+
+def test_a_missing_out_folder_is_refused_before_the_model_is_asked(tmp_path, capsys):
+    narrator = Raises(RuntimeError("the model must not be asked"))
+    out = tmp_path / "missing" / "account.md"
+    assert main(["narrate", str(FIXTURE), "--out", str(out)], narrator=narrator) == EXIT_USAGE
+    assert "internal error" not in capsys.readouterr().err and not out.parent.exists()
+
+
+def test_create_out_dir_creates_the_folder_and_its_parents(tmp_path):
+    out = tmp_path / "a" / "b" / "account.md"
+    assert main(["narrate", str(FIXTURE), "--out", str(out), "--no-model", "--create-out-dir"]) == 0
+    assert out.read_text(encoding="utf-8").startswith("# The Watcher's account")
+
+
+def test_create_out_dir_does_not_lift_the_forbidden_folders(tmp_path, capsys):
+    governed = tmp_path / "governed"
+    governed.mkdir()
+    out = governed / "new" / "account.md"
+    args = ["narrate", str(FIXTURE), "--target", str(governed), "--out", str(out), "--no-model", "--create-out-dir"]
+    assert main(args) == EXIT_USAGE
+    assert "never writes into" in capsys.readouterr().err and not out.parent.exists()
+
+
+def test_an_existing_out_folder_needs_no_flag(tmp_path):
+    assert main(["narrate", str(FIXTURE), "--out", str(tmp_path / "account.md"), "--no-model"]) == 0
+
+
+def test_an_out_folder_that_is_a_file_is_exit_2_with_or_without_the_flag(tmp_path, capsys):
+    blocker = tmp_path / "file"
+    blocker.write_text("x", encoding="utf-8")
+    for extra in ([], ["--create-out-dir"]):
+        assert main(["narrate", str(FIXTURE), "--out", str(blocker / "a.md"), "--no-model", *extra]) == EXIT_USAGE
+    assert "Traceback" not in capsys.readouterr().err
+
+
+# --- a record that is not there ----------------------------------------------------------------------------------
+
+def test_a_missing_record_says_file_not_found_and_is_exit_2(tmp_path, capsys):
+    missing = tmp_path / "missing.json"
+    assert main(["narrate", str(missing), "--no-model"]) == EXIT_USAGE
+    err = capsys.readouterr().err
+    assert f"{missing}: file not found" in err and "JSON" not in err and "FileNotFoundError" not in err
+    with pytest.raises(UnreadableRecord, match="file not found"):
+        load(missing)
+
+
+def test_a_record_that_is_a_folder_is_not_called_json(tmp_path, capsys):
+    assert main(["narrate", str(tmp_path), "--no-model"]) == EXIT_USAGE
+    err = capsys.readouterr().err
+    assert "cannot be read:" in err and "JSON" not in err

@@ -31,6 +31,11 @@ watcher narrate run.json --no-model          # the template account, no model, n
 watcher --verbose narrate run.json --no-model   # diagnostics on standard error
 ```
 
+`--out` writes into an existing folder only. A missing folder is refused (exit 2), not created, so a typo
+cannot make the Watcher build a directory tree somewhere unintended; pass `--create-out-dir` to have it
+create the folder and its parents. The folder checks (the governed folder, every checkout the record names,
+the record itself) run first and are not lifted by the flag.
+
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from
 its git URL pinned to the full commit of release `v1.8.0` (the pin every repository of the circuit
 uses, so `pip install` of the Watcher beside Warden, the Judge, the Drafter and Burnish resolves to
@@ -68,7 +73,7 @@ default); `--effort` low to max.
 |---|---|
 | 0 | An account was written (or printed). |
 | 1 | An internal error, a bug in the Watcher, reported in one line (`--verbose` adds the traceback). Nothing was written. A malformed record is never this; it is 2. |
-| 2 | Usage: a record that is unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), an `--out` inside a forbidden folder or on top of the record it reads, an `--out` that cannot be written, a bad option. |
+| 2 | Usage: a record that is missing ("file not found"), unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), an `--out` inside a forbidden folder or on top of the record it reads, an `--out` whose folder does not exist (unless `--create-out-dir` is given), an `--out` that cannot be written, a bad option. |
 | 3 | No account could be had from a model: no credentials and no `--no-model`, the model could not be reached (connection, timeout, API error, or a response that cannot be decoded as JSON or is not a message) or it declined. Nothing was written. |
 | 4 | The oath dropped every sentence, so there is no account to give. The file is still written and shows what was dropped. |
 
