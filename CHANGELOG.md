@@ -3,7 +3,46 @@
 All notable changes to the Watcher are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/). The version lives in one place, `watcher.__version__`;
-`pyproject.toml` reads it.
+`pyproject.toml` reads it. No release of this repository is tagged; tagging is the owner's decision.
+
+## [0.3.1] - 2026-10-17
+
+### Changed
+- CI tests against WARDEN 0.13.1 at commit `ec551d8e10f82b6e3e681593a97011ae517d360b` (was 0.12.0 at
+  `2cf0eec`). Warden now pins the same CNS commit as the Watcher, so `pip install . ./WARDEN` resolves
+  with full dependency resolution and `pip check` is clean: the `--no-deps` workaround is gone and the
+  co-install job is blocking (it was informational, with a title that said it was red until Warden
+  pinned CNS by commit). The end-to-end tests ran against this Warden: 3 passed.
+- `tests/test_pins.py` checks that both Warden checkouts in CI use one full commit that README and
+  STACK name, that no `--no-deps` or `continue-on-error` is left, and that every action is pinned by
+  commit with its tag in a comment.
+- `--out` no longer creates a missing folder. It is refused with exit 2, before the model is asked,
+  unless `--create-out-dir` is given. The forbidden-folder and overwrite checks run first and are not
+  lifted by the flag.
+
+### Fixed
+- A 200 response from the API whose body is not JSON (or is not a message) gave exit 1 ("internal
+  error: JSONDecodeError"). It is now exit 3 with "no model could be reached" and nothing written, like
+  the other API errors. Documented in the exit-code table.
+- The status filter kept cited sentences such as "ship it", "LGTM", "approved", "looks good", "all
+  clear", "no issues with this change", "trustworthy", "reliable and robust", "OK for production use"
+  and "good to go". They are labels now. Single letters set apart ("s a f e") are joined up before the
+  labels are looked for, and text under a bidirectional override (letters stored as "efas" that show as
+  "safe") is read in the order it is displayed as well as the order it is stored. Honest sentences near
+  these words are still kept (tested). The README says again that a denylist is not a proof of
+  completeness.
+- A record file that does not exist is reported as "file not found" (exit 2) instead of "cannot be read
+  as JSON: FileNotFoundError". Other read errors say "cannot be read", not "as JSON".
+
+### Documentation
+- README: the tested Warden commit and how to bump it, `--create-out-dir`, the exit-3 and exit-2
+  rows, the filter's new coverage and its limits.
+- STACK.md: the tested Warden commit.
+- CHANGELOG: no release is tagged; tagging is the owner's decision.
+
+### Tests
+- One existing test (`test_cli_writes_the_template_account_without_a_model`) wrote into a folder that
+  did not exist; it now passes `--create-out-dir`. Nothing else about it changed.
 
 ## [0.3.0] - 2026-10-17
 
