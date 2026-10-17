@@ -175,3 +175,133 @@ def test_the_reason_names_the_label_as_a_person_reads_it():
 def test_a_real_percent_is_still_a_number_to_the_first_reading():
     assert status_claim("100% coverage") and status_claim("100 % test coverage")
     assert status_claim("coverage is 87%") == ""
+
+
+# --- approvals, sign-offs and all-clears; letters set apart; bidirectional controls -----------------------------
+
+RLO, LRO, PDF, RLI, PDI = "\u202e", "\u202d", "\u202c", "\u2067", "\u2069"
+
+
+@pytest.mark.parametrize("line", [
+    "Ship it [R].",
+    "ship-it [R].",
+    "LGTM [R].",
+    "L.G.T.M [R].",
+    "The change is approved [R].",
+    "Approved [N1].",
+    "This looks good [R].",
+    "It looks good to me [R].",
+    "The diff looked fine [N1].",
+    "Looking solid [R].",
+    "All clear [R].",
+    "all good [R].",
+    "There are no issues with this change [R].",
+    "No issues found [R].",
+    "Zero known problems [R].",
+    "The code is trustworthy [R].",
+    "Reliable and robust [R].",
+    "It is dependable [R].",
+    "OK for production use [R].",
+    "ok to merge [N1].",
+    "Okay for release [R].",
+    "Good to go [R].",
+    "good-to-go [R].",
+    "This is g\u043e\u043ed to g\u043e [R].",  # Cyrillic o
+    "LGTM&nbsp;[R]",
+    "**Approved**: [R]",
+    "L\u200bG\u200bT\u200bM [R].",
+    "Ship\u2011it [R].",
+])
+def test_approvals_and_all_clears_are_status_claims_even_when_cited(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (), line
+    assert out.dropped[0].reason.startswith("status claim of its own"), line
+
+
+@pytest.mark.parametrize("line", [
+    "s a f e [R].",
+    "It is s a f e [R].",
+    "It is s.a.f.e [R].",
+    "It is s - a - f - e [R].",
+    "It is s  a  f  e [R].",
+    "It is S A F E [R].",
+    "It is s\u00b7a\u00b7f\u00b7e [R].",
+    "It is a s a f e [R].",  # the article runs into the word
+    "It is s,a,f,e [R].",
+    "It is s a f e t y [R].",  # a loose reading of squeezed letters errs on the side of dropping
+    "p r o d u c t i o n   r e a d y [R].",
+    "It is p.r.o.d.u.c.t.i.o.n-r.e.a.d.y [R].",
+    "It is b a t t l e - t e s t e d [R].",
+    "L G T M [R].",
+    "a p p r o v e d [R].",
+    "s 4 f e [R].",
+    "It is s\u200b a\u200b f\u200b e [R].",
+    "It is \u0455 \u0430 f \u0435 [R].",  # Cyrillic lookalikes, spaced
+    "It is \uff53 \uff41 \uff46 \uff45 [R].",  # fullwidth, spaced
+])
+def test_letters_set_apart_are_joined_up_before_the_labels_are_looked_for(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (), line
+    assert out.dropped[0].reason.startswith("status claim of its own"), line
+
+
+@pytest.mark.parametrize("line", [
+    "It is sa" + RLO + "fe [R].",  # a control inside the word
+    "It is s" + RLO + "a" + PDF + "fe [R].",
+    "It is " + RLO + "efas" + PDF + " [R].",  # stored backwards, shown as "safe"
+    "It is " + RLO + "efas [R].",  # the override is never closed
+    "It is " + RLO + "efas" + "\u2069 [R].",
+    "It is " + RLI + "efas" + PDI + " [R].",
+    "It is \u202b" + "efas" + PDF + " [R].",
+    "This is " + RLO + "ydaer noitcudorp" + PDF + " [R].",
+    "Status: " + RLO + "devorppa" + PDF + " [R].",
+    "Status: " + RLO + "ti pihs" + PDF + " [R].",
+    "Status: " + RLO + "mtgl" + PDF + " [R].",
+    "A " + LRO + "safe" + PDF + " change [R].",  # a left-to-right override leaves the order alone
+    "It is s&#8238;afe [R].",  # the control as an entity
+    "It is &#8238;efas&#8236; [R].",
+    "It is " + RLO + "e" + RLO + "fa" + PDF + "s" + PDF + " [R].",
+])
+def test_bidirectional_controls_do_not_hide_a_label(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (), repr(line)
+    assert out.dropped[0].reason.startswith("status claim of its own"), repr(line)
+
+
+@pytest.mark.parametrize("line", [
+    "The run ended ACCEPT_UNVERIFIED [R].",
+    "The Judge approves nothing [R].",  # "approves" is not "approved"
+    "Nothing was decided by the Watcher [R].",
+    "It does not look at the code [R].",
+    "Ghost looked at 213 files [N1].",
+    "The suite ran in 3 seconds [N1].",
+    "Ghost found 3 findings and the Judge said INSUFFICIENT [N1].",
+    "Item A B passed in 2 of 3 cycles [R].",
+    "Plan A, B and C were run [R].",
+    "See notes [N1] [R] for the decision.",
+    "The cycle ended in a tie [R].",
+    "Safety was not measured [R].",
+    "The change is unsafe to assume [R].",
+    "A reliability test was not run [R].",
+    "Robustness was not measured [R].",
+    "An unreliable result [R].",
+    "Shipping did not happen [R].",
+    "The ship sailed with it [R].",
+    "All files were scanned [N1].",
+    "All three cycles ended [R].",
+    "Allowed to go ahead only with a reason [R].",
+    "A good deal of the output was cut [R].",
+    "No findings were observed [R].",
+])
+def test_honest_sentences_survive_the_approval_phrases_and_the_spaced_letter_check(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (line,) and out.dropped == (), line
+
+
+def test_a_long_run_of_single_letters_is_read_in_time():
+    import time
+
+    start = time.monotonic()
+    out = enforce("a " * 20000 + "[R]. " + "x." * 20000 + " [R]", INDEX)
+    assert time.monotonic() - start < 5
+    assert out.ratio >= 0

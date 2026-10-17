@@ -32,7 +32,8 @@ Rules you must follow, because a filter enforces them after you write:
 deletes the sentence.
 2. Never make a status claim of your own. Do not write "production ready", "production-grade", "ready for \
 production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "secure", \
-"bulletproof" or "hardened" in any form, in any alphabet, even to deny them.
+"bulletproof", "hardened", "reliable", "robust", "trustworthy", "approved", "LGTM", "looks good", \
+"ship it", "good to go", "all clear" or "no issues" in any form, in any alphabet, even to deny them.
 3. Do not say that the run passed, failed, is safe or is approved in your own voice (the word "safe" is \
 deleted wherever it appears). Say what the \
 record says and cite it: the decision [R], the Judge's verdict [V], the suite lines, the unmeasured \

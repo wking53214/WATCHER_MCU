@@ -9,8 +9,9 @@ through only where it points at something in the JSON. Three things drop a sente
    "battle-tested", "fully tested", "100% coverage", "enterprise grade", "safe", "bulletproof",
    "hardened" and the like. The circuit's own scanner reports those labels for re-verification; the
    Watcher does not get to make them, cited or not. The sentence is read as a person reads it on a
-   rendered page, so other dashes, lookalike letters, entities, markup and invisible characters do not
-   hide a label.
+   rendered page, so other dashes, lookalike letters, entities, markup, invisible characters, bidirectional
+   overrides and letters set apart ("s a f e") do not hide a label. Approvals read the same way: "approved",
+   "LGTM", "looks good", "ship it", "good to go", "all clear", "no issues", "reliable", "robust".
 
 Headings are structure, not claims; a short heading with no claim in it is kept. Nothing else is.
 """
@@ -53,8 +54,7 @@ _STATUS_CLAIMS = (
     r"100" + _SEP + r"(?:%|per" + _SEP + r"cent)" + _SEP
     + r"(?:test" + _SEP + r")?(?:coverage|tested|covered|verified)",
     r"(?:complete|full|total)" + _SEP + r"(?:test" + _SEP + r")?coverage",
-    # safe, sound, secure, free of defects
-    r"(?<![a-z0-9])(?:safe|safely|secure|bulletproof|hardened|flawless|foolproof|bombproof)(?![a-z0-9])",
+    # sound, free of defects
     r"bullet" + _SEP + r"proof",
     r"fool" + _SEP + r"proof",
     r"rock" + _SEP + r"solid",
@@ -62,7 +62,35 @@ _STATUS_CLAIMS = (
     r"(?:verified|proven|guaranteed|certified)" + _SEP + r"(?:safe|correct|secure|sound)",
     r"(?:no|zero)" + _SEP + r"(?:known" + _SEP + r")?(?:bugs|defects|vulnerabilit(?:y|ies)|flaws)",
 )
-_STATUS = re.compile("|".join(f"(?:{p})" for p in _STATUS_CLAIMS))
+
+#: Single words that are a verdict by themselves. They must stand alone: "unsafe" and "safety" are not "safe".
+_WORD_CLAIMS = (
+    "safe", "safely", "secure", "bulletproof", "hardened", "flawless", "foolproof", "bombproof",
+    "approved", "lgtm", "trustworthy", "reliable", "robust", "dependable",
+)
+#: Approval and all-clear phrases, also bounded by non-letters. These are what a reviewer's sign-off sounds like.
+_PHRASE_CLAIMS = (
+    r"ship" + _SEP + r"it",
+    r"look(?:s|ed|ing)?" + _SEP + r"(?:good|great|fine|ok|okay|solid|clean|correct)",
+    r"all" + _SEP + r"(?:clear|good|fine|ok|okay)",
+    r"good" + _SEP + r"to" + _SEP + r"go",
+    r"(?:ok|okay)" + _SEP + r"(?:for|to)" + _SEP
+    + r"(?:prod(?:uction)?|use|deploy(?:ment)?|merge|releas(?:e)?|ship(?:ping)?|launch)",
+    r"(?:no|zero)" + _SEP + r"(?:known" + _SEP + r")?(?:issues|problems|concerns)",
+)
+
+
+def _alternatives(*, bounded: bool) -> re.Pattern[str]:
+    """The label matcher. `bounded` keeps the single words and phrases from matching inside longer words; the
+    loose form is for letters that were spread apart and squeezed together, where a boundary means nothing."""
+    start, end = (r"(?<![a-z0-9])", r"(?![a-z0-9])") if bounded else ("", "")
+    words = f"(?:{'|'.join(_WORD_CLAIMS)})"
+    phrases = [f"(?:{p})" for p in _PHRASE_CLAIMS]
+    return re.compile("|".join([f"(?:{p})" for p in _STATUS_CLAIMS] + [f"{start}(?:{words}|{'|'.join(phrases)}){end}"]))
+
+
+_STATUS = _alternatives(bounded=True)
+_STATUS_SQUEEZED = _alternatives(bounded=False)
 _HEADING = re.compile(r"^\s{0,3}#{1,6}\s+\S")
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
@@ -91,6 +119,14 @@ _DROPPED_CATEGORIES = frozenset({"Mn", "Me", "Cf", "Co", "Cs", "Cn"})
 _MARKDOWN_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _HTML_TAG = re.compile(r"</?[A-Za-z][^<>]*>|<!--.*?-->")
 _EMPHASIS = re.compile(r"[*_`~\\]")
+#: Bidirectional controls. A right-to-left override makes the stored letters "efas" display as "safe".
+_BIDI_RTL = frozenset("\u202b\u202e\u2067")  # RLE, RLO, RLI
+_BIDI_LTR = frozenset("\u202a\u202d\u2066\u2068")  # LRE, LRO, LRI, FSI
+_BIDI_END = frozenset("\u202c\u2069")  # PDF, PDI
+_BIDI = re.compile("[\u202a-\u202e\u2066-\u2069]")
+#: Three or more single letters set apart ("s a f e", "s.a.f.e", "s - a - f - e"): a run a reader joins up.
+_SPACED = re.compile(r"(?<![a-z0-9])[a-z](?:[\s.,;:|/\-\u00b7]+[a-z]){2,}(?![a-z0-9])")
+_SPACING = re.compile(r"[\s.,;:|/\-\u00b7]+")
 
 
 @dataclass(frozen=True)
@@ -127,13 +163,49 @@ def _fold(text: str) -> str:
     return "".join(out)
 
 
-def _as_read(text: str) -> str:
+def _bidi_visual(text: str) -> str:
+    """The order a reader sees, for text that carries bidirectional embeddings or overrides: what sits between
+    a right-to-left start and its end is shown reversed, and a nested level keeps the units of the level it
+    sits in. The stored order is read as well, so this can only add a reading."""
+    levels: list[list[str]] = [[]]  # each level is a list of units: one character, or a finished nested level
+    rtl: list[bool] = [False]
+
+    def close() -> None:
+        chunk, was_rtl = levels.pop(), rtl.pop()
+        if was_rtl == rtl[-1]:
+            levels[-1].extend(chunk)  # same direction as the level around it: the outer reversal covers it
+        else:
+            levels[-1].append("".join(reversed(chunk) if was_rtl else chunk))
+
+    for ch in text:
+        if ch in _BIDI_RTL or ch in _BIDI_LTR:
+            levels.append([])
+            rtl.append(ch in _BIDI_RTL)
+        elif ch in _BIDI_END and len(levels) > 1:
+            close()
+        else:
+            levels[-1].append(ch)
+    while len(levels) > 1:  # a start with no end runs to the end of the sentence
+        close()
+    return "".join(levels[0])
+
+
+def _as_read(text: str, *, visual: bool = False) -> str:
     """The sentence as a person reads it on a rendered page: entities decoded, markup, links and emphasis
     markers gone, NFKC, casefolded, accents and invisible characters gone, every dash a hyphen, lookalike
-    letters folded to Latin."""
+    letters folded to Latin. With `visual`, text under a bidirectional override is first put in the order it
+    is displayed."""
     text = _MARKDOWN_LINK.sub(r"\1", _HTML_TAG.sub("", html.unescape(text)))
+    if visual:
+        text = _bidi_visual(text)
     text = _EMPHASIS.sub("", unicodedata.normalize("NFKC", text)).casefold()
     return _fold(unicodedata.normalize("NFKD", text)).casefold()
+
+
+def _squeezed(reading: str) -> str:
+    """Runs of single letters set apart, joined up and set out on their own: "it is s a f e" gives "safe". Every
+    such run is returned, so a letter that belongs to the word before ("a s a f e") cannot hide the label."""
+    return " ".join(_SPACING.sub("", m.group(0)) for m in _SPACED.finditer(reading))
 
 
 def sentences(text: str) -> list[str]:
@@ -154,13 +226,20 @@ def sentences(text: str) -> list[str]:
 def status_claim(sentence: str) -> str:
     """The status label a sentence makes on its own, or empty. A label inside a citation's quoted
     text is still a claim here: the Watcher repeats nothing it cannot cite as a report of a label.
-    The sentence is read twice, as written and with digits and symbols read as the letters they stand
-    for, so "pr0duction r3ady" is caught and "100% coverage" is still a number."""
-    read = _as_read(sentence)
-    for reading in (read, read.translate(_LEET)):
-        m = _STATUS.search(reading)
-        if m:
-            return m.group(0)
+    The sentence is read as written, with digits and symbols read as the letters they stand for ("pr0duction
+    r3ady" is caught and "100% coverage" is still a number), with letters set apart joined up ("s a f e"), and,
+    when it carries bidirectional controls, in the order it is displayed (letters stored as "efas" after a
+    right-to-left override show as "safe").
+    """
+    for visual in ((False, True) if _BIDI.search(html.unescape(sentence)) else (False,)):
+        read = _as_read(sentence, visual=visual)
+        for reading in (read, read.translate(_LEET)):
+            m = _STATUS.search(reading)
+            if m:
+                return m.group(0)
+            m = _STATUS_SQUEEZED.search(_squeezed(reading))
+            if m:
+                return m.group(0)
     return ""
 
 

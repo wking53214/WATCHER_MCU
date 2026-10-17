@@ -90,7 +90,7 @@ every sentence the oath dropped with its reason.
 | It refuses to overwrite what it reads | `cli.main` refuses (exit 2) an `--out` that resolves to the record, through a symlink, a relative spelling or a hard link. |
 | Nothing in the circuit reads it | Warden, the Judge, Ghost, SWIZZLE and the seats have no input for it. Not ignored: structurally absent. The Watcher imports none of them (`test_charter.py`). |
 | Every kept sentence cites the record | `oath.enforce`: no citation, drop; unknown citation, drop. |
-| It claims no status of its own | `oath.status_claim`: "production ready", "production-grade", "ready for production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "bulletproof", "hardened" and their kin, cited or not, drop. The sentence is read the way a person reads a rendered page: entities decoded, markup and emphasis removed, NFKC, case folded, accents and invisible characters gone, every Unicode dash a hyphen, Cyrillic, Greek and small-capital lookalikes folded to Latin, digits used as letters read as letters. A superset of the labels Ghost Tools reports for re-verification. |
+| It claims no status of its own | `oath.status_claim`: "production ready", "production-grade", "ready for production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "bulletproof", "hardened" and their kin, and the sign-offs a reviewer gives ("approved", "LGTM", "looks good", "ship it", "good to go", "all clear", "no issues", "OK for production use", "trustworthy", "reliable", "robust"), cited or not, drop. The sentence is read the way a person reads a rendered page: entities decoded, markup and emphasis removed, NFKC, case folded, accents and invisible characters gone, every Unicode dash a hyphen, Cyrillic, Greek and small-capital lookalikes folded to Latin, digits used as letters read as letters, single letters set apart ("s a f e") joined up, and text under a bidirectional override read in the order it is displayed as well as the order it is stored. A superset of the labels Ghost Tools reports for re-verification. |
 | It is a description, never a grade | The system prompt says so; the filter makes an uncited grade vanish; the account's first line repeats the decision as recorded, cited. |
 | A refusal is an empty account, not a quiet one | A model that declines (safety classifier) exits 3 with no file written. An account the oath empties exits 4 and still shows what was dropped. |
 
@@ -118,7 +118,8 @@ The arrow into the Watcher is the only one. Nothing comes back.
 
 - `tests/test_oath.py`: cited sentences survive; uncited, falsely cited and status-claiming ones are
   dropped with the reason, through emphasis, invisible characters, other Unicode dashes, lookalike
-  letters, entities, markup, digit-for-letter spelling and a citation after the claim ("is safe [R]");
+  letters, entities, markup, digit-for-letter spelling, spaced-out letters, bidirectional overrides and
+  a citation after the claim ("is safe [R]"); approvals and all-clears ("LGTM", "looks good", "ship it");
   honest sentences near those words are kept; headings are structure.
 - `tests/test_evidence.py`: a real run record (SWIZZLE, 2026-10-15, joined through a stack manifest)
   indexes every kind of thing with stable ids; forbidden paths are the governed folder and every
@@ -143,8 +144,15 @@ The arrow into the Watcher is the only one. Nothing comes back.
 - That the model writes a good account. It is trusted to write, never to be right; the oath bounds
   what reaches a reader, not how useful it is. No live run against the API is in the tests (none is
   possible without a key), so the request shape is tested against a fake client only.
-- That the status-claim list is complete. A list of labels can only be extended; this one is a
-  superset of Ghost Tools' list as of 2026-10-15, and a new label there should be added here.
+- That the status-claim list is complete. It is a denylist of labels and phrases, so it is not a proof
+  and cannot be one: a sign-off in words it does not list, a paraphrase ("nothing to worry about", "you
+  can rely on it"), another language, or letters broken up some way the normaliser does not join
+  (parts of a word split by punctuation, a word spelled out in a table) is kept if it cites the
+  record. The disguises it does read through are listed above and tested; the list was last extended
+  with approvals, all-clears, "reliable" and "robust" after an audit kept such sentences. It is a
+  superset of Ghost Tools' list as of 2026-10-15, and a new label there should be added here. The
+  citation requirement and the shown "dropped" appendix are the other defences; a reader should still
+  check the cited text.
 
 ## KNOWN DEFECTS
 
