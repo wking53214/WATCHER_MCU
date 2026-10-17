@@ -20,5 +20,7 @@ warden tagteam PATH --stack FOLDER --stack-manifest stack.json --authorize "Your
 watcher narrate run.json --target PATH --out account.md
 ```
 
-CNS (private) holds the interoperability contracts. No repository in the circuit modifies it, and the
-Watcher does not read it.
+CNS holds the interoperability contracts. No repository in the circuit modifies it. The Watcher reads
+the run record through it: `watcher.evidence` imports `cns.run` and refuses any record that is not
+`cns.run/1`. CNS is installed from its git URL, pinned to the full commit of release `v1.8.0`, the same
+pin every repository of the circuit uses; installing the Watcher needs access to that repository.

@@ -65,3 +65,113 @@ def test_ratio_counts_kept_against_all():
     out = enforce("x [R]. y. z [R].", INDEX)
     assert out.ratio == pytest.approx(2 / 3)
     assert enforce("", INDEX).ratio == 1.0
+
+
+# --- the audited bypasses, and the ones found beside them ------------------------------------------------------
+
+@pytest.mark.parametrize("line", [
+    # other dashes (U+2010 hyphen, U+2011, en and em dash, minus sign, figure dash, horizontal bar, wave dash)
+    "This is production\u2010ready [R].",
+    "This is production\u2011ready [R].",
+    "This is production\u2013ready [R].",
+    "This is production\u2014ready [R].",
+    "This is production\u2212ready [R].",
+    "This is production\u2012ready [R].",
+    "This is production\u2015ready [R].",
+    "This is production\u301cready [R].",
+    "This is battle\u2010tested [R].",
+    "This is enterprise\u2013grade [R].",
+    # lookalike letters: Cyrillic, Greek, small capitals, fullwidth
+    "This is produ\u0441tion ready [R].",
+    "This is pr\u043eduction ready [R].",
+    "This is \u0440roduction ready [R].",
+    "This is production r\u0435ady [R].",
+    "This is production re\u0430dy [R].",
+    "This is \u03c1roduction ready [R].",
+    "This is pr\u03bfduction ready [R].",
+    "This is \u1d18\u0280\u1d0f\u1d05\u1d1c\u1d04\u1d1b\u026a\u1d0f\u0274 \u0280\u1d07\u1d00\u1d05\u028f [R].",
+    "This is \uff50\uff52\uff4f\uff44\uff55\uff43\uff54\uff49\uff4f\uff4e \uff52\uff45\uff41\uff44\uff59 [R].",
+    "This is " + "".join(chr(0x1D41A + ord(c) - 97) for c in "production") + " ready [R].",  # mathematical bold
+    # phrase order and wording
+    "The code is ready for production [R].",
+    "It is Ready For Prod [N1].",
+    "Ready to ship [R].",
+    "Release-ready [R].",
+    "It is production-grade [R].",
+    "It is production grade [R].",
+    "It is production quality [R].",
+    "It is production\u2011proven [R].",
+    "Enterprise-ready [R].",
+    "It is battle tested [R].",
+    "It is well-tested [R].",
+    "It is thoroughly tested [R].",
+    "It is fully verified [R].",
+    "Complete test coverage [R].",
+    "100 percent coverage [R].",
+    "It is bulletproof [R].",
+    "It is bullet-proof [R].",
+    "It is hardened [R].",
+    "It is rock solid [R].",
+    "It is bug-free [R].",
+    "It is flawless [R].",
+    "There are no known bugs [R].",
+    "Safe to deploy [R].",
+    # a cited claim is still a claim
+    "The run passed and is safe [R].",
+    "The change is safe [N1].",
+    "The run is secure [R].",
+    "Nothing here is unsafe, it is safe [R].",
+    # markup, entities, escapes and separators that a rendered page would hide
+    "This is production&#8208;ready [R].",
+    "This is production&ndash;ready [R].",
+    "This is production&nbsp;ready [R].",
+    "This is production<wbr>ready [R].",
+    "This is production<!-- x -->ready [R].",
+    "This is [production](https://example.invalid) ready [R].",
+    "This is production\\-ready [R].",
+    "This is production.ready [R].",
+    "This is production/ready [R].",
+    "This is `production` _ready_ [R].",
+    "This is pro\u0336duction ready [R].",
+    "This is pr\u00f3duction ready [R].",
+    "This is production\u200b ready [R].",
+    "This is production \u202eready [R].",
+    # digits and symbols for letters
+    "This is pr0duction r3ady [R].",
+    "This is pr0duct10n-r3@dy [R].",
+    "This is s4fe [R].",
+    "This is b4ttle-t3sted [R].",
+    "This is f\u03c5lly tested [R].",
+])
+def test_status_claims_are_dropped_through_every_disguise(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (), line
+    assert out.dropped[0].reason.startswith("status claim of its own"), line
+
+
+@pytest.mark.parametrize("line", [
+    "The run ended ACCEPT_UNVERIFIED [R].",
+    "The Judge said INSUFFICIENT [N1].",
+    "1117 passed, 0 failed, 5 skipped [N1].",
+    "Ghost observed 213 findings [R].",
+    "The reproduction is ready to read [R].",
+    "Safety was not measured [R].",
+    "The change is unsafe to assume [R].",
+    "Ghost found one thing [ghost-1b3766cb418b].",
+    "The suite covered 100 files [N1].",
+    "The production folder was not touched [R].",
+    "Nothing was released [R].",
+])
+def test_honest_sentences_are_not_caught_by_the_wider_net(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (line,) and out.dropped == ()
+
+
+def test_the_reason_names_the_label_as_a_person_reads_it():
+    out = enforce("It is production\u2010ready [R].", INDEX)
+    assert out.dropped[0].reason == "status claim of its own: 'production-ready'"
+
+
+def test_a_real_percent_is_still_a_number_to_the_first_reading():
+    assert status_claim("100% coverage") and status_claim("100 % test coverage")
+    assert status_claim("coverage is 87%") == ""

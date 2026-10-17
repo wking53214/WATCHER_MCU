@@ -10,7 +10,7 @@ before anyone reads it. That is the oath, and `watcher.oath` is the part of the 
 
 from __future__ import annotations
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 #: The oath, as text. Printed at the end of every account so the reader knows what was promised.
 OATH = (

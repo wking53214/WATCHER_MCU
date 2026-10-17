@@ -19,7 +19,8 @@ class Scripted:
     """A narrator that says whatever the test wrote, and remembers what it was asked."""
 
     def __init__(self, text: str) -> None:
-        self.text, self.calls = text, []
+        self.text = text
+        self.calls: list[tuple[str, str, str, str]] = []
 
     def narrate(self, system, prompt, model, effort):
         self.calls.append((system, prompt, model, effort))
@@ -123,7 +124,7 @@ def test_the_sdk_narrator_asks_for_the_right_request_and_reads_text_blocks():
 
     class Response:
         stop_reason = "end_turn"
-        content = [Block("thinking"), Block("text", "one [R]."), Block("text", "two [V].")]
+        content = (Block("thinking"), Block("text", "one [R]."), Block("text", "two [V]."))
 
     class Messages:
         def create(self, **kw):
@@ -150,14 +151,18 @@ def test_the_sdk_narrator_turns_a_refusal_into_an_error():
     class Response:
         stop_reason = "refusal"
         stop_details = Details()
-        content = []
+        content = ()
+
+    class Messages:
+        @staticmethod
+        def create(**kw):
+            return Response()
+
+    class Beta:
+        messages = Messages()
 
     class Client:
-        class beta:
-            class messages:
-                @staticmethod
-                def create(**kw):
-                    return Response()
+        beta = Beta()
 
     with pytest.raises(Refused, match="cyber"):
         AnthropicNarrator(Client()).narrate("s", "p", "m", "high")

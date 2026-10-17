@@ -10,12 +10,15 @@ the index alone, one cited bullet per fact. That path is deterministic and is wh
 
 from __future__ import annotations
 
+import logging
 import os
-from typing import Optional, Protocol
+from typing import Any, Protocol
 
 from .evidence import Evidence
 
-#: The model that wrote the Watcher. Any current Claude model id works; pass --model to choose.
+log = logging.getLogger(__name__)
+
+#: The default model. Any current Claude model id works; pass --model to choose.
 DEFAULT_MODEL = "claude-fable-5-1"
 DEFAULT_EFFORT = "high"
 
@@ -27,9 +30,11 @@ Rules you must follow, because a filter enforces them after you write:
 1. Every sentence must cite at least one id from the record, in square brackets, like [N3] or \
 [ghost-1b3766cb418b]. A sentence without a citation is deleted. A citation that is not in the record \
 deletes the sentence.
-2. Never make a status claim of your own. Do not write "production ready", "battle-tested", "fully \
-tested", "enterprise grade" or "100% coverage" in any form, even to deny them.
-3. Do not say that the run passed, failed, is safe or is approved in your own voice. Say what the \
+2. Never make a status claim of your own. Do not write "production ready", "production-grade", "ready for \
+production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "secure", \
+"bulletproof" or "hardened" in any form, in any alphabet, even to deny them.
+3. Do not say that the run passed, failed, is safe or is approved in your own voice (the word "safe" is \
+deleted wherever it appears). Say what the \
 record says and cite it: the decision [R], the Judge's verdict [V], the suite lines, the unmeasured \
 list [U].
 4. Prefer short sentences. Lead with what happened, then why, then what a person could do next, each \
@@ -57,10 +62,10 @@ def prompt_for(evidence: Evidence) -> str:
 class AnthropicNarrator:
     """Claude through the official SDK. Thinking is the model's default; depth is `effort`."""
 
-    def __init__(self, client=None) -> None:
+    def __init__(self, client: Any = None) -> None:
         self._client = client
 
-    def _get(self):
+    def _get(self) -> Any:
         if self._client is None:
             import anthropic  # imported here so `--no-model` needs no SDK
             self._client = anthropic.Anthropic()
@@ -123,13 +128,26 @@ def template(evidence: Evidence) -> str:
     return "\n".join(out)
 
 
-def narrate(evidence: Evidence, narrator: Optional[Narrator], model: str = DEFAULT_MODEL,
+def narrate(evidence: Evidence, narrator: Narrator | None, model: str = DEFAULT_MODEL,
             effort: str = DEFAULT_EFFORT) -> str:
     """The raw account: from the narrator when one is given, else from the template."""
     if narrator is None:
+        log.debug("writing the template account from %d citable things", len(evidence.citations))
         return template(evidence)
-    return narrator.narrate(SYSTEM, prompt_for(evidence), model, effort)
+    prompt = prompt_for(evidence)
+    log.debug("asking %s (effort %s) with a prompt of %d characters", model, effort, len(prompt))
+    return narrator.narrate(SYSTEM, prompt, model, effort)
 
 
-__all__ = ["AnthropicNarrator", "DEFAULT_EFFORT", "DEFAULT_MODEL", "Narrator", "Refused", "SYSTEM",
-           "credentials_present", "narrate", "prompt_for", "template"]
+__all__ = [
+    "DEFAULT_EFFORT",
+    "DEFAULT_MODEL",
+    "SYSTEM",
+    "AnthropicNarrator",
+    "Narrator",
+    "Refused",
+    "credentials_present",
+    "narrate",
+    "prompt_for",
+    "template",
+]

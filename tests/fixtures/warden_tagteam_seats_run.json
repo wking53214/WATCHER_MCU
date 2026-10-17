@@ -1,0 +1,140 @@
+{
+  "schema": "cns.run/1",
+  "decision": "ACCEPT",
+  "converged": true,
+  "cycles": [
+    {
+      "number": 1,
+      "outcome": "APPLIED",
+      "observed": 1
+    },
+    {
+      "number": 2,
+      "outcome": "NOTHING_TO_PROPOSE",
+      "observed": 0
+    }
+  ],
+  "finished": true,
+  "put_back": false,
+  "held_digest": null,
+  "reason": "",
+  "notes": [
+    "SWIZZLE proofs: 12 of 12 proofs hold.",
+    "ASSAY: Ghost caught 5 of 7 known failure modes (59/59 manifest claims hold)",
+    "Ghost Tools observed 1 finding(s).",
+    "SWIZZLE proofs: 12 of 12 proofs hold.",
+    "Rule 7 suite cycle 1 keep test baseline: 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Rule 7 suite cycle 1 keep test (code made to fail): 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Cycle 1: keep test passed. Nothing ran the code when it was made to fail.",
+    "Rule 7 suite cycle 1 before: 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Cycle 1: transformation applied under granted authorization.",
+    "Rule 7 suite cycle 1 after: 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Ghost re-inspected: 0 finding(s); closed=['ghost-3861ccfe0979'] new=[]",
+    "SWIZZLE proofs: 12 of 12 proofs hold.",
+    "Rule 7 suite converged: 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Rule 7 suite cycle 0 before: 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Cycle 0: transformation applied under granted authorization.",
+    "Rule 7 suite cycle 0 after: 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Ghost re-inspected: 0 finding(s); closed=[] new=[]",
+    "SWIZZLE attacks on the governor: 0 of 28 violated",
+    "Rule 7 suite final state, for the Judge: 2 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Loop converged and the finishing change stands. Judge: ACCEPT (checked and accepted: 3 change(s) applied; no tests or test settings were changed and no edit left the project; suite 2 passed, 0 skipped, 0 xfailed (before: 2 passed, 0 skipped, 0 xfailed); Ghost: 1 finding(s) at the start, 0 at the end, none new; SWIZZLE's own proofs held; 28 of 28 attacks on the governor held; ASSAY: Ghost caught 5 of 7 known failure modes, floor 3; Ghost's baseline suppressed nothing new)."
+  ],
+  "observed": [
+    "ghost-3861ccfe0979"
+  ],
+  "reobserved": [],
+  "contract": "1",
+  "versions": {
+    "warden": {
+      "version": "0.12.0",
+      "contract": "1",
+      "commit": "2cf0eeccf839f88d624deb133fe1cb4b16a99009",
+      "dirty": null
+    },
+    "ghost_tools": {
+      "path": "/srv/circuit/stack/ghost_tools",
+      "commit": "dd1b8039a9b32fe41cfa2823228ab3a03c394d0f",
+      "version": "1.9.1",
+      "dirty": false
+    },
+    "swizzle": {
+      "path": "/srv/circuit/stack/SWIZZLE",
+      "commit": "9eb2a10ed1a05f3d15041c68f08b9c1c8c8c036f",
+      "version": "0.7.1",
+      "dirty": false
+    },
+    "assay": {
+      "path": "/srv/circuit/stack/ASSAY",
+      "commit": "4da3919f19a04cb59b45c6d07d55229c923e5126",
+      "version": "0.10.0",
+      "dirty": true
+    },
+    "seats": {
+      "drafter": {
+        "spec": "drafter.seat:Drafter",
+        "requires_contract": "1",
+        "version": "0.1.0",
+        "commit": "cd4235e063ffc281e3f156ec951f4f603dea85b5",
+        "dirty": false
+      },
+      "finisher": {
+        "spec": "burnish.finisher:Burnish",
+        "requires_contract": "1",
+        "version": "0.2.0",
+        "commit": "a814159947f73040099ccec0df877998a02e285b",
+        "dirty": false
+      },
+      "judge": {
+        "spec": "judge.seat:Judge",
+        "requires_contract": "1",
+        "version": "0.3.0",
+        "commit": "86c55b55153434979193e2565b1efd795b10d781",
+        "dirty": false
+      }
+    },
+    "joins": []
+  },
+  "swizzle_sound": true,
+  "unmeasured": [],
+  "ghost_scan": {
+    "status": "ok",
+    "files_scanned": 4,
+    "files_skipped": 0,
+    "files_unparsable": 0,
+    "gaps": [],
+    "gaps_not_shown": 0,
+    "declined": [
+      "mutate",
+      "kernel",
+      "structure",
+      "tests",
+      "project",
+      "secrets",
+      "correlate"
+    ],
+    "baseline": {
+      "path": null,
+      "suppressed": 0
+    }
+  },
+  "ghost_baseline": {
+    "before": {
+      "path": null,
+      "suppressed": 0
+    },
+    "after": {
+      "path": null,
+      "suppressed": 0
+    }
+  },
+  "drafter_skipped": [],
+  "informational": [],
+  "verdict": {
+    "decision": "ACCEPT",
+    "reasons": [
+      "checked and accepted: 3 change(s) applied; no tests or test settings were changed and no edit left the project; suite 2 passed, 0 skipped, 0 xfailed (before: 2 passed, 0 skipped, 0 xfailed); Ghost: 1 finding(s) at the start, 0 at the end, none new; SWIZZLE's own proofs held; 28 of 28 attacks on the governor held; ASSAY: Ghost caught 5 of 7 known failure modes, floor 3; Ghost's baseline suppressed nothing new"
+    ],
+    "judge": "judge 0.3"
+  }
+}

@@ -2,20 +2,73 @@ name: tests
 on:
   push:
   pull_request:
+permissions:
+  contents: read
 jobs:
-  pytest:
+  check:
+    name: lint, types, tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # Actions are pinned by commit; the tag is in the comment. Bump both together.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
       - run: python -m ruff check .
+      - run: python -m mypy
+      # pytest includes tests/test_pins.py: the installed CNS must be the commit pyproject pins.
       - run: pytest -q
       # The template account on a real record, without a model and without credentials: the Watcher
       # must work where no key exists, and must refuse to write into any folder the record names.
-      - run: python -m watcher.cli narrate tests/fixtures/swizzle_joined_run.json --no-model --out /tmp/account.md
+      - run: python -m watcher.cli narrate tests/fixtures/swizzle_joined_run.json --no-model --out "$RUNNER_TEMP/account.md"
+      - run: python -m watcher.cli narrate tests/fixtures/warden_tagteam_seats_run.json --no-model --out "$RUNNER_TEMP/account2.md"
+
+  warden-e2e:
+    name: the real Warden writes, the Watcher reads
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      # WARDEN is public. To bump: change `ref` to the new full commit SHA of WARDEN main (its tagteam
+      # writer is `_run_team` in warden/cli.py) and re-run; the commit below is WARDEN 0.12.0.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          repository: wking53214/WARDEN
+          ref: 2cf0eeccf839f88d624deb133fe1cb4b16a99009
+          path: _warden
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.13"
+      - run: pip install -e ".[dev]"
+      # Warden's own dependency is the same CNS release named by tag; pip treats a tag and a commit URL as
+      # two sources and refuses to resolve both, so Warden goes in without dependency resolution. The Watcher
+      # already installed the one CNS (the pinned commit), and the step after proves it is still that one.
+      - run: pip install --no-deps ./_warden
+      - run: python -m pytest -q tests/test_pins.py
+      - run: warden --help > /dev/null
+      - run: python -m pytest -q -m e2e tests/test_warden_e2e.py
+      # By hand, the same thing end to end: a record from Warden, then the account, exit 0.
+      - run: |
+          warden tagteam "$RUNNER_TEMP/no-such-folder" > "$RUNNER_TEMP/run.json" || test $? -eq 2
+          watcher narrate "$RUNNER_TEMP/run.json" --no-model --out "$RUNNER_TEMP/account.md"
+          grep -q 'USAGE_ERROR' "$RUNNER_TEMP/account.md"
+
+  coinstall-warden:
+    name: informational, pip resolves the Watcher with Warden (red until WARDEN pins CNS by commit)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          repository: wking53214/WARDEN
+          ref: 2cf0eeccf839f88d624deb133fe1cb4b16a99009
+          path: _warden
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.13"
+      - run: pip install --dry-run . ./_warden

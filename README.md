@@ -9,7 +9,7 @@ every sentence it keeps cites a measurement in the record by id. A sentence that
 cites something that is not there, or makes a status claim of its own is dropped before anyone reads
 it, and the account says how many were dropped and why.
 
-Version `0.2.0` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.0` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
@@ -28,7 +28,14 @@ the record does not back.
 pip install -e .
 watcher narrate run.json --out account.md
 watcher narrate run.json --no-model          # the template account, no model, no credentials
+watcher --verbose narrate run.json --no-model   # diagnostics on standard error
 ```
+
+The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from
+its git URL pinned to the full commit of release `v1.8.0` (the pin every repository of the circuit
+uses, so `pip install` of the Watcher beside Warden, the Judge, the Drafter and Burnish resolves to
+one CNS). `tests/test_pins.py` fails if the installed CNS is not the pinned one. Installing needs
+access to that repository.
 
 `run.json` is the JSON `warden tagteam` prints. It must be a `cns.run/1` record: the contract is
 `RunRecord` in the CNS repository, and a record that predates it, names another version, or has a
@@ -46,8 +53,27 @@ in part. The account is Markdown:
 
 Credentials come from `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or an `ant auth login` profile.
 Without any, `watcher` exits 3 and says so; `--no-model` writes the same shape of account from the
-record alone, deterministically. `--model` chooses the Claude model (default `claude-fable-5-1`, the
-model that wrote the Watcher; `claude-opus-5-5` is the ordinary choice); `--effort` low to max.
+record alone, deterministically. `--model` chooses the Claude model (`watcher narrate --help` shows the
+default); `--effort` low to max.
+
+## EXIT CODES
+
+| Code | Meaning |
+|---|---|
+| 0 | An account was written (or printed). |
+| 1 | An internal error, a bug in the Watcher, reported in one line (`--verbose` adds the traceback). Nothing was written. A malformed record is never this; it is 2. |
+| 2 | Usage: a record that is unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), an `--out` inside a forbidden folder or on top of the record it reads, an `--out` that cannot be written, a bad option. |
+| 3 | No account could be had from a model: no credentials and no `--no-model`, the model could not be reached (connection, timeout, API error) or it declined. Nothing was written. |
+| 4 | The oath dropped every sentence, so there is no account to give. The file is still written and shows what was dropped. |
+
+`tests/test_docs.py` fails if this table and the code disagree.
+
+## DIAGNOSTICS
+
+The Watcher logs through the standard `logging` module under the name `watcher`, to standard error.
+By default only warnings appear. `--verbose` (or `-v`, before or after `narrate`) shows what was read,
+how many citable things the record holds, what was sent to the model (its size, never the record) and
+every sentence the oath dropped with its reason.
 
 ## THE OATH, AS CODE
 
@@ -55,9 +81,10 @@ model that wrote the Watcher; `claude-opus-5-5` is the ordinary choice); `--effo
 |---|---|
 | It reads the run record and nothing else | `narrate.prompt_for` shows the model the citation index only. No file, no diff, no repository. |
 | It writes nothing into the governed folder or any checkout the record names | `cli.main` resolves `--out` against the governed folder (`--target`) and every instrument and joined path in `versions`, and refuses with exit 2. `tests/test_charter.py` reads the source: only `cli.py` writes, and only the account. |
+| It refuses to overwrite what it reads | `cli.main` refuses (exit 2) an `--out` that resolves to the record, through a symlink, a relative spelling or a hard link. |
 | Nothing in the circuit reads it | Warden, the Judge, Ghost, SWIZZLE and the seats have no input for it. Not ignored: structurally absent. The Watcher imports none of them (`test_charter.py`). |
 | Every kept sentence cites the record | `oath.enforce`: no citation, drop; unknown citation, drop. |
-| It claims no status of its own | `oath.status_claim`: "production ready", "battle-tested", "fully tested", "enterprise grade", "100% coverage", read the way a person reads them (NFKC, emphasis and invisible characters stripped), drop. The same labels Ghost Tools reports for re-verification. |
+| It claims no status of its own | `oath.status_claim`: "production ready", "production-grade", "ready for production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "bulletproof", "hardened" and their kin, cited or not, drop. The sentence is read the way a person reads a rendered page: entities decoded, markup and emphasis removed, NFKC, case folded, accents and invisible characters gone, every Unicode dash a hyphen, Cyrillic, Greek and small-capital lookalikes folded to Latin, digits used as letters read as letters. A superset of the labels Ghost Tools reports for re-verification. |
 | It is a description, never a grade | The system prompt says so; the filter makes an uncited grade vanish; the account's first line repeats the decision as recorded, cited. |
 | A refusal is an empty account, not a quiet one | A model that declines (safety classifier) exits 3 with no file written. An account the oath empties exits 4 and still shows what was dropped. |
 
@@ -66,7 +93,7 @@ model that wrote the Watcher; `claude-opus-5-5` is the ordinary choice); `--effo
 - Not a seat. Warden never loads it; `warden tagteam` runs to its end without it.
 - Not an instrument. It measures nothing; it cannot run the suite, Ghost or SWIZZLE.
 - Not a judge. It can say "the Judge said INSUFFICIENT [V]"; it cannot say "this is fine".
-- Not a reader of code. Version 0.1.0 reads the run record only. Reading files is a later
+- Not a reader of code. The Watcher reads the run record only. Reading files is a later
   decision and would be read-only, with the same citation rule applied to file ids.
 
 ## HOW IT FITS THE CIRCUIT
@@ -84,10 +111,19 @@ The arrow into the Watcher is the only one. Nothing comes back.
 ## WHAT IS PROVEN
 
 - `tests/test_oath.py`: cited sentences survive; uncited, falsely cited and status-claiming ones are
-  dropped with the reason, through emphasis and invisible characters; headings are structure.
+  dropped with the reason, through emphasis, invisible characters, other Unicode dashes, lookalike
+  letters, entities, markup, digit-for-letter spelling and a citation after the claim ("is safe [R]");
+  honest sentences near those words are kept; headings are structure.
 - `tests/test_evidence.py`: a real run record (SWIZZLE, 2026-10-15, joined through a stack manifest)
   indexes every kind of thing with stable ids; forbidden paths are the governed folder and every
-  checkout the record names.
+  checkout the record names; the instruments and the Drafter, Burnish and Judge seats of a record
+  written by Warden's own writer are all listed as having taken part.
+- `tests/test_refusals.py`: a table of malformed fields (wrong type for every field the index reads)
+  is exit 2 with one line and no traceback; an unreachable model is exit 3; `--out` on top of the
+  record is refused however it is spelled.
+- `tests/test_docs.py`, `tests/test_pins.py`: the README exit-code table matches the code, the
+  version agrees across the package, the changelog and the README, the installed CNS is the pinned one.
+- `tests/test_warden_e2e.py`: in CI, the real Warden writes a record and the Watcher narrates it.
 - `tests/test_narrate_and_cli.py`: the model is shown the index and the oath only; what it writes is
   filtered and the filtering is shown; an emptied account is exit 4; the CLI refuses an `--out`
   inside the governed folder or a named checkout and leaves it untouched; without credentials it
@@ -101,8 +137,8 @@ The arrow into the Watcher is the only one. Nothing comes back.
 - That the model writes a good account. It is trusted to write, never to be right; the oath bounds
   what reaches a reader, not how useful it is. No live run against the API is in the tests (none is
   possible without a key), so the request shape is tested against a fake client only.
-- That the status-claim list is complete. It mirrors Ghost Tools' list on 2026-10-15; a new label
-  needs adding in both places.
+- That the status-claim list is complete. A list of labels can only be extended; this one is a
+  superset of Ghost Tools' list as of 2026-10-15, and a new label there should be added here.
 
 ## KNOWN DEFECTS
 
@@ -110,5 +146,9 @@ The arrow into the Watcher is the only one. Nothing comes back.
   paraphrase it badly; the citations appendix exists so a reader can check.
 - A heading is kept without a citation when it is short and claims no status. A model that wants to
   editorialize could do it in headings. The account shows headings as headings.
+- An empty `unmeasured` list is reported as "the record lists nothing as unmeasured". A run that ended
+  before it began (for example `USAGE_ERROR`) also has an empty list; read the decision first.
+- A sentence that quotes a label (for example the Judge's reason "cannot be shown safe") is dropped,
+  like any other use of it.
 - `--target` is needed for the governed folder because Warden's record does not name it; the
   instrument and joined paths are refused from the record alone.
