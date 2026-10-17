@@ -30,3 +30,33 @@ def test_the_installed_cns_is_the_pinned_one():
     direct = metadata.distribution("cns").read_text("direct_url.json")
     if direct is not None:  # installed from git: the commit must be the pinned one, not a moved tag or branch
         assert json.loads(direct).get("vcs_info", {}).get("commit_id") == sha
+
+
+WORKFLOW = ROOT / ".github" / "workflows" / "tests.yml"
+
+
+def _workflow() -> str:
+    return WORKFLOW.read_text(encoding="utf-8")
+
+
+def test_every_ci_job_that_checks_out_warden_uses_one_full_commit_that_the_readme_names():
+    text = _workflow()
+    refs = re.findall(r"repository: wking53214/WARDEN\s+ref: (\S+)", text)
+    assert len(refs) == 2 and len(set(refs)) == 1, "the e2e and co-install jobs test the same Warden"
+    assert re.fullmatch(r"[0-9a-f]{40}", refs[0]), "a sibling checkout is pinned to a full commit"
+    assert refs[0] in (ROOT / "README.md").read_text(encoding="utf-8")
+    assert refs[0] in (ROOT / "STACK.md").read_text(encoding="utf-8")
+
+
+def test_the_warden_jobs_resolve_dependencies_and_are_blocking():
+    text = _workflow()
+    assert "--no-deps" not in text and "continue-on-error" not in text
+    assert "pip check" in text and "pip install . ./_warden" in text
+
+
+def test_every_action_is_pinned_by_commit_with_its_tag_in_a_comment():
+    uses = re.findall(r"^\s*- uses: (\S+)(.*)$", _workflow(), flags=re.MULTILINE)
+    assert uses
+    for ref, rest in uses:
+        assert re.fullmatch(r"[\w.-]+/[\w.-]+@[0-9a-f]{40}", ref), ref
+        assert re.search(r"#\s*v\d+\.\d+\.\d+", rest), ref
