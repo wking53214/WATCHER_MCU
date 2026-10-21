@@ -82,3 +82,21 @@ def test_the_module_entry_point_agrees(tmp_path):
     cmd = [sys.executable, "-m", "watcher.cli", "narrate", str(record), "--no-model"]
     shown = subprocess.run(cmd, capture_output=True, text=True, check=False, timeout=120)
     assert shown.returncode == 0, shown.stderr
+
+
+def test_the_oaths_standard_sentences_are_in_the_installed_wardens_source():
+    """`watcher.oath.WARDEN_STANDARD` names sentences Warden writes; each must still be a string in Warden's code."""
+    import ast
+    import importlib.util
+
+    from watcher.oath import WARDEN_STANDARD
+
+    spec = importlib.util.find_spec("warden")
+    assert spec is not None and spec.submodule_search_locations, "warden is not installed: this test needs it"
+    strings: list[str] = []
+    for path in Path(spec.submodule_search_locations[0]).glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                strings.append(" ".join(node.value.lower().split()))
+    for fragment in WARDEN_STANDARD:
+        assert any(fragment in text for text in strings), fragment

@@ -10,8 +10,12 @@ through only where it points at something in the JSON. Three things drop a sente
    "hardened" and the like. The circuit's own scanner reports those labels for re-verification; the
    Watcher does not get to make them, cited or not. The sentence is read as a person reads it on a
    rendered page, so other dashes, lookalike letters, entities, markup, invisible characters, bidirectional
-   overrides and letters set apart ("s a f e") do not hide a label. Approvals read the same way: "approved",
-   "LGTM", "looks good", "ship it", "good to go", "all clear", "no issues", "reliable", "robust".
+   overrides, a citation tag set into the label and letters set apart ("s a f e") do not hide a label.
+   Approvals read the same way: "approved", "LGTM", "looks good", "ship it", "good to go", "all clear",
+   "no issues", "reliable", "robust". A label that is plainly denied ("not production ready", "nothing was
+   approved", "cannot be applied safely"), or "no issues" reported by a named part of the circuit ("Ghost
+   reported no issues"), is a description and is kept; a denial of a bad thing ("not unsafe") is not.
+   Warden's own standard sentences are allowed by exact text (`WARDEN_STANDARD`).
 
 Headings are structure, not claims; a short heading with no claim in it is kept. Nothing else is.
 """
@@ -63,14 +67,34 @@ _STATUS_CLAIMS = (
     r"rock" + _SEP + r"solid",
     r"(?:bug|defect|error|regression|vulnerability|issue|flaw)" + _SEP + r"free",
     r"(?:verified|proven|guaranteed|certified)" + _SEP + r"(?:safe|correct|secure|sound)",
-    r"(?:no|zero)" + _SEP + r"(?:known" + _SEP + r")?(?:bugs|defects|vulnerabilit(?:y|ies)|flaws)",
-    # a mark that is a sign-off by itself: check marks, thumbs up, 100, OK, rocket, green circle
-    r"[\u2705\u2714\u2713\u2611\U0001F44D\U0001F4AF\U0001F197\U0001F680\U0001F7E2]",
+)
+
+#: A mark that is a sign-off by itself: check marks, thumbs up, 100, OK, rocket, green circle. It is never excused.
+_MARKS = re.compile(r"[\u2705\u2714\u2713\u2611\U0001F44D\U0001F4AF\U0001F197\U0001F680\U0001F7E2]")
+
+#: "No issues", "zero known bugs": the sign-off of a reviewer, and also what Ghost reports when a scan finds
+#: nothing. In the second case the sentence says who reported it (`_attributed`) and is kept; in the first it is a
+#: label. Bounded by non-letters.
+_NO_FINDINGS = (
+    r"(?:no|zero)" + _SEP + r"(?:known" + _SEP
+    + r")?(?:issues|problems|concerns|bugs|defects|vulnerabilit(?:y|ies)|flaws|blockers|showstoppers"
+    + r"|red" + _SEP + r"flags|regressions|objections)"
+)
+
+#: Where the technical sense of "secure" is not a verdict: "a secure hash call", "secure cookie flag", "Secure Shell".
+#: A closed list: a noun that is not here leaves "secure" a label.
+_SECURE_NOUNS = (
+    "hash", "hashes", "hashing", "cookie", "cookies", "shell", "random", "boot", "enclave", "channel", "channels",
+    "connection", "connections", "socket", "sockets", "transport", "protocol", "protocols", "flag", "flags",
+    "context", "contexts", "erase", "delete", "wipe", "storage", "store", "vault", "string", "token", "tokens",
+    "ssl", "tls", "ssh", "https", "ftp", "ldap", "smtp", "imap", "key", "keys", "keyring", "credential",
+    "credentials", "password", "passwords", "compare", "comparison",
 )
 
 #: Single words that are a verdict by themselves. They must stand alone: "unsafe" and "safety" are not "safe".
 _WORD_CLAIMS = (
-    "safe", "safely", "secure", "bulletproof", "hardened", "flawless", "foolproof", "bombproof",
+    "safe", "safely", r"secure(?!\s+(?:" + "|".join(_SECURE_NOUNS) + r")(?![a-z0-9]))", "bulletproof", "hardened",
+    "flawless", "foolproof", "bombproof",
     "approved", "lgtm", "trustworthy", "reliable", "robust", "dependable",
 )
 #: Approval and all-clear phrases, also bounded by non-letters. These are what a reviewer's sign-off sounds like.
@@ -81,8 +105,6 @@ _PHRASE_CLAIMS = (
     r"good" + _SEP + r"to" + _SEP + r"go",
     r"(?:ok|okay)" + _SEP + r"(?:for|to)" + _SEP
     + r"(?:prod(?:uction)?|use|deploy(?:ment)?|merge|releas(?:e)?|ship(?:ping)?|launch)",
-    r"(?:no|zero)" + _SEP + r"(?:known" + _SEP + r")?(?:issues|problems|concerns|blockers|showstoppers|red" + _SEP
-    + r"flags|regressions|objections)",
     r"(?:free" + _SEP + r"of|without)" + _SEP + r"(?:any" + _SEP + r")?(?:known" + _SEP
     + r")?(?:bugs?|defects?|regressions?|vulnerabilit(?:y|ies)|flaws?)",
     r"(?:can|may|could|should)" + _SEP + r"go" + _SEP + r"live",
@@ -94,17 +116,24 @@ _PHRASE_CLAIMS = (
 )
 
 
-def _alternatives(*, bounded: bool) -> re.Pattern[str]:
+def _alternatives(*, bounded: bool, findings: bool = False) -> re.Pattern[str]:
     """The label matcher. `bounded` keeps the single words and phrases from matching inside longer words; the
-    loose form is for letters that were spread apart and squeezed together, where a boundary means nothing."""
+    loose form is for letters that were spread apart and squeezed together, where a boundary means nothing.
+    With `findings`, the matcher for "no issues" and its kin instead."""
     start, end = (r"(?<![a-z0-9])", r"(?![a-z0-9])") if bounded else ("", "")
+    if findings:
+        return re.compile(f"{start}(?:{_NO_FINDINGS}){end}")
     words = f"(?:{'|'.join(_WORD_CLAIMS)})"
     phrases = [f"(?:{p})" for p in _PHRASE_CLAIMS]
     return re.compile("|".join([f"(?:{p})" for p in _STATUS_CLAIMS] + [f"{start}(?:{words}|{'|'.join(phrases)}){end}"]))
 
 
-_STATUS = _alternatives(bounded=True)
-_STATUS_SQUEEZED = _alternatives(bounded=False)
+_LABELS = _alternatives(bounded=True)
+_FINDINGS = _alternatives(bounded=True, findings=True)
+#: The loose forms, for letters set apart and squeezed together: every label, none of them excused.
+_SQUEEZED_LABELS = re.compile(
+    _alternatives(bounded=False).pattern + "|" + _alternatives(bounded=False, findings=True).pattern
+)
 
 #: Sign-offs in some other languages. This is a short list of the commonest, not a translation of the denylist:
 #: a paraphrase, or a language that is not here, is kept if it cites the record. They are read in the text as it
@@ -363,6 +392,118 @@ def sentences(text: str) -> list[str]:
 _FOREIGN = _foreign()
 
 
+#: Sentences Warden itself writes, which say that nothing was approved or that something could not be done
+#: safely. They are fragments of the exact strings in Warden 0.13.3 (580f659); each is taken out of the reading
+#: before the labels are looked for, so it cannot be mistaken for the Watcher grading a run, and it hides only
+#: itself. The negation rule (`_negated`) keeps these too; the list is the exact-text check beside it, and
+#: tests/test_oath.py holds the sources.
+WARDEN_STANDARD = (
+    "nothing was approved",  # warden/cli.py, warden/tagteam.py: "Warden failed with X. Nothing was approved."
+    "the run was stopped and nothing was approved",  # warden/tagteam.py
+    "the run is an error and nothing was approved",  # warden/tagteam.py
+    "the held result cannot be applied safely",  # warden/held.py
+    "warden could not make a safe place for its lock and journal",  # warden/runstate.py
+    "the lock file could not be opened safely",  # warden/runstate.py
+)
+_STANDARD = re.compile("|".join(r"\s+".join(map(re.escape, text.split())) for text in WARDEN_STANDARD))
+
+#: Words that turn what follows them into a denial. A label is honest ("not production ready", "cannot be applied
+#: safely", "nothing was approved") when one of these is among the few words before it, in the same clause.
+_NEGATORS = frozenset({
+    "not", "no", "never", "cannot", "nothing", "nobody", "none", "neither", "nor", "without", "hardly", "barely",
+    "scarcely", "cant", "dont", "isnt", "wasnt", "arent", "werent", "doesnt", "didnt", "wont", "wouldnt",
+    "shouldnt", "couldnt", "hasnt", "havent", "hadnt", "aint",
+})
+#: A word after a negator that cancels it: "not only safe", "no doubt it is safe", "no problem, it is safe",
+#: "nobody doubts it is safe", "nothing stops it being ready", "nothing is more reliable".
+_NOT_NEGATING = frozenset({
+    "only", "just", "merely", "simply", "even", "doubt", "doubts", "question", "wonder", "worry", "worries",
+    "hesitation", "reservation", "reservations", "mistake", "surprise", "less", "more", "better", "problem",
+    "problems", "way", "issue", "issues", "fear", "sweat", "disputes", "denies", "questions", "contests",
+    "objects", "stops", "stop", "prevents", "prevent", "blocks", "block", "stopping", "preventing", "blocking",
+    "hinders", "holds", "keeps", "forbids", "bars",
+})
+#: Words that start a new clause: a denial before one of them does not reach what comes after it.
+_CLAUSE_STARTS = frozenset({
+    "and", "but", "or", "so", "yet", "then", "because", "since", "while", "whereas", "though", "although",
+    "however", "therefore", "thus", "hence", "which", "that", "when",
+})
+_NEGATION_WINDOW = 4
+_CLAUSE_BREAK = re.compile(r"[.,;:!?()\[\]{}|\n\u2026]|\s-+\s")
+_WORD = re.compile(r"[a-z]+(?:['\u2019][a-z]+)?")
+_LOOKBACK = 240  # characters of context; a clause longer than this has been cut short
+
+
+def _negated(before: str) -> bool:
+    """Whether a label that starts after `before` is denied: a negator within `_NEGATION_WINDOW` words before it,
+    in the same clause, and not cancelled ("not only"). The window is short on purpose: a denial that is far
+    from the label is not about it, and the cost of being wrong is a status claim let through."""
+    words = _WORD.findall(_CLAUSE_BREAK.split(before[-_LOOKBACK:])[-1])
+    for k in range(len(words) - 1, -1, -1):
+        if words[k] in _CLAUSE_STARTS:
+            words = words[k + 1 :]
+            break
+    window = words[-_NEGATION_WINDOW:]
+    denials = 0
+    for k, word in enumerate(window):
+        if word in _NEGATORS or word.endswith(("n't", "n\u2019t")):
+            if _NOT_NEGATING.intersection(window[k + 1 : k + 3]):
+                continue
+            denials += 1
+    return denials % 2 == 1  # "not not safe" is "safe"
+
+
+#: What an instrument or a seat of the circuit is called, for "Ghost reported no issues". The record is not here:
+#: "the record shows no issues" is the Watcher reading the record, not a part of the circuit reporting.
+_SOURCES = r"(?:ghost(?:[ _]tools)?|swizzle|assay|warden|judge|drafter|burnish|scan(?:ner)?|suite)"
+_REPORTS = (
+    r"(?:reported|reports|reporting|found|finds|lists|listed|flagged|flags|observed|observes|recorded|records|says"
+    r"|said|shows|showed|noted|notes|returned|returns|detected|detects|logged|logs)"
+)
+_REPORTED_BEFORE = re.compile(
+    rf"(?<![a-z0-9]){_SOURCES}(?![a-z0-9])(?:\s+[a-z0-9_.'-]+){{0,6}}?\s+{_REPORTS}\s+(?:that\s+)?"
+    rf"(?:(?:there|it)\s+(?:were|was|are|is)\s+)?$"
+)
+_REPORTED_AFTER = re.compile(
+    rf"^(?:\s+[a-z0-9_.'-]+){{0,3}}?\s+(?:was\s+|were\s+|are\s+|is\s+|been\s+)?{_REPORTS}\s+by\s+{_SOURCES}(?![a-z0-9])"
+)
+_FIRST_PERSON = re.compile(r"(?<![a-z0-9])(?:i|we|my|our|me|us|watcher)(?![a-z0-9])")
+
+
+def _attributed(before: str, after: str) -> bool:
+    """Whether "no issues" is a report of what a named part of the circuit found ("Ghost reported no issues",
+    "no known bugs were reported by Ghost") and not the Watcher's own sign-off. The Watcher is never the source."""
+    clause_before = _CLAUSE_BREAK.split(before[-_LOOKBACK:])[-1]
+    if _FIRST_PERSON.search(clause_before):
+        return False
+    clause_after = _CLAUSE_BREAK.split(after[:_LOOKBACK])[0]
+    return bool(_REPORTED_BEFORE.search(clause_before) or _REPORTED_AFTER.match(clause_after))
+
+
+#: "Not unsafe", "never risky": a denial of a bad thing is a good-thing claim, so it is never excused.
+_DOUBLE = re.compile(
+    r"(?<![a-z0-9])(?:not|never|nothing|isn't|wasn't|aren't|weren't|isnt|wasnt|arent|werent)\s+(?:[a-z']+\s+){0,2}"
+    r"(?:unsafe|insecure|unreliable|untrustworthy|unsound|dangerous|risky)(?![a-z0-9])"
+)
+
+
+def _scan(reading: str) -> str:
+    """The first label in one reading that is not excused, or empty."""
+    reading = _STANDARD.sub(" ", reading)
+    for m in _LABELS.finditer(reading):
+        if not _negated(reading[: m.start()]):
+            return m.group(0)
+    for m in _FINDINGS.finditer(reading):
+        before = reading[: m.start()]
+        if not _negated(before) and not _attributed(before, reading[m.end() :]):
+            return m.group(0)
+    found = _DOUBLE.search(reading) or _MARKS.search(reading)
+    if found:
+        return found.group(0)
+    squeezed = _SQUEEZED_LABELS.search(_squeezed(reading))
+    return squeezed.group(0) if squeezed else ""
+
+
 def _citation_variants(text: str) -> list[str]:
     """The sentence as it stands, and with its `[id]` tags taken out (joining the letters either side, and leaving
     a space), because a tag set into a label ("sa[R]fe", "production [R] ready") is not part of what a reader
@@ -392,12 +533,9 @@ def status_claim(sentence: str) -> str:
                     return found.group(0)
             read = _as_read(text, order=order, blank=blank, alt=alt, prepared=True)
             for reading in (read, read.translate(_LEET)):
-                m = _STATUS.search(reading)
-                if m:
-                    return m.group(0)
-                m = _STATUS_SQUEEZED.search(_squeezed(reading))
-                if m:
-                    return m.group(0)
+                claim = _scan(reading)
+                if claim:
+                    return claim
     return ""
 
 

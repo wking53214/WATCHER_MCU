@@ -33,9 +33,11 @@ deletes the sentence.
 2. Never make a status claim of your own. Do not write "production ready", "production-grade", "ready for \
 production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "secure", \
 "bulletproof", "hardened", "reliable", "robust", "trustworthy", "approved", "LGTM", "looks good", \
-"ship it", "good to go", "all clear" or "no issues" in any form, in any alphabet, even to deny them.
-3. Do not say that the run passed, failed, is safe or is approved in your own voice (the word "safe" is \
-deleted wherever it appears). Say what the \
+"ship it", "good to go", "all clear" or "no issues" in your own voice, in any form, in any alphabet. A plain \
+denial that cites the record ("nothing was approved [R]", "not production ready [R]") is kept; "no issues" is kept \
+only as a report of an instrument ("Ghost reported no issues [G]").
+3. Do not say that the run passed, failed, is safe or is approved in your own voice (a sentence that calls \
+anything safe is deleted). Say what the \
 record says and cite it: the decision [R], the Judge's verdict [V], the suite lines, the unmeasured \
 list [U].
 4. Prefer short sentences. Lead with what happened, then why, then what a person could do next, each \

@@ -25,7 +25,6 @@ def test_a_citation_that_is_not_in_the_record_drops_the_sentence():
 @pytest.mark.parametrize("line", [
     "This repository is production ready [R].",
     "It is battle-tested [N1].",
-    "Not production-ready yet [R].",
     "Produc­tion ready [R].",
     "**Fully** tested [N1].",
     "We have 100 % coverage [R].",
@@ -607,3 +606,149 @@ def test_nested_bidirectional_controls_are_read_the_crude_way_too(line):
 def test_the_new_labels_do_not_catch_honest_neighbours(line):
     out = enforce(line, INDEX)
     assert out.kept == (line,), line
+
+
+# --- round 3: honest text near the labels (negation, attribution, Warden's own sentences) -----------------------------
+
+#: Each of these is true and says nothing in the Watcher's own voice. They were dropped before the filter read negation.
+HONEST_NEAR_A_LABEL = [
+    # Warden's standard sentences (warden/cli.py:404, tagteam.py:331 and 386, held.py:118, runstate.py:131)
+    "- [N2] Warden failed with ValueError. Nothing was approved.",
+    "The run is an ERROR and nothing was approved [R].",
+    "The run was stopped and nothing was approved [R].",
+    "Nothing was approved [R].",
+    "The folder is not in the state the run started from, so the held result cannot be applied safely [N1].",
+    "Warden could not make a safe place for its lock and journal (permission denied) [N1].",
+    "Warden could not make a safe place for its lock [N1].",
+    "The lock file could not be opened safely (Too many levels of symbolic links) [N1].",
+    "The patch cannot be applied safely, so nothing was kept [N4].",
+    # denied labels
+    "The run is not production ready according to Ghost [G].",
+    "Not production-ready yet [R].",
+    "The run was not ship-ready [R].",
+    "The change is not safe to assume [R].",
+    "It is never safe to read this as an approval [R].",
+    "The Judge was not approved to run [V].",
+    "The decision is REJECT, not approved [R].",
+    "The Judge never reviewed it; nobody approved it [V].",
+    "Nothing is verified safe, per the unmeasured list [U].",
+    "The record does not say the change looks good [R].",
+    "It isn't ready for production [R].",
+    "It isn\u2019t ready for production [R].",
+    "The Watcher cannot say it is safe [R].",
+    "The record says nothing like LGTM [R].",
+    "The run was not mergeable [R].",
+    "No check was approved [R].",
+    "The Judge cannot confirm there are no issues [V].",
+    # a report of what a named part of the circuit said
+    "Ghost reported no issues in the scan [G].",
+    "Ghost scanned 3 files and found no issues [G].",
+    "No known bugs were reported by Ghost [G].",
+    "The scan lists zero known issues [G].",
+    "The Judge said there were no concerns [V].",
+    # technical senses of "secure"
+    "The finding flags a secure hash call [ghost-1b3766cb418b].",
+    "The finding concerns a secure cookie flag [ghost-1b3766cb418b].",
+    "Secure Shell host keys were not measured [U].",
+]
+
+
+@pytest.mark.parametrize("line", HONEST_NEAR_A_LABEL)
+def test_a_denied_label_or_a_report_of_one_is_not_a_status_claim(line):
+    out = enforce(line, {**INDEX, "G": object(), "V": object(), "U": object(), "N2": object(), "N4": object()})
+    assert out.kept == (line,) and out.dropped == (), line
+
+
+#: These look like the lines above and are not: the denial does not reach the label, or the label is not reported.
+STILL_A_CLAIM = [
+    "It is not unsafe [R].",
+    "It is not at all unsafe [R].",
+    "Nothing here is unsafe [R].",
+    "It isn't unsafe [R].",
+    "It is never insecure [R].",
+    "It is not risky [R].",
+    "It is not unreliable [R].",
+    "Not only is it safe, it is production ready [R].",
+    "It is not just safe but ready for production [R].",
+    "No doubt it is safe [R].",
+    "Without doubt it is safe [R].",
+    "There is no question the change is production ready [R].",
+    "Nothing is wrong and it is safe [R].",
+    "Nothing failed and it is production ready [R].",
+    "It is not broken and is safe [R].",
+    "It was not hard to see that it is safe [R].",
+    "Nothing was approved, but it is safe [R].",
+    "Nothing was approved. It is safe [R].",
+    "Not now, but it is production ready [R].",
+    "I found no issues [R].",
+    "We found no issues with this change [R].",
+    "The Watcher found no issues [R].",
+    "The run found no issues [R].",
+    "There are no issues with this change [R].",
+    "Ghost is fine and there are no issues with it [R].",
+    "I reviewed it and Ghost reported nothing, so no issues [R].",
+    "No issues found [R].",
+    "Zero known problems [R].",
+    "The finding is secure [ghost-1b3766cb418b].",
+    "It is secure and fast [R].",
+    "It is secure now [R].",
+    "It is safe [R].",
+    "It is safe to deploy [R].",
+    "It is production ready, not that anyone doubts it [R].",
+    "Nothing to worry about [R].",
+    "Nothing was approved because it is safe [R].",
+    "It is not not safe [R].",
+    "No problem it is safe [R].",
+    "Nobody doubts it is safe [R].",
+    "Nothing stops it being ready for production [R].",
+    "Nothing is more reliable [R].",
+    "The record shows no issues [R].",
+    "Nothing prevents it from being production ready [R].",
+]
+
+
+@pytest.mark.parametrize("line", STILL_A_CLAIM)
+def test_a_denial_that_does_not_reach_the_label_is_still_a_status_claim(line):
+    out = enforce(line, {**INDEX, "ghost-1b3766cb418b": object()})
+    assert not out.kept or all("[R]" not in k and "ghost-1b3766cb418b" not in k for k in out.kept if "safe" in k), line
+    assert any(d.reason.startswith("status claim of its own") for d in out.dropped), line
+
+
+def test_a_double_negative_is_a_status_claim_and_says_which():
+    out = enforce("It is not unsafe [R].", INDEX)
+    assert out.dropped[0].reason == "status claim of its own: 'not unsafe'"
+    assert enforce("The change is unsafe to assume [R].", INDEX).kept == ("The change is unsafe to assume [R].",)
+
+
+def test_a_denial_does_not_reach_a_label_across_a_clause():
+    assert status_claim("Nothing was approved, it is safe") == "safe"
+    assert status_claim("Nothing was approved and it is safe") == "safe"
+    assert status_claim("Nothing was approved; ready for production") == "ready for production"
+    assert status_claim("Nothing was approved") == ""
+
+
+def test_the_denial_window_is_four_words():
+    assert status_claim("It is not very often safe") == ""  # the denial is the fourth word back
+    assert status_claim("It is not very often seen as safe") == "safe"  # the sixth
+
+
+@pytest.mark.parametrize("fragment", [
+    "nothing was approved",
+    "the run was stopped and nothing was approved",
+    "the run is an error and nothing was approved",
+    "the held result cannot be applied safely",
+    "warden could not make a safe place for its lock and journal",
+    "the lock file could not be opened safely",
+])
+def test_every_standard_warden_sentence_is_allowed_exactly(fragment):
+    from watcher.oath import WARDEN_STANDARD
+
+    assert fragment in WARDEN_STANDARD
+    assert status_claim(fragment) == "" and status_claim(fragment.upper()) == ""
+
+
+def test_the_allowlist_hides_only_the_standard_text():
+    assert status_claim("Warden could not make a safe place for its lock and journal, so it is safe") == "safe"
+    assert status_claim("Warden could not make a safe place for the lock") == ""  # a denial, not the allowlist
+    assert status_claim("Warden made a safe place for its lock and journal") == "safe"
+    assert status_claim("nothing was approved and ship it") == "ship it"
