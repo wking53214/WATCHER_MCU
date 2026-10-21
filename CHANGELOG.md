@@ -7,6 +7,19 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-10-21
+
+### Changed
+- CI, README, STACK and `tests/test_pins.py` test against Warden 0.13.5 (not tagged) at commit
+  `decc3c3b5af479ad0eef3df4d66dbcb21e90897c` (was 0.13.4 at `36e98433f4928b7d12905f02b56e55ee1943b56e`). That Warden
+  commit pins CNS `v1.9.0` (`da18e411743d4e3b0e783105394d845fb1c16746`) itself, the same as the Watcher, so the
+  `--no-deps` workaround is gone: the `warden-e2e` and `coinstall-warden` jobs install the Watcher and Warden together
+  with full dependency resolution and run `pip check`, which is clean with exactly one CNS installed.
+  The test that asserted `--no-deps` is restored to its earlier form (no `--no-deps`, `pip check`, blocking jobs), and
+  the end-to-end version assertion expects 0.13.5.
+- The CNS pin is unchanged (`da18e411743d4e3b0e783105394d845fb1c16746`, `v1.9.0`). `origin/main` (`747656c`) is already
+  contained in this branch; no merge was needed.
+
 ## [0.3.3] - 2026-10-21
 
 ### Changed
