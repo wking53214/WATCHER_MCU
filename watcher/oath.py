@@ -19,6 +19,7 @@ Headings are structure, not claims; a short heading with no claim in it is kept.
 from __future__ import annotations
 
 import html
+import itertools
 import logging
 import re
 import unicodedata
@@ -45,7 +46,7 @@ _STATUS_CLAIMS = (
     + r"(?:prod(?:uction)?|deploy(?:ment|ed|ing)?|releas(?:e|ed|ing)|ship(?:ping)?|merg(?:e|ing)|launch|go"
     + _SEP + r"live)",
     r"(?:deploy(?:ment)?|releas(?:e)?|ship|merge|launch|go" + _SEP + r"live)" + _SEP + r"ready",
-    r"(?:ship|deploy|merg|releas)able",
+    r"(?:shipp?|deploy|merge?|releas(?:ee?)?)able",  # shippable, shipable, mergeable, mergable, releasable, releaseable
     r"enterprise" + _SEP + r"(?:grade|ready|class|quality)",
     r"(?:industrial|military|commercial)" + _SEP + r"(?:grade|strength)",
     # tested
@@ -116,6 +117,21 @@ _CONFUSABLES = {
 #: numbers ("100% coverage") are still read as numbers by the first.
 _LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s"})
 _DROPPED_CATEGORIES = frozenset({"Mn", "Me", "Cf", "Co", "Cs", "Cn"})
+#: Characters that draw nothing, or only a gap, whatever their category. The Unicode property
+#: Default_Ignorable_Code_Point is not in `unicodedata`, so its ranges are listed here (Unicode 15.1,
+#: DerivedCoreProperties). Most are format or mark characters the category test already drops, but the Hangul
+#: fillers are letters (Lo) and the braille blank is a symbol (So), so only a list catches them.
+#: tests/test_oath.py holds its own copy of the ranges and checks every character in them.
+_DEFAULT_IGNORABLE = (
+    (0x00AD, 0x00AD), (0x034F, 0x034F), (0x061C, 0x061C), (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180F),
+    (0x200B, 0x200F), (0x202A, 0x202E), (0x2060, 0x206F), (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3), (0x1D173, 0x1D17A), (0xE0000, 0xE0FFF),
+)
+#: Blank-looking characters that are not ignorable by the Unicode property but draw a gap or nothing: the
+#: braille blank. Together with the Hangul fillers (which draw a gap in some fonts and nothing in others) they
+#: are read both ways: as nothing (so "sa<filler>fe" is "safe") and as a space (so "is<filler>safe" is "is safe").
+_BLANKS = frozenset("ᅟᅠㅤﾠ⠀")
+_IGNORABLE = frozenset(chr(cp) for lo, hi in _DEFAULT_IGNORABLE for cp in range(lo, hi + 1)) - _BLANKS
 _MARKDOWN_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _HTML_TAG = re.compile(r"</?[A-Za-z][^<>]*>|<!--.*?-->")
 _EMPHASIS = re.compile(r"[*_`~\\]")
@@ -146,13 +162,17 @@ class Enforced:
         return 1.0 if total == 0 else len(self.kept) / total
 
 
-def _fold(text: str) -> str:
+def _fold(text: str, blank: str = "") -> str:
     """One character at a time: marks and invisible characters vanish, every dash is a hyphen, a lookalike
-    is the letter it imitates, any other control or separator is a space."""
+    is the letter it imitates, any other control or separator is a space. A blank filler (see `_BLANKS`) becomes
+    `blank`: the caller reads the sentence with it as nothing and with it as a space."""
     out: list[str] = []
     for ch in text:
+        if ch in _BLANKS:
+            out.append(blank)
+            continue
         cat = unicodedata.category(ch)
-        if cat in _DROPPED_CATEGORIES:
+        if cat in _DROPPED_CATEGORIES or ch in _IGNORABLE:
             continue
         if cat == "Pd" or ch == "\u2212":
             out.append("-")
@@ -190,7 +210,7 @@ def _bidi_visual(text: str) -> str:
     return "".join(levels[0])
 
 
-def _as_read(text: str, *, visual: bool = False) -> str:
+def _as_read(text: str, *, visual: bool = False, blank: str = "") -> str:
     """The sentence as a person reads it on a rendered page: entities decoded, markup, links and emphasis
     markers gone, NFKC, casefolded, accents and invisible characters gone, every dash a hyphen, lookalike
     letters folded to Latin. With `visual`, text under a bidirectional override is first put in the order it
@@ -199,7 +219,7 @@ def _as_read(text: str, *, visual: bool = False) -> str:
     if visual:
         text = _bidi_visual(text)
     text = _EMPHASIS.sub("", unicodedata.normalize("NFKC", text)).casefold()
-    return _fold(unicodedata.normalize("NFKD", text)).casefold()
+    return _fold(unicodedata.normalize("NFKD", text), blank).casefold()
 
 
 def _squeezed(reading: str) -> str:
@@ -231,8 +251,11 @@ def status_claim(sentence: str) -> str:
     when it carries bidirectional controls, in the order it is displayed (letters stored as "efas" after a
     right-to-left override show as "safe").
     """
-    for visual in ((False, True) if _BIDI.search(html.unescape(sentence)) else (False,)):
-        read = _as_read(sentence, visual=visual)
+    unescaped = html.unescape(sentence)
+    blanks = ("", " ") if _BLANKS.intersection(unicodedata.normalize("NFKC", unescaped)) else ("",)
+    orders = (False, True) if _BIDI.search(unescaped) else (False,)
+    for visual, blank in itertools.product(orders, blanks):
+        read = _as_read(sentence, visual=visual, blank=blank)
         for reading in (read, read.translate(_LEET)):
             m = _STATUS.search(reading)
             if m:

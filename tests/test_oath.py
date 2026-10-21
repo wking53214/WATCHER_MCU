@@ -305,3 +305,57 @@ def test_a_long_run_of_single_letters_is_read_in_time():
     out = enforce("a " * 20000 + "[R]. " + "x." * 20000 + " [R]", INDEX)
     assert time.monotonic() - start < 5
     assert out.ratio >= 0
+
+
+# --- round 3: "mergeable", and the fillers that draw nothing ------------------------------------------------------
+
+@pytest.mark.parametrize("word", ["mergeable", "mergable", "shippable", "shipable", "deployable", "releasable",
+                                  "releaseable", "Mergeable", "MERGEABLE"])
+def test_the_able_words_are_status_claims(word):
+    out = enforce(f"The change is {word} [R].", INDEX)
+    assert out.kept == () and out.dropped[0].reason.startswith("status claim of its own"), word
+
+
+#: Default_Ignorable_Code_Point, from the Unicode Character Database (DerivedCoreProperties.txt, 15.1), written out
+#: here separately from the code under test.
+IGNORABLE_RANGES = [
+    (0x00AD, 0x00AD), (0x034F, 0x034F), (0x061C, 0x061C), (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180F),
+    (0x200B, 0x200F), (0x202A, 0x202E), (0x2060, 0x206F), (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3), (0x1D173, 0x1D17A), (0xE0000, 0xE0FFF),
+]
+FILLERS = ["ᅟ", "ᅠ", "ㅤ", "ﾠ", "⠀"]
+
+
+@pytest.mark.parametrize("filler", FILLERS, ids=[f"U+{ord(f):04X}" for f in FILLERS])
+@pytest.mark.parametrize("template", ["sa{}fe", "pro{}duction ready", "L{}GTM", "app{}roved", "ship{}it"])
+def test_fillers_that_draw_nothing_do_not_hide_a_label(filler, template):
+    assert status_claim(template.format(filler)), (template, hex(ord(filler)))
+
+
+@pytest.mark.parametrize("filler", FILLERS, ids=[f"U+{ord(f):04X}" for f in FILLERS])
+def test_a_filler_that_draws_a_gap_is_also_read_as_a_gap(filler):
+    assert status_claim(f"It is{filler}safe [R]") == "safe"
+    assert status_claim(f"It is{filler}{filler}production{filler}ready [R]")
+
+
+def test_every_default_ignorable_character_is_stripped():
+    for lo, hi in IGNORABLE_RANGES:
+        for cp in range(lo, hi + 1):
+            assert status_claim("sa" + chr(cp) + "fe") == "safe", hex(cp)
+
+
+def test_every_format_character_in_unicode_is_stripped():
+    import unicodedata
+
+    for cp in range(0x110000):
+        if unicodedata.category(chr(cp)) == "Cf":
+            assert status_claim("sa" + chr(cp) + "fe") == "safe", hex(cp)
+
+
+def test_the_fillers_in_an_entity_are_stripped_too():
+    assert status_claim("sa&#x3164;fe [R]") and status_claim("sa&#10240;fe [R]") and status_claim("sa&#xFFA0;fe")
+
+
+def test_a_filler_in_an_honest_sentence_changes_nothing():
+    line = "Ghostㅤobserved 213⠀findings [R]."
+    assert enforce(line, INDEX).kept == (line,)
