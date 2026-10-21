@@ -19,10 +19,27 @@ from watcher.cli import main
 pytestmark = pytest.mark.e2e
 
 
+def _find_warden() -> str | None:
+    """The `warden` of the interpreter running the tests first (its venv's bin folder, so a venv that is not
+    activated still works), then the PATH."""
+    bindir = Path(sys.executable).parent
+    for name in ("warden", "warden.exe"):
+        candidate = bindir / name
+        if candidate.is_file():
+            return str(candidate)
+    return shutil.which("warden")
+
+
 def _warden(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    exe = shutil.which("warden")
+    exe = _find_warden()
     assert exe is not None, "warden is not installed: this test needs the real Warden writer"
     return subprocess.run([exe, *args], cwd=cwd, capture_output=True, text=True, check=False, timeout=120)
+
+
+def test_the_installed_warden_is_the_tested_one():
+    from importlib import metadata
+
+    assert metadata.version("warden") == "0.13.3", "the e2e job tests the Warden that tests/test_pins.py names"
 
 
 def test_a_record_from_a_target_that_does_not_exist(tmp_path, capsys):

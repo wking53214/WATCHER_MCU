@@ -8,9 +8,13 @@ All notable changes to the Watcher are recorded here. The format follows
 ## [Unreleased]
 
 ### Changed
-- CI, README and STACK test against WARDEN 0.13.2 at commit `9d9a71d1bc3195f0abd9aee8fe553cc09838b684` (was 0.13.1 at
-  `ec551d8`). Verified against Warden's `warden/__init__.py` (`__version__ = "0.13.2"`). The end-to-end tests, the
-  full suite, ruff and mypy ran green with it installed, and `pip check` is clean for the Watcher beside Warden.
+- CI, README and STACK test against WARDEN 0.13.3 at commit `580f659336818b4a5a2c0ca235d2344012536426` (was 0.13.2 at
+  `9d9a71d`, and 0.13.1 at `ec551d8` before that). Verified with `git ls-remote` (the commit is the head of Warden's
+  branch `claude/horsemen-production-status-5wsndb`) and Warden's `warden/__init__.py` (`__version__ = "0.13.3"`).
+  The end-to-end tests, the full suite, ruff and mypy ran green with it installed, and `pip check` is clean for the
+  Watcher beside Warden. `tests/test_pins.py` now names the expected commit and version.
+- The end-to-end test finds `warden` in the bin folder of the interpreter running the tests first, then on the PATH,
+  so a virtual environment that is not activated works. It also asserts the installed Warden is 0.13.3.
 
 ### Added
 - A fixture, `tests/fixtures/warden_0_13_2_record.json`, trimmed from a real `warden tagteam` run (Warden 0.13.2

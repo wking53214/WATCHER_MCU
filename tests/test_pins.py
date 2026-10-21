@@ -48,6 +48,19 @@ def test_every_ci_job_that_checks_out_warden_uses_one_full_commit_that_the_readm
     assert refs[0] in (ROOT / "STACK.md").read_text(encoding="utf-8")
 
 
+#: The tested Warden: WARDEN 0.13.3 (its warden/__init__.py says so at this commit). Bump with the workflow.
+WARDEN_PIN = "580f659336818b4a5a2c0ca235d2344012536426"
+WARDEN_VERSION = "0.13.3"
+
+
+def test_the_pinned_warden_is_the_expected_commit_and_every_doc_names_its_version():
+    refs = re.findall(r"repository: wking53214/WARDEN\s+ref: (\S+)", _workflow())
+    assert refs == [WARDEN_PIN, WARDEN_PIN]
+    for doc in ("README.md", "STACK.md"):
+        text = (ROOT / doc).read_text(encoding="utf-8")
+        assert f"WARDEN {WARDEN_VERSION} at commit" in " ".join(text.split()), doc
+
+
 def test_the_warden_jobs_resolve_dependencies_and_are_blocking():
     text = _workflow()
     assert "--no-deps" not in text and "continue-on-error" not in text
