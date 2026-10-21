@@ -5,6 +5,20 @@ All notable changes to the Watcher are recorded here. The format follows
 [Semantic Versioning](https://semver.org/). The version lives in one place, `watcher.__version__`;
 `pyproject.toml` reads it. No release of this repository is tagged; tagging is the owner's decision.
 
+## [Unreleased]
+
+### Changed
+- CI, README and STACK test against WARDEN 0.13.4 at commit `36e98433f4928b7d12905f02b56e55ee1943b56e` (was 0.13.3 at
+  `580f659`). Verified with `git ls-remote` (the commit is the head of Warden's branch
+  `claude/horsemen-production-status-5wsndb`) and Warden's `warden/__init__.py` (`__version__ = "0.13.4"`).
+  `tests/test_pins.py`, the end-to-end version assertion and the exact-text source of `watcher.oath.WARDEN_STANDARD`
+  follow it. The end-to-end tests ran against clean clones of the tested set (ghost_tools `5d7a386`, SWIZZLE
+  `8166c47`, ASSAY `4c41556`).
+- A record from Warden 0.13.4 that has `allow_uncommitted_instruments: true` is narrated: the flag is cited as `[AU]`
+  and listed under "What was not" beside `[U]` (which names `instrument_provenance` as not measured), with Warden's
+  own note naming the instrument. New fixture `tests/fixtures/warden_0_13_4_uncommitted_record.json` is a real
+  record (paths neutralised).
+
 ## [0.3.2] - 2026-10-21
 
 ### Changed

@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from watcher.evidence import UnreadableRecord, forbidden_paths, index, load
+from watcher.evidence import Evidence, UnreadableRecord, forbidden_paths, index, load
 
 FIXTURE = Path(__file__).parent / "fixtures" / "swizzle_joined_run.json"
 
@@ -173,3 +173,35 @@ def test_unknown_extra_fields_in_versions_are_accepted(tmp_path):
     path = tmp_path / "run.json"
     path.write_text(json.dumps(run), encoding="utf-8")
     assert "assay 0.11.1" in load(path).citations["W"].text
+
+
+WARDEN_0_13_4_UNCOMMITTED = Path(__file__).parent / "fixtures" / "warden_0_13_4_uncommitted_record.json"
+
+
+def test_a_run_that_allowed_an_unnamed_instrument_says_so_and_names_it_as_not_measured():
+    """A real Warden 0.13.4 record (ghost_tools given as a copy with no git history, `--allow-uncommitted-instruments`):
+    `allow_uncommitted_instruments` is true and `instrument_provenance` is in `unmeasured`. The account names it as
+    not measured, says the flag was on, and carries Warden's own note naming the instrument."""
+    from watcher.narrate import template
+
+    run = json.loads(WARDEN_0_13_4_UNCOMMITTED.read_text(encoding="utf-8"))
+    assert run["allow_uncommitted_instruments"] is True and "instrument_provenance" in run["unmeasured"]
+    evidence = load(WARDEN_0_13_4_UNCOMMITTED)
+    assert "instrument_provenance" in evidence.citations["U"].text
+    assert evidence.citations["AU"].text == "allow_uncommitted_instruments: True"
+    account = template(evidence)
+    not_measured = account.split("## What was not", 1)[1].split("## Who took part", 1)[0]
+    assert "[U] not measured: " in not_measured and "instrument_provenance" in not_measured
+    assert "[AU] allow_uncommitted_instruments: True" in not_measured
+    assert "ghost_tools. Their results are not verified measurements" in not_measured
+
+
+def test_a_record_that_did_not_allow_it_has_no_such_line():
+    from watcher.narrate import template
+
+    run = json.loads(WARDEN_0_13_4_UNCOMMITTED.read_text(encoding="utf-8"))
+    run["allow_uncommitted_instruments"] = False
+    run["unmeasured"] = [name for name in run["unmeasured"] if name != "instrument_provenance"]
+    run["notes"] = run["notes"][1:]
+    account = template(Evidence(run=run, citations=index(run)))
+    assert "[AU]" not in account and "instrument_provenance" not in account

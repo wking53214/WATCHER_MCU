@@ -116,7 +116,8 @@ def index(run: Mapping[str, Any]) -> dict[str, Citation]:
     if isinstance(assay, Mapping):
         put("K", "assay", json.dumps(assay, sort_keys=True))
     for key, cid in (("held_digest", "H"), ("put_back", "PB"), ("converged", "CV"), ("finished", "FN"),
-                     ("swizzle_sound", "SS"), ("contract", "CT")):
+                     ("swizzle_sound", "SS"), ("contract", "CT"),
+                     ("allow_uncommitted_instruments", "AU")):
         if key in run:
             put(cid, key, f"{key}: {run[key]!s}")
     return out

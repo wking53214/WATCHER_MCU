@@ -137,8 +137,11 @@ def template(evidence: Evidence) -> str:
     out.append("## What was not")
     if "U" in c:
         out.append(fact("U"))
+    if run.get("allow_uncommitted_instruments") is True and "AU" in c:
+        out.append(fact("AU"))  # an instrument Warden cannot name was allowed on request
     out += [fact(cid) for cid, cit in c.items()
-            if cit.kind == "note" and ("gap" in cit.text.lower() or "not measured" in cit.text.lower())]
+            if cit.kind == "note" and ("gap" in cit.text.lower() or "not measured" in cit.text.lower()
+                                       or "uncommitted-instruments" in cit.text.lower())]
     joins = [cid for cid, cit in c.items() if cit.kind == "join"]
     if joins:
         out.append("## What was joined")

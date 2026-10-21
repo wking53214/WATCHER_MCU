@@ -1,0 +1,100 @@
+{
+  "schema": "cns.run/1",
+  "decision": "INCONCLUSIVE",
+  "converged": false,
+  "cycles": [],
+  "finished": false,
+  "put_back": false,
+  "held_digest": null,
+  "reason": "No drafter. Tag team observed only; nothing can be proposed.",
+  "notes": [
+    "Instrument roots with no git commit or readable version were allowed (--allow-uncommitted-instruments): ghost_tools. Their results are not verified measurements, so this run is never a plain ACCEPT.",
+    "SWIZZLE proofs: 12 of 12 proofs hold.",
+    "ASSAY grading failed (key unproven or specimen unscorable): the answer key was not proven: NOT PROVEN: 59/59 manifest claims hold; SWIZZLE said: swizzle: cannot score 27 specimen(s): fm_3_1_silent_pass, fm_3_2_overclaim, fm_3_3_flattening_duplicate, fm_3_4_unreachable_branch, fm_3_5_reskinned_duplicate. The answer key is not proven ...",
+    "Ghost Tools observed 0 finding(s).",
+    "No drafter. Tag team observed only; nothing can be proposed."
+  ],
+  "observed": [],
+  "reobserved": [],
+  "contract": "1",
+  "versions": {
+    "warden": {
+      "version": "0.13.4",
+      "contract": "1",
+      "commit": null,
+      "dirty": null
+    },
+    "ghost_tools": {
+      "path": "/srv/circuit/stack/ghost_tools_copy",
+      "commit": null,
+      "version": "1.10.1",
+      "dirty": null,
+      "module": "/srv/circuit/stack/ghost_tools_copy/ghost_buster/__init__.py",
+      "module_in_root": true
+    },
+    "swizzle": {
+      "path": "/srv/circuit/stack/SWIZZLE",
+      "commit": "8166c47f321ecfb66b8efa72c1deac5d954e8e48",
+      "version": "0.8.1",
+      "dirty": false,
+      "module": "/srv/circuit/stack/SWIZZLE/swizzle/__init__.py",
+      "module_in_root": true
+    },
+    "assay": {
+      "path": "/srv/circuit/stack/ASSAY",
+      "commit": "4c415567d1c1cb2c1a9e8f343a7a11a5064258c8",
+      "version": "0.11.1",
+      "dirty": false,
+      "module": "/srv/circuit/stack/ASSAY/assay_production/__init__.py",
+      "module_in_root": true
+    },
+    "seats": {
+      "drafter": null,
+      "finisher": null,
+      "judge": null
+    },
+    "joins": []
+  },
+  "swizzle_sound": true,
+  "allow_uncommitted_instruments": true,
+  "unmeasured": [
+    "assay",
+    "suite",
+    "instrument_provenance",
+    "judge"
+  ],
+  "ghost_scan": {
+    "status": "ok",
+    "files_scanned": 1,
+    "files_skipped": 0,
+    "files_unparsable": 0,
+    "gaps": [],
+    "gaps_not_shown": 0,
+    "declined": [
+      "mutate",
+      "kernel",
+      "structure",
+      "tests",
+      "project",
+      "secrets",
+      "correlate"
+    ],
+    "baseline": {
+      "path": null,
+      "suppressed": 0
+    }
+  },
+  "ghost_baseline": {
+    "before": {
+      "path": null,
+      "suppressed": 0
+    },
+    "after": {
+      "path": null,
+      "suppressed": 0
+    }
+  },
+  "drafter_skipped": [],
+  "informational": [],
+  "verdict": null
+}
