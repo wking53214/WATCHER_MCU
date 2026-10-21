@@ -37,8 +37,8 @@ create the folder and its parents. The folder checks (the governed folder, every
 the record itself) run first and are not lifted by the flag.
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from
-its git URL pinned to the full commit of release `v1.9.0`
-(`da18e411743d4e3b0e783105394d845fb1c16746`). `cns/run.py` is byte for byte the same in `v1.8.0` and `v1.9.0`,
+its git URL pinned by the release tag `v1.9.0`
+(the tag peels to `da18e411743d4e3b0e783105394d845fb1c16746`). `cns/run.py` is byte for byte the same in `v1.8.0` and `v1.9.0`,
 so the record Warden writes is read as before. `tests/test_pins.py` fails if the installed CNS is not the pinned
 one. Installing needs access to that repository.
 

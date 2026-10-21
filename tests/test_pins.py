@@ -8,21 +8,24 @@ from importlib import metadata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PIN = re.compile(r"cns @ git\+https://github\.com/wking53214/CNS\.git@([0-9a-f]{40})\"\]\s*#\s*(v\d+\.\d+\.\d+)")
+PIN = re.compile(r"cns @ git\+https://github\.com/wking53214/CNS\.git@(v\d+\.\d+\.\d+)\"\]")
+#: The commit the tag v1.9.0 peels to (git ls-remote ... 'refs/tags/v1.9.0^{}'); the installed CNS must be this commit.
+CNS_COMMIT = "da18e411743d4e3b0e783105394d845fb1c16746"
 
 
 def _declared() -> tuple[str, str]:
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = PIN.search(text)
-    assert match, "the CNS dependency must be a full 40-character commit with its release tag in a comment"
-    return match.group(1), match.group(2)
+    assert match, "the CNS dependency must be pinned by its release tag, spelled as the rest of the circuit does"
+    return CNS_COMMIT, match.group(1)
 
 
-def test_cns_is_pinned_to_a_full_commit_with_its_tag():
+def test_cns_is_pinned_by_its_release_tag():
     sha, tag = _declared()
     assert tag == "v1.9.0" and len(sha) == 40
     assert sha == "da18e411743d4e3b0e783105394d845fb1c16746"
-    assert tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["dependencies"]
+    deps = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["dependencies"]
+    assert "cns @ git+https://github.com/wking53214/CNS.git@v1.9.0" in deps
 
 
 def test_the_installed_cns_is_the_pinned_one():
