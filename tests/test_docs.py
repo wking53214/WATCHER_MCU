@@ -56,3 +56,11 @@ def test_the_docs_say_nothing_that_is_no_longer_true():
     assert "does not read it" not in stack and "cns.run" in stack
     for text in (readme, stack, (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")):
         assert chr(0x2014) not in text
+
+
+def test_the_readme_names_every_standard_warden_sentence_the_oath_allows():
+    from watcher.oath import WARDEN_STANDARD
+
+    text = " ".join(_readme().lower().split())
+    for fragment in WARDEN_STANDARD:
+        assert fragment in text, fragment

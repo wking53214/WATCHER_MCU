@@ -9,7 +9,7 @@ every sentence it keeps cites a measurement in the record by id. A sentence that
 cites something that is not there, or makes a status claim of its own is dropped before anyone reads
 it, and the account says how many were dropped and why.
 
-Version `0.3.1` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.2` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
@@ -95,7 +95,7 @@ every sentence the oath dropped with its reason.
 | It refuses to overwrite what it reads | `cli.main` refuses (exit 2) an `--out` that resolves to the record, through a symlink, a relative spelling or a hard link. |
 | Nothing in the circuit reads it | Warden, the Judge, Ghost, SWIZZLE and the seats have no input for it. Not ignored: structurally absent. The Watcher imports none of them (`test_charter.py`). |
 | Every kept sentence cites the record | `oath.enforce`: no citation, drop; unknown citation, drop. |
-| It claims no status of its own | `oath.status_claim`: "production ready", "production-grade", "ready for production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "bulletproof", "hardened" and their kin, and the sign-offs a reviewer gives ("approved", "LGTM", "looks good", "ship it", "good to go", "all clear", "no issues", "OK for production use", "trustworthy", "reliable", "robust"), cited or not, drop. The sentence is read the way a person reads a rendered page: entities decoded, markup and emphasis removed, NFKC, case folded, accents and invisible characters gone, every Unicode dash a hyphen, Cyrillic, Greek and small-capital lookalikes folded to Latin, digits used as letters read as letters, single letters set apart ("s a f e") joined up, and text under a bidirectional override read in the order it is displayed as well as the order it is stored. A superset of the labels Ghost Tools reports for re-verification. |
+| It claims no status of its own | `oath.status_claim`: "production ready", "production-grade", "ready for production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "bulletproof", "hardened", "mergeable" and their kin, and the sign-offs a reviewer gives ("approved", "LGTM", "looks good", "ship it", "good to go", "all clear", "no issues", "no blockers", "free of defects", "can go live", "rest easy", "OK for production use", "trustworthy", "reliable", "robust", check-mark and thumbs-up emoji, a short list in nine other languages), cited or not, drop. The sentence is read the way a person reads a rendered page: entities decoded, markup and emphasis removed, NFKC, case folded, accents and every Unicode default-ignorable character gone (the Hangul fillers and the braille blank are read both as nothing and as a gap), every Unicode dash a hyphen, lookalike letters folded to Latin (a table built from the Unicode names and the Unicode confusables data: Cyrillic, Greek, Armenian, Cherokee, small capitals, negative circled and squared letters, regional indicators, letters with hooks and strokes), digits used as letters read as letters, single letters set apart ("s a f e") joined up, an `[id]` citation tag set into the label taken out, text under a bidirectional override read in the order stored, in the order the algorithm displays it and in a cruder reversed order, and lines read at their seams (one bullet per letter, "production" at the end of one line and "ready" at the start of the next). A label is excused only where it is a description: plainly denied ("not production ready", "nothing was approved"), "no issues" reported by a named part of the circuit ("Ghost reported no issues"), "secure" before a technical noun ("secure hash call"), or one of Warden's own standard sentences by exact text. See WHAT IS NOT PROVEN for the limits. A superset of the labels Ghost Tools reports for re-verification. |
 | It is a description, never a grade | The system prompt says so; the filter makes an uncited grade vanish; the account's first line repeats the decision as recorded, cited. |
 | A refusal is an empty account, not a quiet one | A model that declines (safety classifier) exits 3 with no file written. An account the oath empties exits 4 and still shows what was dropped. |
 
@@ -122,10 +122,13 @@ The arrow into the Watcher is the only one. Nothing comes back.
 ## WHAT IS PROVEN
 
 - `tests/test_oath.py`: cited sentences survive; uncited, falsely cited and status-claiming ones are
-  dropped with the reason, through emphasis, invisible characters, other Unicode dashes, lookalike
-  letters, entities, markup, digit-for-letter spelling, spaced-out letters, bidirectional overrides and
-  a citation after the claim ("is safe [R]"); approvals and all-clears ("LGTM", "looks good", "ship it");
-  honest sentences near those words are kept; headings are structure.
+  dropped with the reason, through emphasis, invisible characters (every default-ignorable character,
+  the Hangul fillers and the braille blank), other Unicode dashes, lookalike letters (including the negative
+  circled and squared letters, regional indicators and Cherokee), entities, markup, digit-for-letter
+  spelling, spaced-out letters, a citation inside the label, labels set across lines, bidirectional
+  overrides (nested too) and a citation after the claim ("is safe [R]"); approvals, all-clears and the
+  other sign-offs in a table; a table of honest sentences that the filter keeps (denied labels, reports by
+  a named instrument, Warden's own sentences) and a table of look-alikes of those that it still drops.
 - `tests/test_evidence.py`: a real run record (SWIZZLE, 2026-10-15, joined through a stack manifest)
   indexes every kind of thing with stable ids; forbidden paths are the governed folder and every
   checkout the record names; the instruments and the Drafter, Burnish and Judge seats of a record
@@ -149,15 +152,52 @@ The arrow into the Watcher is the only one. Nothing comes back.
 - That the model writes a good account. It is trusted to write, never to be right; the oath bounds
   what reaches a reader, not how useful it is. No live run against the API is in the tests (none is
   possible without a key), so the request shape is tested against a fake client only.
-- That the status-claim list is complete. It is a denylist of labels and phrases, so it is not a proof
-  and cannot be one: a sign-off in words it does not list, a paraphrase ("nothing to worry about", "you
-  can rely on it"), another language, or letters broken up some way the normaliser does not join
-  (parts of a word split by punctuation, a word spelled out in a table) is kept if it cites the
-  record. The disguises it does read through are listed above and tested; the list was last extended
-  with approvals, all-clears, "reliable" and "robust" after an audit kept such sentences. It is a
-  superset of Ghost Tools' list as of 2026-10-15, and a new label there should be added here. The
-  citation requirement and the shown "dropped" appendix are the other defences; a reader should still
-  check the cited text.
+- That the status-claim list is complete. It is a denylist of labels and phrases, so it is not a proof and
+  cannot be one. What it does, precisely: a sentence is dropped when any reading of it (as written, with
+  the citation tags removed, with fillers as gaps, with lookalikes read their second way, in each bidirectional
+  order, with digits read as letters) holds a label that is not excused, or when letters set apart or lines
+  set across a seam make one. What it does not do:
+  - Paraphrases. "Nothing to worry about" and "green light" are listed; "you can rely on it", "this is
+    fine", "in good shape" and the like are not, and are kept if they cite the record. A single word of
+    praise ("good", "fine", "correct", "complete", "passes", "verified") is not a label either: honest
+    sentences use those words constantly, and the citation requirement is the defence there.
+  - Other languages. A short list of the commonest sign-offs in Spanish, Portuguese, French, German, Italian,
+    Russian, Chinese, Japanese and Korean is read; any other language, and any paraphrase in these, is kept.
+    Paraphrases in other languages can never be complete.
+  - Every lookalike. The table is the Unicode confusables data (UTR #39, as shipped in
+    `watcher/_homoglyphs.py`, generated by `tools/make_homoglyphs.py`), the Unicode names of letter forms
+    (read at import from the Python in use, so a newer Python knows newer characters), and a small hand list;
+    a lookalike in none of them is not folded. Mixed-script spellings that put two characters in place of one
+    ("rn" for "m") are not folded.
+  - Labels spread over three or more long lines. Lines are read at the seam of two neighbours (eight words
+    each side) and as runs of one- and two-letter lines; a label broken across three longer lines is not joined.
+  - Bidirectional text in every renderer. Three orders are read (stored, the Unicode algorithm, and a crude
+    reversal after the first right-to-left start); a renderer that orders differently from all three can show a
+    label the filter did not see.
+  - Truth. "Ghost reported no issues [G]" is kept because a named part of the circuit is the subject; the
+    filter checks the form of the sentence, not that Ghost said it. The citation appendix is how a reader checks.
+  How a label is excused, and where that goes wrong. A label is a denial, and kept, when a negator ("not",
+  "no", "never", "cannot", "nothing", "nobody", "without", "n't") is among the four words before it in the
+  same clause. A clause start ("and", "but", "so", "that", a comma, a colon) ends the reach; a cancelling word
+  after the negator ("not only", "no doubt", "nobody doubts", "nothing stops", "nothing is more") and two
+  negators ("not not safe") leave the label standing; a denial of a bad word ("not unsafe", "never risky",
+  "nothing here is unsafe") is dropped as a claim. This is a rule of thumb, not a parser. It can let a claim
+  through: a sentence in which a negator within four words does not deny the label, in a form the
+  cancelling words do not name. It can drop an honest sentence: the ones the audit found that are still
+  dropped are "all clear of edits", "all good checks are listed", a keyword quoted as a keyword ("a 'robust'
+  keyword"), "hardened-runtime flag", "safe-mode flag", "OK to use the cached baseline" and "no problems
+  collecting them". "No issues" and its kin are excused only when the clause names Ghost, Ghost Tools, SWIZZLE,
+  ASSAY, Warden, the Judge, the Drafter, Burnish, a scan, a scanner or the suite as the one that reported
+  it, and never when it says "I", "we", "our" or the Watcher. "Secure" is excused before a closed list of
+  technical nouns (hash, cookie, shell, random, channel, connection, socket, token, key and so on). Warden's
+  own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
+  approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
+  "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
+  (strings in Warden 0.13.3 at 580f659; `tests/test_warden_e2e.py` checks they are still in the installed
+  Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
+  The disguises it does read through are listed above and tested. It is a superset of Ghost Tools' list as of
+  2026-10-15, and a new label there should be added here. The citation requirement and the shown "dropped"
+  appendix are the other defences; a reader should still check the cited text.
 
 ## KNOWN DEFECTS
 
@@ -167,7 +207,8 @@ The arrow into the Watcher is the only one. Nothing comes back.
   editorialize could do it in headings. The account shows headings as headings.
 - An empty `unmeasured` list is reported as "the record lists nothing as unmeasured". A run that ended
   before it began (for example `USAGE_ERROR`) also has an empty list; read the decision first.
-- A sentence that quotes a label (for example the Judge's reason "cannot be shown safe") is dropped,
-  like any other use of it.
+- A sentence that quotes a label without denying it (for example a finding named "robust", or the Judge's
+  reason quoted as "safe to merge") is dropped, like any other use of it. A quoted denial ("cannot be shown
+  safe") is kept.
 - `--target` is needed for the governed folder because Warden's record does not name it; the
   instrument and joined paths are refused from the record alone.
