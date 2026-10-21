@@ -23,7 +23,7 @@ classifiers = [
 ]
 # The official SDK only. The Watcher imports nothing of the circuit (tests/test_charter.py reads the source).
 # The run record contract (cns.run/1) comes from the CNS repository. Pinned to its release tag.
-dependencies = ["anthropic>=1.14,<2", "cns @ git+https://github.com/wking53214/CNS.git@v1.6.0"]
+dependencies = ["anthropic>=1.14,<2", "cns @ git+https://github.com/wking53214/CNS.git@v1.9.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff==0.15.22"]
