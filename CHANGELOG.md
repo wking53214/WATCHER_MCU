@@ -7,7 +7,19 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-21
+
 ### Changed
+- CNS moves from `v1.8.0` to `v1.9.0`: the dependency is pinned to the full commit
+  `da18e411743d4e3b0e783105394d845fb1c16746` (the peeled commit of the tag, from `git ls-remote`), in `pyproject.toml`,
+  README, STACK.md and `tests/test_pins.py` (which checks the installed CNS commit and version against the pin).
+  `cns/run.py`, the only CNS module the Watcher reads, is unchanged between `v1.8.0` and `v1.9.0` (`git diff` is empty),
+  so the Watcher reads the `cns.run/1` record Warden writes exactly as before; the end-to-end tests confirm it.
+- The tested Warden commit (0.13.4, `36e98433f4928b7d12905f02b56e55ee1943b56e`) still requires CNS `v1.8.0`
+  (`5252ceebe98185f7be81212d988055ccf9884568`), and pip reports `ResolutionImpossible` for the Watcher and that Warden
+  together. Until a Warden commit pins `da18e41`, the `warden-e2e` and `coinstall-warden` CI jobs install the Watcher
+  with its dependencies and Warden with `--no-deps`, then run `pip check`; the workflow comments name the condition for
+  dropping `--no-deps` and the SHA that the owner session must supply. No Warden SHA was invented.
 - CI, README and STACK test against WARDEN 0.13.4 at commit `36e98433f4928b7d12905f02b56e55ee1943b56e` (was 0.13.3 at
   `580f659`). Verified with `git ls-remote` (the commit is the head of Warden's branch
   `claude/horsemen-production-status-5wsndb`) and Warden's `warden/__init__.py` (`__version__ = "0.13.4"`).

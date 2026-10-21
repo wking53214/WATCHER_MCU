@@ -9,7 +9,7 @@ every sentence it keeps cites a measurement in the record by id. A sentence that
 cites something that is not there, or makes a status claim of its own is dropped before anyone reads
 it, and the account says how many were dropped and why.
 
-Version `0.3.2` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.3` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
@@ -37,16 +37,19 @@ create the folder and its parents. The folder checks (the governed folder, every
 the record itself) run first and are not lifted by the flag.
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from
-its git URL pinned to the full commit of release `v1.8.0` (the pin every repository of the circuit
-uses, so `pip install` of the Watcher beside Warden, the Judge, the Drafter and Burnish resolves to
-one CNS). `tests/test_pins.py` fails if the installed CNS is not the pinned one. Installing needs
-access to that repository.
+its git URL pinned to the full commit of release `v1.9.0`
+(`da18e411743d4e3b0e783105394d845fb1c16746`). `cns/run.py` is byte for byte the same in `v1.8.0` and `v1.9.0`,
+so the record Warden writes is read as before. `tests/test_pins.py` fails if the installed CNS is not the pinned
+one. Installing needs access to that repository.
 
 CI runs the end-to-end job and the co-install job against WARDEN 0.13.4 at commit
 `36e98433f4928b7d12905f02b56e55ee1943b56e` (the tested set; it may be one or more commits behind
-WARDEN's branch head). Warden pins the same CNS commit, so `pip install . ./WARDEN` resolves with full
-dependency resolution and `pip check` is clean. To bump it, change the commit in both jobs of
-`.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree.
+WARDEN's branch head). That Warden commit still requires CNS `v1.8.0` (`5252ceebe98185f7be81212d988055ccf9884568`),
+which pip cannot resolve together with the Watcher's `v1.9.0`; until a Warden commit pins `da18e41`, both jobs
+install the Watcher with its dependencies and Warden with `--no-deps`, then run `pip check`. The Watcher reads
+only `cns.run`, which is the same in both releases. To bump Warden, change the commit in both jobs of
+`.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree. Once Warden's own commit
+pins `da18e41`, drop `--no-deps` from both jobs (the test names this).
 
 `run.json` is the JSON `warden tagteam` prints. It must be a `cns.run/1` record: the contract is
 `RunRecord` in the CNS repository, and a record that predates it, names another version, or has a

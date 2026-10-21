@@ -23,8 +23,8 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 # The official SDK only. The Watcher imports nothing of the circuit (tests/test_charter.py reads the source).
-# The run record contract (cns.run/1) comes from the CNS repository. Pinned to the commit of release v1.8.0, the same pin every repo of the circuit uses.
-dependencies = ["anthropic>=1.14,<2", "cns @ git+https://github.com/wking53214/CNS.git@5252ceebe98185f7be81212d988055ccf9884568"]  # v1.8.0
+# The run record contract (cns.run/1) comes from the CNS repository. Pinned to the full commit of release v1.9.0.
+dependencies = ["anthropic>=1.14,<2", "cns @ git+https://github.com/wking53214/CNS.git@da18e411743d4e3b0e783105394d845fb1c16746"]  # v1.9.0
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff==0.15.22", "mypy==1.20.2"]

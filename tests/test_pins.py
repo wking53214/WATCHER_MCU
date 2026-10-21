@@ -20,7 +20,8 @@ def _declared() -> tuple[str, str]:
 
 def test_cns_is_pinned_to_a_full_commit_with_its_tag():
     sha, tag = _declared()
-    assert tag == "v1.8.0" and len(sha) == 40
+    assert tag == "v1.9.0" and len(sha) == 40
+    assert sha == "da18e411743d4e3b0e783105394d845fb1c16746"
     assert tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["dependencies"]
 
 
@@ -61,10 +62,15 @@ def test_the_pinned_warden_is_the_expected_commit_and_every_doc_names_its_versio
         assert f"WARDEN {WARDEN_VERSION} at commit" in " ".join(text.split()), doc
 
 
-def test_the_warden_jobs_resolve_dependencies_and_are_blocking():
+def test_the_warden_jobs_install_warden_without_its_dependencies_until_warden_pins_the_same_cns_and_are_blocking():
+    # The tested Warden commit requires CNS v1.8.0 (5252cee), which conflicts with the Watcher's v1.9.0 (da18e41) in
+    # pip, so Warden goes in with --no-deps. When a Warden commit pins da18e41, drop --no-deps and this test's check.
     text = _workflow()
-    assert "--no-deps" not in text and "continue-on-error" not in text
-    assert "pip check" in text and "pip install . ./_warden" in text
+    assert "continue-on-error" not in text and "pip check" in text
+    assert text.count("pip install --no-deps ./_warden") == 2, "both Warden jobs install Warden with --no-deps"
+    steps = re.findall(r"^\s*- run: (.*)$", text, flags=re.MULTILINE)
+    assert not [s for s in steps if "./_warden" in s and "--no-deps" not in s], "no step resolves Warden's CNS"
+    assert "until Warden's own commit pins CNS da18e411743d4e3b0e783105394d845fb1c16746" in " ".join(text.split())
 
 
 def test_every_action_is_pinned_by_commit_with_its_tag_in_a_comment():

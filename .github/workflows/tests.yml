@@ -44,9 +44,13 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.13"
-      # The Watcher and Warden both pin CNS to the same commit, so they install together with full dependency
-      # resolution, and `pip check` proves the result is consistent.
-      - run: pip install -e ".[dev]" ./_warden
+      # The Watcher pins CNS v1.9.0 (da18e411743d4e3b0e783105394d845fb1c16746). The Warden commit above still requires
+      # CNS v1.8.0 (5252ceebe98185f7be81212d988055ccf9884568), which pip cannot resolve together with it. So Warden is
+      # installed with --no-deps until Warden's own commit pins CNS da18e411743d4e3b0e783105394d845fb1c16746. When the
+      # owner session gives the new Warden commit SHA, change `ref` here and in `coinstall-warden` to it (full SHA, not
+      # invented) and drop --no-deps. The Watcher reads only cns.run, which is identical in v1.8.0 and v1.9.0.
+      - run: pip install -e ".[dev]"
+      - run: pip install --no-deps ./_warden
       - run: pip check
       - run: python -m pytest -q tests/test_pins.py
       - run: warden --help > /dev/null
@@ -71,5 +75,10 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.13"
-      - run: pip install . ./_warden
+      # Warden is installed with --no-deps until Warden's own commit pins CNS da18e411743d4e3b0e783105394d845fb1c16746
+      # (the same reason and the same fix as in `warden-e2e`: its current commit requires CNS v1.8.0, which conflicts
+      # with the Watcher's v1.9.0 in pip). Once the owner session gives the new Warden SHA, set `ref` above to it and
+      # install both with full dependency resolution: `pip install . ./_warden`.
+      - run: pip install .
+      - run: pip install --no-deps ./_warden
       - run: pip check
