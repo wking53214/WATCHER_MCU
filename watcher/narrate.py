@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Mapping
 from typing import Any, Protocol
 
-from .evidence import Evidence
+from .evidence import DIRTY_MARK, Evidence, dirty_parts
 
 log = logging.getLogger(__name__)
 
@@ -116,6 +117,17 @@ def credentials_present() -> bool:
     return os.path.isdir(profile) and any(os.scandir(profile))
 
 
+def _cycles_that_observed(run: Mapping[str, Any]) -> list[tuple[int, int]]:
+    """(cycle number, findings Ghost observed) for each cycle of the record that observed any."""
+    out: list[tuple[int, int]] = []
+    for cycle in run.get("cycles") or ():
+        if isinstance(cycle, Mapping) and isinstance(cycle.get("number"), int):
+            n = cycle.get("observed")
+            if isinstance(n, int) and not isinstance(n, bool) and n > 0:
+                out.append((cycle["number"], n))
+    return out
+
+
 def template(evidence: Evidence) -> str:
     """A cited account written from the index alone. Deterministic; no model. Each fact is one bullet,
     which the oath reads as one unit however many sentences the record's text holds."""
@@ -129,6 +141,11 @@ def template(evidence: Evidence) -> str:
     if "V" in c:
         out.append(f"- [V] The Judge said {run['verdict'].get('decision')}.")
     out += [fact(cid) for cid in ("C1", "C2", "C3") if cid in c]
+    seen = _cycles_that_observed(run)
+    if run.get("converged") is True and seen:  # converged is "no proposals left"; the record shows findings left
+        number, count = seen[-1]
+        out.append(f"- [CV] Converged is true and converged is not zero findings: Ghost still observed {count} "
+                   f"finding(s) in cycle {number} [C{number}].")
     out.append("## What was measured")
     out += [fact(cid) for cid, cit in c.items()
             if cit.kind == "note" and ("suite" in cit.text.lower() or "observed" in cit.text.lower())]
@@ -139,9 +156,20 @@ def template(evidence: Evidence) -> str:
         out.append(fact("U"))
     if run.get("allow_uncommitted_instruments") is True and "AU" in c:
         out.append(fact("AU"))  # an instrument Warden cannot name was allowed on request
+    scan = run.get("ghost_scan")
+    declined = scan.get("declined") if isinstance(scan, Mapping) else None
+    if "G" in c and isinstance(declined, list) and declined:  # checks left out of the scan
+        out.append(f"- [G] Ghost declined {len(declined)} check(s): {', '.join(map(str, declined))}. A declined check "
+                   "was not run, so the absence of findings from it means nothing.")
+    dirty = dirty_parts(run)
+    if dirty:  # the record flags uncommitted changes in a part that took part
+        ids = "".join(f"[{cid}]" for cid in dict.fromkeys(cid for _, cid in dirty))
+        out.append(f"- {ids} {DIRTY_MARK} (dirty: true) in {', '.join(name for name, _ in dirty)}; "
+                   "the commit shown for each is not the whole of what ran.")
     out += [fact(cid) for cid, cit in c.items()
             if cit.kind == "note" and ("gap" in cit.text.lower() or "not measured" in cit.text.lower()
-                                       or "uncommitted-instruments" in cit.text.lower())]
+                                       or "uncommitted-instruments" in cit.text.lower()
+                                       or "not zero findings" in cit.text.lower())]
     joins = [cid for cid, cit in c.items() if cit.kind == "join"]
     if joins:
         out.append("## What was joined")

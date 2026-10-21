@@ -51,6 +51,41 @@ def _clean(value: Any, limit: int = 400) -> str:
     return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
+def _declined(scan: Mapping[str, Any]) -> list[str]:
+    """The checks the record says Ghost left out (`ghost_scan.declined`), as text. A declined check was not run."""
+    declined = scan.get("declined")
+    return [str(name) for name in declined] if isinstance(declined, (list, tuple)) else []
+
+
+def _dirty(entry: Mapping[str, Any]) -> bool:
+    """Whether the record flags this checkout as having uncommitted changes. Only `true` says so: null is unknown."""
+    return entry.get("dirty") is True
+
+
+#: What the account says beside a part whose `dirty` flag is true.
+DIRTY_MARK = "DIRTY: uncommitted changes"
+
+
+def dirty_parts(run: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """(name, citation id) of every part of `versions` the record flags `dirty: true`: the four named entries and the
+    seats under [W], each join under its [J<n>]. Nothing is added that the record does not hold."""
+    out: list[tuple[str, str]] = []
+    versions = run.get("versions")
+    if not isinstance(versions, Mapping):
+        return out
+    for name in ("warden", "ghost_tools", "swizzle", "assay"):
+        v = versions.get(name)
+        if isinstance(v, Mapping) and _dirty(v):
+            out.append((name, "W"))
+    seats = versions.get("seats")
+    if isinstance(seats, Mapping):
+        out += [(f"{role} seat", "W") for role, seat in seats.items() if isinstance(seat, Mapping) and _dirty(seat)]
+    for n, join in enumerate(versions.get("joins") or (), start=1):
+        if isinstance(join, Mapping) and _dirty(join):
+            out.append((f"join {join.get('path')}", f"J{n}"))
+    return out
+
+
 def index(run: Mapping[str, Any]) -> dict[str, Citation]:
     """Every citable thing in a run record, keyed by id. Ids are stable for a given record."""
     out: dict[str, Citation] = {}
@@ -80,9 +115,11 @@ def index(run: Mapping[str, Any]) -> dict[str, Citation]:
         put("U", "unmeasured", "not measured: " + (", ".join(map(str, unmeasured)) or "nothing listed in the record"))
     scan = run.get("ghost_scan")
     if isinstance(scan, Mapping):
+        declined = _declined(scan)
         put("G", "ghost_scan", f"Ghost scan {scan.get('status')}: {scan.get('files_scanned')} file(s) scanned, "
                                f"{scan.get('files_unparsable')} unparsable; gaps: "
-                               f"{'; '.join(map(str, scan.get('gaps') or ())) or 'none'}")
+                               f"{'; '.join(map(str, scan.get('gaps') or ())) or 'none'}"
+                               + (f"; declined, so not run: {', '.join(declined)}" if declined else ""))
     baseline = run.get("ghost_baseline")
     if isinstance(baseline, Mapping):
         put("B", "ghost_baseline", f"Ghost baseline before/after: {json.dumps(baseline, sort_keys=True)}")
@@ -96,17 +133,19 @@ def index(run: Mapping[str, Any]) -> dict[str, Citation]:
         for name in ("warden", "ghost_tools", "swizzle", "assay"):
             v = versions.get(name)
             if isinstance(v, Mapping):
-                parts.append(f"{name} {v.get('version')} at {str(v.get('commit'))[:12]}")
+                parts.append(f"{name} {v.get('version')} at {str(v.get('commit'))[:12]}"
+                             + (f" ({DIRTY_MARK})" if _dirty(v) else ""))
         seats = versions.get("seats")
         if isinstance(seats, Mapping):
             for role, seat in seats.items():  # a seat that was not loaded is null in the record
                 if isinstance(seat, Mapping):
                     parts.append(f"{role} seat {seat.get('spec')} {seat.get('version')} "
-                                 f"at {str(seat.get('commit'))[:12]}")
+                                 f"at {str(seat.get('commit'))[:12]}" + (f" ({DIRTY_MARK})" if _dirty(seat) else ""))
         put("W", "versions", "took part: " + ("; ".join(parts) or "unknown"))
         for n, join in enumerate(versions.get("joins") or (), start=1):
             if isinstance(join, Mapping):
-                put(f"J{n}", "join", f"joined for Ghost: {join.get('path')} at {str(join.get('commit'))[:12]}")
+                put(f"J{n}", "join", f"joined for Ghost: {join.get('path')} at {str(join.get('commit'))[:12]}"
+                                     + (f" ({DIRTY_MARK})" if _dirty(join) else ""))
     for key, prefix, kind in (("attacks", "A", "attack"), ("swizzle_proofs", "P", "proof")):
         rows = run.get(key)
         if isinstance(rows, (list, tuple)):
@@ -183,6 +222,8 @@ def _check_shapes(run: Mapping[str, Any], path: Any) -> None:
     scan = run.get("ghost_scan") or {}
     if scan.get("gaps") is not None and not isinstance(scan["gaps"], list):
         raise _bad(path, f"ghost_scan.gaps is {type(scan['gaps']).__name__}, not a list")
+    if scan.get("declined") is not None and not isinstance(scan["declined"], list):
+        raise _bad(path, f"ghost_scan.declined is {type(scan['declined']).__name__}, not a list")
     versions = run.get("versions") or {}
     for name in ("warden", "ghost_tools", "swizzle", "assay"):
         entry = versions.get(name)
@@ -234,4 +275,4 @@ def load(path: Path, target: Path | None = None) -> Evidence:
     return Evidence(run=run, citations=citations, forbidden_paths=forbidden)
 
 
-__all__ = ["Citation", "Evidence", "UnreadableRecord", "forbidden_paths", "index", "load"]
+__all__ = ["DIRTY_MARK", "Citation", "Evidence", "UnreadableRecord", "dirty_parts", "forbidden_paths", "index", "load"]
