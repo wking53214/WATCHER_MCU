@@ -166,3 +166,11 @@ def test_the_sdk_narrator_turns_a_refusal_into_an_error():
 
     with pytest.raises(Refused, match="cyber"):
         AnthropicNarrator(Client()).narrate("s", "p", "m", "high")
+
+
+def test_the_cli_narrates_a_real_0_13_2_record_with_an_assay_version(tmp_path):
+    record = Path(__file__).parent / "fixtures" / "warden_0_13_2_record.json"
+    out = tmp_path / "account.md"
+    assert main(["narrate", str(record), "--no-model", "--out", str(out)]) == 0
+    text = out.read_text(encoding="utf-8")
+    assert "assay 0.11.1" in text and "assay None" not in text

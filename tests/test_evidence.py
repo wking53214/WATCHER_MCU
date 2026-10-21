@@ -130,3 +130,46 @@ def test_the_template_account_names_the_seats(tmp_path):
     assert "judge seat judge.seat:Judge" in account and "finisher seat burnish.finisher:Burnish" in account
     out = enforce(account, e.citations)
     assert out.dropped == ()
+
+
+WARDEN_0_13_2_RUN = Path(__file__).parent / "fixtures" / "warden_0_13_2_record.json"
+
+
+def test_a_real_0_13_2_record_names_a_real_assay_version():
+    """A trimmed record from a real `warden tagteam` (Warden 0.13.2 with the tested ghost_tools, SWIZZLE and
+    ASSAY; paths neutralised). Warden 0.13.2 reads ASSAY's dynamic version, so the account prints it."""
+    run = json.loads(WARDEN_0_13_2_RUN.read_text(encoding="utf-8"))
+    assert run["versions"]["assay"]["version"] == "0.11.1"
+    text = index(run)["W"].text
+    assert "assay 0.11.1 at 7b781cf9cb2b" in text and "assay None" not in text
+    for name in ("warden 0.13.2", "ghost_tools 1.10.1 at 5d7a38638b12", "swizzle 0.8.1 at 123d7aba5d91"):
+        assert name in text, name
+
+
+def test_the_account_of_a_0_13_2_record_prints_the_assay_version(tmp_path):
+    from watcher.narrate import template
+
+    account = template(load(WARDEN_0_13_2_RUN))
+    assert "assay 0.11.1" in account and "assay None" not in account
+
+
+def test_module_fields_added_by_0_13_2_are_accepted_and_do_not_change_the_account():
+    """`module` and `module_in_root` are new on versions.ghost_tools/swizzle/assay. The Watcher accepts fields it
+    does not know: they are loaded, not cited, and the instrument folders stay forbidden to write into."""
+    run = json.loads(WARDEN_0_13_2_RUN.read_text(encoding="utf-8"))
+    for name in ("ghost_tools", "swizzle", "assay"):
+        assert isinstance(run["versions"][name]["module"], str) and run["versions"][name]["module_in_root"] is True
+    with_fields = index(run)["W"].text
+    for name in ("ghost_tools", "swizzle", "assay"):
+        del run["versions"][name]["module"], run["versions"][name]["module_in_root"]
+    assert index(run)["W"].text == with_fields
+    assert {p.name for p in forbidden_paths(run)} == {"ghost_tools", "SWIZZLE", "ASSAY"}
+
+
+def test_unknown_extra_fields_in_versions_are_accepted(tmp_path):
+    run = json.loads(WARDEN_0_13_2_RUN.read_text(encoding="utf-8"))
+    for name in ("warden", "ghost_tools", "swizzle", "assay"):
+        run["versions"][name]["some_future_field"] = {"nested": [1, 2, 3]}
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps(run), encoding="utf-8")
+    assert "assay 0.11.1" in load(path).citations["W"].text

@@ -5,6 +5,20 @@ All notable changes to the Watcher are recorded here. The format follows
 [Semantic Versioning](https://semver.org/). The version lives in one place, `watcher.__version__`;
 `pyproject.toml` reads it. No release of this repository is tagged; tagging is the owner's decision.
 
+## [Unreleased]
+
+### Changed
+- CI, README and STACK test against WARDEN 0.13.2 at commit `9d9a71d1bc3195f0abd9aee8fe553cc09838b684` (was 0.13.1 at
+  `ec551d8`). Verified against Warden's `warden/__init__.py` (`__version__ = "0.13.2"`). The end-to-end tests, the
+  full suite, ruff and mypy ran green with it installed, and `pip check` is clean for the Watcher beside Warden.
+
+### Added
+- A fixture, `tests/fixtures/warden_0_13_2_record.json`, trimmed from a real `warden tagteam` run (Warden 0.13.2
+  with ghost_tools `5d7a386`, SWIZZLE `123d7ab`, ASSAY `7b781cf`; paths neutralised), and tests that the account
+  prints a real ASSAY version (0.11.1) rather than "None". The same tests show that `module` and `module_in_root`,
+  newly added to `versions.ghost_tools`, `versions.swizzle` and `versions.assay`, and any other unknown field are
+  accepted without a crash and without changing the account.
+
 ## [0.3.1] - 2026-10-17
 
 ### Changed

@@ -42,8 +42,8 @@ uses, so `pip install` of the Watcher beside Warden, the Judge, the Drafter and 
 one CNS). `tests/test_pins.py` fails if the installed CNS is not the pinned one. Installing needs
 access to that repository.
 
-CI runs the end-to-end job and the co-install job against WARDEN 0.13.1 at commit
-`ec551d8e10f82b6e3e681593a97011ae517d360b` (the tested set; it may be one or more commits behind
+CI runs the end-to-end job and the co-install job against WARDEN 0.13.2 at commit
+`9d9a71d1bc3195f0abd9aee8fe553cc09838b684` (the tested set; it may be one or more commits behind
 WARDEN's branch head). Warden pins the same CNS commit, so `pip install . ./WARDEN` resolves with full
 dependency resolution and `pip check` is clean. To bump it, change the commit in both jobs of
 `.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree.

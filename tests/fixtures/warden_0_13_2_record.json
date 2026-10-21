@@ -1,0 +1,100 @@
+{
+  "schema": "cns.run/1",
+  "decision": "INCONCLUSIVE",
+  "converged": false,
+  "cycles": [],
+  "finished": false,
+  "put_back": false,
+  "held_digest": null,
+  "reason": "No drafter. Tag team observed only; nothing can be proposed.",
+  "notes": [
+    "SWIZZLE proofs: 12 of 12 proofs hold.",
+    "ASSAY: Ghost caught 5 of 7 known failure modes (60/60 manifest claims hold)",
+    "Ghost Tools observed 1 finding(s).",
+    "No drafter. Tag team observed only; nothing can be proposed."
+  ],
+  "observed": [
+    "ghost-a595a0b9837f"
+  ],
+  "reobserved": [
+    "ghost-a595a0b9837f"
+  ],
+  "contract": "1",
+  "versions": {
+    "warden": {
+      "version": "0.13.2",
+      "contract": "1",
+      "commit": null,
+      "dirty": null
+    },
+    "ghost_tools": {
+      "path": "/srv/circuit/stack/ghost_tools",
+      "commit": "5d7a38638b12a75b25c84ab3652e4774acb9aa10",
+      "version": "1.10.1",
+      "dirty": false,
+      "module": "/srv/circuit/stack/ghost_tools/ghost_buster/__init__.py",
+      "module_in_root": true
+    },
+    "swizzle": {
+      "path": "/srv/circuit/stack/SWIZZLE",
+      "commit": "123d7aba5d91896b6c9b381c8b0de4c89365ab81",
+      "version": "0.8.1",
+      "dirty": false,
+      "module": "/srv/circuit/stack/SWIZZLE/swizzle/__init__.py",
+      "module_in_root": true
+    },
+    "assay": {
+      "path": "/srv/circuit/stack/ASSAY",
+      "commit": "7b781cf9cb2bbc3748aaff4343d778c64dc20d8c",
+      "version": "0.11.1",
+      "dirty": false,
+      "module": "/srv/circuit/stack/ASSAY/assay_production/__init__.py",
+      "module_in_root": true
+    },
+    "seats": {
+      "drafter": null,
+      "finisher": null,
+      "judge": null
+    },
+    "joins": []
+  },
+  "swizzle_sound": true,
+  "unmeasured": [
+    "suite",
+    "judge"
+  ],
+  "ghost_scan": {
+    "status": "ok",
+    "files_scanned": 2,
+    "files_skipped": 0,
+    "files_unparsable": 0,
+    "gaps": [],
+    "gaps_not_shown": 0,
+    "declined": [
+      "mutate",
+      "kernel",
+      "structure",
+      "tests",
+      "project",
+      "secrets",
+      "correlate"
+    ],
+    "baseline": {
+      "path": null,
+      "suppressed": 0
+    }
+  },
+  "ghost_baseline": {
+    "before": {
+      "path": null,
+      "suppressed": 0
+    },
+    "after": {
+      "path": null,
+      "suppressed": 0
+    }
+  },
+  "drafter_skipped": [],
+  "informational": [],
+  "verdict": null
+}
