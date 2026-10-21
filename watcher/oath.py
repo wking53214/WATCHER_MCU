@@ -44,7 +44,7 @@ _SEP = r"[\s\-./\u00b7]*"
 _STATUS_CLAIMS = (
     # ready / grade / quality, in the production and enterprise senses
     r"prod(?:uction)?" + _SEP + r"(?:ready|grade|quality|worthy|proven|hardened|tested|safe|stable)",
-    r"ready" + _SEP + r"(?:for|to)" + _SEP
+    r"ready" + _SEP + r"(?:for|to|4|2)" + _SEP  # "ready 4 production": a digit for a word
     + r"(?:prod(?:uction)?|deploy(?:ment|ed|ing)?|releas(?:e|ed|ing)|ship(?:ping)?|merg(?:e|ing)|launch|go"
     + _SEP + r"live)",
     r"(?:deploy(?:ment)?|releas(?:e)?|ship|merge|launch|go" + _SEP + r"live)" + _SEP + r"ready",
@@ -64,6 +64,8 @@ _STATUS_CLAIMS = (
     r"(?:bug|defect|error|regression|vulnerability|issue|flaw)" + _SEP + r"free",
     r"(?:verified|proven|guaranteed|certified)" + _SEP + r"(?:safe|correct|secure|sound)",
     r"(?:no|zero)" + _SEP + r"(?:known" + _SEP + r")?(?:bugs|defects|vulnerabilit(?:y|ies)|flaws)",
+    # a mark that is a sign-off by itself: check marks, thumbs up, 100, OK, rocket, green circle
+    r"[\u2705\u2714\u2713\u2611\U0001F44D\U0001F4AF\U0001F197\U0001F680\U0001F7E2]",
 )
 
 #: Single words that are a verdict by themselves. They must stand alone: "unsafe" and "safety" are not "safe".
@@ -79,7 +81,16 @@ _PHRASE_CLAIMS = (
     r"good" + _SEP + r"to" + _SEP + r"go",
     r"(?:ok|okay)" + _SEP + r"(?:for|to)" + _SEP
     + r"(?:prod(?:uction)?|use|deploy(?:ment)?|merge|releas(?:e)?|ship(?:ping)?|launch)",
-    r"(?:no|zero)" + _SEP + r"(?:known" + _SEP + r")?(?:issues|problems|concerns)",
+    r"(?:no|zero)" + _SEP + r"(?:known" + _SEP + r")?(?:issues|problems|concerns|blockers|showstoppers|red" + _SEP
+    + r"flags|regressions|objections)",
+    r"(?:free" + _SEP + r"of|without)" + _SEP + r"(?:any" + _SEP + r")?(?:known" + _SEP
+    + r")?(?:bugs?|defects?|regressions?|vulnerabilit(?:y|ies)|flaws?)",
+    r"(?:can|may|could|should)" + _SEP + r"go" + _SEP + r"live",
+    r"(?:rest|sleep|breathe)" + _SEP + r"(?:easy|easily|well)",
+    r"nothing" + _SEP + r"to" + _SEP + r"(?:worry|fear)",
+    r"no" + _SEP + r"(?:cause|reason|need)" + _SEP + r"(?:for|to)" + _SEP + r"(?:concern|alarm|worry)",
+    r"green" + _SEP + r"light",
+    r"thumbs" + _SEP + r"up",
 )
 
 
@@ -94,6 +105,32 @@ def _alternatives(*, bounded: bool) -> re.Pattern[str]:
 
 _STATUS = _alternatives(bounded=True)
 _STATUS_SQUEEZED = _alternatives(bounded=False)
+
+#: Sign-offs in some other languages. This is a short list of the commonest, not a translation of the denylist:
+#: a paraphrase, or a language that is not here, is kept if it cites the record. They are read in the text as it
+#: is (`lookalikes=False`), since folding Cyrillic or Greek letters to Latin would turn these words into noise.
+_FOREIGN_WORDS = (
+    "es seguro", "esta seguro", "aprobado", "listo para produccion", "lista para produccion", "aprovado",
+    "pronto para producao", "approuve", "pret pour la production", "sans probleme", "sicher", "freigegeben",
+    "produktionsreif", "genehmigt", "kein problem", "in ordnung", "approvato",
+    "\u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e", "\u043e\u0434\u043e\u0431\u0440\u0435\u043d\u043e",
+    "\u0433\u043e\u0442\u043e\u0432\u043e \u043a \u043f\u0440\u043e\u0434\u0430\u043a\u0448\u0435\u043d\u0443",
+)
+#: Languages written without spaces between words: no word boundary to look for.
+_FOREIGN_RUNS = (
+    "\u5b89\u5168", "\u5df2\u6279\u51c6", "\u6279\u51c6", "\u53ef\u4ee5\u53d1\u5e03", "\u53ef\u53d1\u5e03",
+    "\u627f\u8a8d", "\u554f\u984c\u3042\u308a\u307e\u305b\u3093", "\uc548\uc804", "\uc2b9\uc778",
+)
+
+
+def _foreign() -> re.Pattern[str]:
+    def plain(text: str) -> str:
+        return re.escape(_as_read(text, lookalikes=False))
+
+    words = "|".join(plain(w).replace(r"\ ", r"\s+") for w in _FOREIGN_WORDS)
+    runs = "|".join(plain(w) for w in _FOREIGN_RUNS)
+    return re.compile(rf"(?<!\w)(?:{words})(?!\w)|{runs}")
+
 _HEADING = re.compile(r"^\s{0,3}#{1,6}\s+\S")
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
@@ -189,7 +226,7 @@ _DEFAULT_IGNORABLE = (
 #: Blank-looking characters that are not ignorable by the Unicode property but draw a gap or nothing: the
 #: braille blank. Together with the Hangul fillers (which draw a gap in some fonts and nothing in others) they
 #: are read both ways: as nothing (so "sa<filler>fe" is "safe") and as a space (so "is<filler>safe" is "is safe").
-_BLANKS = frozenset("ᅟᅠㅤﾠ⠀")
+_BLANKS = frozenset("\u115f\u1160\u3164\uffa0\u2800")
 _IGNORABLE = frozenset(chr(cp) for lo, hi in _DEFAULT_IGNORABLE for cp in range(lo, hi + 1)) - _BLANKS
 _MARKDOWN_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _HTML_TAG = re.compile(r"</?[A-Za-z][^<>]*>|<!--.*?-->")
@@ -221,7 +258,7 @@ class Enforced:
         return 1.0 if total == 0 else len(self.kept) / total
 
 
-def _fold(text: str, blank: str = "", alt: int = 0) -> str:
+def _fold(text: str, blank: str = "", alt: int = 0, lookalikes: bool = True) -> str:
     """One character at a time: marks and invisible characters vanish, every dash is a hyphen, a lookalike
     is the letter it imitates, any other control or separator is a space. A blank filler (see `_BLANKS`) becomes
     `blank`: the caller reads the sentence with it as nothing and with it as a space."""
@@ -238,7 +275,7 @@ def _fold(text: str, blank: str = "", alt: int = 0) -> str:
         elif cat in ("Cc", "Zs", "Zl", "Zp"):
             out.append(" ")
         else:
-            letters = _HOMOGLYPHS.get(ch)
+            letters = _HOMOGLYPHS.get(ch) if lookalikes else None
             out.append(letters[min(alt, len(letters) - 1)] if letters else ch)
     return "".join(out)
 
@@ -270,22 +307,36 @@ def _bidi_visual(text: str) -> str:
     return "".join(levels[0])
 
 
+def _bidi_naive(text: str) -> str:
+    """The cruder reading of the same controls: everything after the first right-to-left start is reversed, whatever
+    is nested in it. A renderer that does not follow the full algorithm (a terminal, a log viewer) can show this
+    where the algorithm itself would show `_bidi_visual`, so a label hidden either way is read."""
+    start = re.search("[\u202b\u202e\u2067]", text)
+    if start is None:
+        return text
+    return _BIDI.sub("", text[: start.start()]) + _BIDI.sub("", text[start.end() :])[::-1]
+
+
 def _prepared(text: str) -> str:
     """Entities decoded, markup and links removed: the text of a rendered page, before any letter is touched."""
     return _MARKDOWN_LINK.sub(r"\1", _HTML_TAG.sub("", html.unescape(text)))
 
 
-def _as_read(text: str, *, visual: bool = False, blank: str = "", alt: int = 0, prepared: bool = False) -> str:
+def _as_read(text: str, *, order: str = "stored", blank: str = "", alt: int = 0, prepared: bool = False,
+             lookalikes: bool = True) -> str:
     """The sentence as a person reads it on a rendered page: entities decoded, markup, links and emphasis
     markers gone, NFKC, casefolded, accents and invisible characters gone, every dash a hyphen, lookalike
-    letters folded to Latin. With `visual`, text under a bidirectional override is first put in the order it
-    is displayed. `prepared` says `_prepared` has already been applied."""
+    letters folded to Latin. With `order` "visual" or "naive", text under a bidirectional override is first put
+    in the order it is displayed (see `_bidi_visual`, `_bidi_naive`). `prepared` says `_prepared` has already been
+    applied. Without `lookalikes` the letters of other alphabets are left as they are (for labels in them)."""
     if not prepared:
         text = _prepared(text)
-    if visual:
+    if order == "visual":
         text = _bidi_visual(text)
+    elif order == "naive":
+        text = _bidi_naive(text)
     text = _EMPHASIS.sub("", unicodedata.normalize("NFKC", text)).casefold()
-    return _fold(unicodedata.normalize("NFKD", text), blank, alt).casefold()
+    return _fold(unicodedata.normalize("NFKD", text), blank, alt, lookalikes).casefold()
 
 
 def _squeezed(reading: str) -> str:
@@ -309,6 +360,9 @@ def sentences(text: str) -> list[str]:
     return out
 
 
+_FOREIGN = _foreign()
+
+
 def _citation_variants(text: str) -> list[str]:
     """The sentence as it stands, and with its `[id]` tags taken out (joining the letters either side, and leaving
     a space), because a tag set into a label ("sa[R]fe", "production [R] ready") is not part of what a reader
@@ -328,11 +382,15 @@ def status_claim(sentence: str) -> str:
     """
     for text in _citation_variants(_prepared(sentence)):
         blanks = ("", " ") if _BLANKS.intersection(unicodedata.normalize("NFKC", text)) else ("",)
-        orders = (False, True) if _BIDI.search(text) else (False,)
+        orders = ("stored", "visual", "naive") if _BIDI.search(text) else ("stored",)
         normal = unicodedata.normalize("NFKD", unicodedata.normalize("NFKC", text)).casefold()
         alts = (0, 1) if _AMBIGUOUS.intersection(normal) else (0,)
-        for visual, blank, alt in itertools.product(orders, blanks, alts):
-            read = _as_read(text, visual=visual, blank=blank, alt=alt, prepared=True)
+        for order, blank, alt in itertools.product(orders, blanks, alts):
+            if alt == 0:
+                found = _FOREIGN.search(_as_read(text, order=order, blank=blank, prepared=True, lookalikes=False))
+                if found:
+                    return found.group(0)
+            read = _as_read(text, order=order, blank=blank, alt=alt, prepared=True)
             for reading in (read, read.translate(_LEET)):
                 m = _STATUS.search(reading)
                 if m:

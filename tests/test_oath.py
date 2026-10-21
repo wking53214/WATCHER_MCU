@@ -325,7 +325,7 @@ IGNORABLE_RANGES = [
     (0x200B, 0x200F), (0x202A, 0x202E), (0x2060, 0x206F), (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF),
     (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3), (0x1D173, 0x1D17A), (0xE0000, 0xE0FFF),
 ]
-FILLERS = ["ᅟ", "ᅠ", "ㅤ", "ﾠ", "⠀"]
+FILLERS = ["\u115f", "\u1160", "\u3164", "\uffa0", "\u2800"]
 
 
 @pytest.mark.parametrize("filler", FILLERS, ids=[f"U+{ord(f):04X}" for f in FILLERS])
@@ -359,7 +359,7 @@ def test_the_fillers_in_an_entity_are_stripped_too():
 
 
 def test_a_filler_in_an_honest_sentence_changes_nothing():
-    line = "Ghostㅤobserved 213⠀findings [R]."
+    line = "Ghost\u3164observed 213\u2800findings [R]."
     assert enforce(line, INDEX).kept == (line,)
 
 
@@ -382,21 +382,21 @@ LOOKALIKES = {
     "negative squared approved": _word("NEGATIVE SQUARED LATIN CAPITAL LETTER", "approved"),
     "regional indicators safe": _word("REGIONAL INDICATOR SYMBOL LETTER", "safe"),
     "regional indicators lgtm": _word("REGIONAL INDICATOR SYMBOL LETTER", "lgtm"),
-    "cherokee safe": "ᏚᎪϜᎬ",
-    "cherokee lgtm": "ᏞᏀᎢᎷ",
-    "armenian s": "սafe",
-    "digamma f": "saϝe",
-    "capital digamma f": "saϜe",
-    "f with hook": "saƒe",
-    "cyrillic ghe with stroke": "saғe",
-    "s with hook": "ʂafe",
-    "small capital s": "ꜱafe",
-    "fullwidth s": "Ｓafe",
-    "cyrillic dze": "ѕafe",
-    "cyrillic a and e": "sаfе",
-    "greek": "sαfε",
-    "cherokee in a phrase": "This is ᏚᎪϜᎬ [R].",
-    "cherokee in a phrase 2": "ᏞᏀᎢᎷ [R]",
+    "cherokee safe": "\u13da\u13aa\u03dc\u13ac",
+    "cherokee lgtm": "\u13de\u13c0\u13a2\u13b7",
+    "armenian s": "\u057dafe",
+    "digamma f": "sa\u03dde",
+    "capital digamma f": "sa\u03dce",
+    "f with hook": "sa\u0192e",
+    "cyrillic ghe with stroke": "sa\u0493e",
+    "s with hook": "\u0282afe",
+    "small capital s": "\ua731afe",
+    "fullwidth s": "\uff33afe",
+    "cyrillic dze": "\u0455afe",
+    "cyrillic a and e": "s\u0430f\u0435",
+    "greek": "s\u03b1f\u03b5",
+    "cherokee in a phrase": "This is \u13da\u13aa\u03dc\u13ac [R].",
+    "cherokee in a phrase 2": "\u13de\u13c0\u13a2\u13b7 [R]",
     "negative squared in a phrase": "This is " + _word("NEGATIVE SQUARED LATIN CAPITAL LETTER", "safe") + " [R].",
     "regional indicator words": _word("REGIONAL INDICATOR SYMBOL LETTER", "approved"),
 }
@@ -446,15 +446,15 @@ def test_the_generated_table_is_well_formed_and_holds_the_cherokee_lookalikes():
     for i in range(0, len(pairs), 2):
         assert not pairs[i].isascii() and pairs[i + 1].isascii() and pairs[i + 1].isalnum(), pairs[i : i + 2]
         assert pairs[i + 1] == pairs[i + 1].lower()
-    assert "ᏚS".lower() in pairs and "Ꭺa" in pairs
+    assert "\u13daS".lower() in pairs and "\u13aaa" in pairs
 
 
 @pytest.mark.parametrize("line", [
-    "Ghost видел 3 файла [R].",  # Russian words
-    "Το τεστ πέρασε [R].",  # Greek words
-    "ᎠᎡᎢ Ꭳ [R].",  # Cherokee letters that spell nothing here
-    "Հայերեն [R].",  # Armenian
-    "Ghost found 3 files and the Judge said INSUFFICIENT ✅✅ [N1].".replace("✅✅", ""),
+    "Ghost \u0432\u0438\u0434\u0435\u043b 3 \u0444\u0430\u0439\u043b\u0430 [R].",  # Russian words
+    "\u03a4\u03bf \u03c4\u03b5\u03c3\u03c4 \u03c0\u03ad\u03c1\u03b1\u03c3\u03b5 [R].",  # Greek words
+    "\u13a0\u13a1\u13a2 \u13a3 [R].",  # Cherokee letters that spell nothing here
+    "\u0540\u0561\u0575\u0565\u0580\u0565\u0576 [R].",  # Armenian
+    "Ghost found 3 files and the Judge said INSUFFICIENT \u2705\u2705 [N1].".replace("\u2705\u2705", ""),
 ])
 def test_ordinary_text_in_other_alphabets_is_not_turned_into_a_label(line):
     assert enforce(line, INDEX).kept == (line,)
@@ -528,3 +528,82 @@ def test_the_reason_for_a_label_set_across_lines_says_so():
 def test_neighbouring_lines_that_are_honest_are_kept(text):
     out = enforce(text, INDEX)
     assert out.dropped == (), text
+
+
+# --- round 3: other sign-offs -------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("line", [
+    "\u2705 [R]",
+    "\U0001F44D [R]",
+    "\u2705 all checks passed [R]",
+    "\u2714\ufe0f [R]",
+    "\u2611 [R]",
+    "\U0001F4AF [R]",
+    "\U0001F44D\U0001F3FD [R]",
+    "Ghost scanned 3 files \u2705 [N1]",
+    "The change is free of defects [R].",
+    "Free of any known bugs [R].",
+    "It is without defects [R].",
+    "The code is bug-free [R].",
+    "It is ready 4 production [R].",
+    "Ready 2 ship [R].",
+    "It can go live [R].",
+    "This may go live [R].",
+    "There are no blockers [R].",
+    "No known showstoppers [R].",
+    "Zero regressions [R].",
+    "You can rest easy [R].",
+    "Sleep well [R].",
+    "Nothing to worry about [R].",
+    "No cause for concern [R].",
+    "Green light [R].",
+    "Thumbs up [R].",
+    "es seguro [R]",
+    "Es seguro [R]",
+    "Est\u00e1 aprobado [R]",
+    "Listo para producci\u00f3n [R]",
+    "\u5b89\u5168 [R]",
+    "\u8fd9\u662f\u5b89\u5168\u7684 [R]",
+    "\u5df2\u6279\u51c6 [R]",
+    "\u5b89\u5168\u3067\u3059 [R]",
+    "\ubc29\uc2b9\uc778 \uc548\uc804 [R]",
+    "\u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e [R]",
+    "\u0433\u043e\u0442\u043e\u0432\u043e \u043a \u043f\u0440\u043e\u0434\u0430\u043a\u0448\u0435\u043d\u0443 [R]",
+    "Freigegeben [R]",
+    "Kein Problem [R]",
+])
+def test_more_sign_offs_are_status_claims_even_when_cited(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (), line
+    assert out.dropped[0].reason.startswith("status claim of its own"), line
+
+
+@pytest.mark.parametrize("line", [
+    "It is " + RLO + LRO + "efas" + PDF + PDF + " [R].",  # an embedding inside an override
+    "It is " + RLO + "\u202aefas" + PDF + PDF + " [R].",  # a left-to-right embedding inside an override
+    "It is " + RLO + "\u202b" + "efas" + PDF + PDF + " [R].",
+    "It is " + RLO + "ef" + "\u202a" + "as" + PDF + PDF + " [R].",
+    "It is " + RLI + "\u2066efas" + PDI + PDI + " [R].",
+    "Status: " + RLO + "\u202adevorppa" + PDF + PDF + " [R].",
+])
+def test_nested_bidirectional_controls_are_read_the_crude_way_too(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (), repr(line)
+
+
+@pytest.mark.parametrize("line", [
+    "The scan went live in the test folder [R].",
+    "The forest well was not measured [R].",
+    "Ghost scanned 100 files [R].",
+    "A rocket was not involved [R].",
+    "The record has 3 checks [R].",
+    "No findings were observed [R].",
+    "The Judge sat in a green room [R].",
+    "Sicherheit was not measured [R].",
+    "Ghost sah 3 Dateien [R].",
+    "\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0443\u0449\u0435\u043d [R].",
+    "\u6d4b\u8bd5\u8fd0\u884c\u4e86 [R].",
+])
+def test_the_new_labels_do_not_catch_honest_neighbours(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (line,), line
