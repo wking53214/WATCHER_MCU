@@ -58,6 +58,9 @@ select = ["E", "F", "W", "B", "I", "UP", "C4", "SIM", "PT", "RUF", "S", "N", "PI
 ignore = ["N818"]
 
 [tool.ruff.lint.per-file-ignores]
+# The lookalike table exists to hold ambiguous characters.
+"watcher/_homoglyphs.py" = ["RUF001"]
+"tests/test_oath.py" = ["RUF001"]
 # Tests assert, and the end-to-end test runs the Warden command line on purpose.
 "tests/**" = ["S101", "S603", "S607", "PT018"]
 # PT018 is off for tests: the suite asserts a few related facts on one line and the message is the line itself.

@@ -1,6 +1,8 @@
 """The oath is enforced mechanically: cited sentences survive, everything else is dropped with a reason."""
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from watcher.oath import cited_ids, enforce, sentences, status_claim
@@ -358,4 +360,101 @@ def test_the_fillers_in_an_entity_are_stripped_too():
 
 def test_a_filler_in_an_honest_sentence_changes_nothing():
     line = "Ghostㅤobserved 213⠀findings [R]."
+    assert enforce(line, INDEX).kept == (line,)
+
+
+# --- round 3: letter forms NFKC does not fold -----------------------------------------------------------------
+
+def _lettered(prefix: str, letters: str) -> list[str]:
+    import unicodedata
+
+    return [unicodedata.lookup(f"{prefix} {c}") for c in letters]
+
+
+def _word(prefix: str, word: str) -> str:
+    return "".join(_lettered(prefix, word.upper()))
+
+
+LOOKALIKES = {
+    "negative circled safe": _word("NEGATIVE CIRCLED LATIN CAPITAL LETTER", "safe"),
+    "negative squared safe": _word("NEGATIVE SQUARED LATIN CAPITAL LETTER", "safe"),
+    "negative circled lgtm": _word("NEGATIVE CIRCLED LATIN CAPITAL LETTER", "lgtm"),
+    "negative squared approved": _word("NEGATIVE SQUARED LATIN CAPITAL LETTER", "approved"),
+    "regional indicators safe": _word("REGIONAL INDICATOR SYMBOL LETTER", "safe"),
+    "regional indicators lgtm": _word("REGIONAL INDICATOR SYMBOL LETTER", "lgtm"),
+    "cherokee safe": "ᏚᎪϜᎬ",
+    "cherokee lgtm": "ᏞᏀᎢᎷ",
+    "armenian s": "սafe",
+    "digamma f": "saϝe",
+    "capital digamma f": "saϜe",
+    "f with hook": "saƒe",
+    "cyrillic ghe with stroke": "saғe",
+    "s with hook": "ʂafe",
+    "small capital s": "ꜱafe",
+    "fullwidth s": "Ｓafe",
+    "cyrillic dze": "ѕafe",
+    "cyrillic a and e": "sаfе",
+    "greek": "sαfε",
+    "cherokee in a phrase": "This is ᏚᎪϜᎬ [R].",
+    "cherokee in a phrase 2": "ᏞᏀᎢᎷ [R]",
+    "negative squared in a phrase": "This is " + _word("NEGATIVE SQUARED LATIN CAPITAL LETTER", "safe") + " [R].",
+    "regional indicator words": _word("REGIONAL INDICATOR SYMBOL LETTER", "approved"),
+}
+
+
+@pytest.mark.parametrize("text", list(LOOKALIKES.values()), ids=list(LOOKALIKES))
+def test_letter_forms_nfkc_does_not_fold_are_read_as_the_letters_they_show(text):
+    assert status_claim(text), text
+    out = enforce(text if "[R]" in text else text + " [R].", INDEX)
+    assert out.kept == (), text
+
+
+def test_every_negative_circled_squared_and_regional_letter_folds_to_its_letter():
+    import unicodedata
+
+    from watcher.oath import _as_read
+
+    seen = 0
+    for cp in range(0x1F100, 0x1F200):
+        match = re.fullmatch(
+            r"(?:NEGATIVE (?:CIRCLED|SQUARED) LATIN CAPITAL LETTER|REGIONAL INDICATOR SYMBOL LETTER) ([A-Z])",
+            unicodedata.name(chr(cp), ""),
+        )
+        if match:
+            seen += 1
+            assert _as_read(chr(cp)) == match.group(1).lower(), hex(cp)
+    assert seen == 78  # 26 letters in each of the three sets
+
+
+def test_every_latin_letter_with_a_hook_stroke_or_bar_folds_to_its_base_letter():
+    import unicodedata
+
+    from watcher.oath import _as_read
+
+    for cp in range(0x0180, 0x0250):
+        name = unicodedata.name(chr(cp), "")
+        match = re.fullmatch(r"LATIN (?:CAPITAL|SMALL) LETTER ([A-Z]) WITH (?:HOOK|STROKE|BAR)", name)
+        if match:
+            assert _as_read(chr(cp)) == match.group(1).lower(), name
+
+
+def test_the_generated_table_is_well_formed_and_holds_the_cherokee_lookalikes():
+    from watcher._homoglyphs import PAIRS
+
+    pairs = "".join(PAIRS)
+    assert len(pairs) % 2 == 0 and len(pairs) > 2000
+    for i in range(0, len(pairs), 2):
+        assert not pairs[i].isascii() and pairs[i + 1].isascii() and pairs[i + 1].isalnum(), pairs[i : i + 2]
+        assert pairs[i + 1] == pairs[i + 1].lower()
+    assert "ᏚS".lower() in pairs and "Ꭺa" in pairs
+
+
+@pytest.mark.parametrize("line", [
+    "Ghost видел 3 файла [R].",  # Russian words
+    "Το τεστ πέρασε [R].",  # Greek words
+    "ᎠᎡᎢ Ꭳ [R].",  # Cherokee letters that spell nothing here
+    "Հայերեն [R].",  # Armenian
+    "Ghost found 3 files and the Judge said INSUFFICIENT ✅✅ [N1].".replace("✅✅", ""),
+])
+def test_ordinary_text_in_other_alphabets_is_not_turned_into_a_label(line):
     assert enforce(line, INDEX).kept == (line,)
