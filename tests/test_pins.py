@@ -49,9 +49,9 @@ def test_every_ci_job_that_checks_out_warden_uses_one_full_commit_that_the_readm
     assert refs[0] in (ROOT / "STACK.md").read_text(encoding="utf-8")
 
 
-#: The tested Warden: WARDEN 0.13.4 (its warden/__init__.py says so at this commit). Bump with the workflow.
-WARDEN_PIN = "36e98433f4928b7d12905f02b56e55ee1943b56e"
-WARDEN_VERSION = "0.13.4"
+#: The tested Warden: Warden 0.13.5, not tagged (its warden/__init__.py says so at this commit). Bump with the workflow.
+WARDEN_PIN = "decc3c3b5af479ad0eef3df4d66dbcb21e90897c"
+WARDEN_VERSION = "0.13.5"
 
 
 def test_the_pinned_warden_is_the_expected_commit_and_every_doc_names_its_version():
@@ -59,18 +59,13 @@ def test_the_pinned_warden_is_the_expected_commit_and_every_doc_names_its_versio
     assert refs == [WARDEN_PIN, WARDEN_PIN]
     for doc in ("README.md", "STACK.md"):
         text = (ROOT / doc).read_text(encoding="utf-8")
-        assert f"WARDEN {WARDEN_VERSION} at commit" in " ".join(text.split()), doc
+        assert f"Warden {WARDEN_VERSION} (not tagged) at commit" in " ".join(text.split()), doc
 
 
-def test_the_warden_jobs_install_warden_without_its_dependencies_until_warden_pins_the_same_cns_and_are_blocking():
-    # The tested Warden commit requires CNS v1.8.0 (5252cee), which conflicts with the Watcher's v1.9.0 (da18e41) in
-    # pip, so Warden goes in with --no-deps. When a Warden commit pins da18e41, drop --no-deps and this test's check.
+def test_the_warden_jobs_resolve_dependencies_and_are_blocking():
     text = _workflow()
-    assert "continue-on-error" not in text and "pip check" in text
-    assert text.count("pip install --no-deps ./_warden") == 2, "both Warden jobs install Warden with --no-deps"
-    steps = re.findall(r"^\s*- run: (.*)$", text, flags=re.MULTILINE)
-    assert not [s for s in steps if "./_warden" in s and "--no-deps" not in s], "no step resolves Warden's CNS"
-    assert "until Warden's own commit pins CNS da18e411743d4e3b0e783105394d845fb1c16746" in " ".join(text.split())
+    assert "--no-deps" not in text and "continue-on-error" not in text
+    assert "pip check" in text and "pip install . ./_warden" in text
 
 
 def test_every_action_is_pinned_by_commit_with_its_tag_in_a_comment():
