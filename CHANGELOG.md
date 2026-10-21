@@ -7,6 +7,17 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-10-21
+
+### Changed
+- The CNS dependency is pinned by the release tag: `cns @ git+https://github.com/wking53214/CNS.git@v1.9.0`, the
+  spelling every repository of the circuit uses (it was the full commit SHA). The tag peels to
+  `da18e411743d4e3b0e783105394d845fb1c16746`, so the installed CNS is the same commit. `tests/test_pins.py` asserts the
+  tag spelling and still checks the installed commit.
+- CI, README, STACK, the `watcher/oath.py` comment and the tests name Warden 0.13.6 (not tagged) at commit
+  `0c1ea567f0b69586cfd735f82260774aec9552bb` (was 0.13.5 at `decc3c3b5af479ad0eef3df4d66dbcb21e90897c`). The end-to-end
+  version assertion expects 0.13.6.
+
 ## [0.3.4] - 2026-10-21
 
 ### Changed
