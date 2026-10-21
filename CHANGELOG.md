@@ -7,6 +7,37 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-21
+
+### Changed
+- CI, README, STACK, the `watcher/oath.py` comment and the tests name Warden 0.13.7 (not tagged) at commit
+  `1636e1a21f124eedbf6e158db95dc75344f4308d` (was 0.13.6 at `0c1ea567f0b69586cfd735f82260774aec9552bb`). The CNS pin is
+  unchanged: the tag `v1.9.0`. The end-to-end version assertion expects 0.13.7, and `pip check` is clean with one CNS
+  after the Watcher and Warden are installed together. (Step 1)
+- The account states what the record says was not done, from the record only (found by the circuit audit, on a real
+  record: it said "not measured: nothing listed" and "gaps: none" while `ghost_scan.declined` listed seven checks Warden
+  did not run). `[G]` now carries "declined, so not run: ..." and the template account names the declined checks and says
+  that a declined check was not run, so the absence of findings from it means nothing. A part of `versions` (Warden, an
+  instrument, a seat, a joined checkout) whose `dirty` flag is `true` is marked "DIRTY: uncommitted changes" in `[W]` and
+  `[J<n>]` and named in a line of its own; `null` is not reported as dirty. When `converged` is true and a cycle still
+  observed findings, `[CV]` says converged is not zero findings, and Warden's own note to that effect is kept in the
+  template. A `ghost_scan.declined` that is not a list is refused by name, like `gaps`. The oath denylist is unchanged.
+  README (the account description and WHAT IS NOT PROVEN) says the same. New tests in `tests/test_account_honesty.py`,
+  on a real record (`tests/fixtures/warden_0_13_6_declined_record.json`), fail on the old output. (Step 2)
+
+### Fixed
+- `watcher narrate ... --target PATH` with a PATH that does not exist exited 0 and guarded nothing, so a mistyped
+  `--target` let `--out` write into the folder really governed. It now exits 2 with one line. (Step 3)
+- `--out` is written to a temporary file in the same folder and moved into place with `os.replace`, so a failed write
+  leaves no partial file and no temporary file, and an earlier account at that path stays whole. Not synced to disk.
+  (Step 4)
+
+### Tests edited
+- `tests/test_pins.py` and `tests/test_warden_e2e.py`: the expected Warden commit and version (Step 1).
+- `tests/test_charter.py`, `test_only_the_cli_writes_and_only_the_account`: the exact set of write calls in `cli.py` is
+  now `mkdir`, `unlink`, `write_text` (the temporary file of Step 4 is removed after a failed write). Nothing else about
+  it changed (Step 4).
+
 ## [0.3.5] - 2026-10-21
 
 ### Changed
