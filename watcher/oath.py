@@ -270,12 +270,18 @@ def _bidi_visual(text: str) -> str:
     return "".join(levels[0])
 
 
-def _as_read(text: str, *, visual: bool = False, blank: str = "", alt: int = 0) -> str:
+def _prepared(text: str) -> str:
+    """Entities decoded, markup and links removed: the text of a rendered page, before any letter is touched."""
+    return _MARKDOWN_LINK.sub(r"\1", _HTML_TAG.sub("", html.unescape(text)))
+
+
+def _as_read(text: str, *, visual: bool = False, blank: str = "", alt: int = 0, prepared: bool = False) -> str:
     """The sentence as a person reads it on a rendered page: entities decoded, markup, links and emphasis
     markers gone, NFKC, casefolded, accents and invisible characters gone, every dash a hyphen, lookalike
     letters folded to Latin. With `visual`, text under a bidirectional override is first put in the order it
-    is displayed."""
-    text = _MARKDOWN_LINK.sub(r"\1", _HTML_TAG.sub("", html.unescape(text)))
+    is displayed. `prepared` says `_prepared` has already been applied."""
+    if not prepared:
+        text = _prepared(text)
     if visual:
         text = _bidi_visual(text)
     text = _EMPHASIS.sub("", unicodedata.normalize("NFKC", text)).casefold()
@@ -303,6 +309,15 @@ def sentences(text: str) -> list[str]:
     return out
 
 
+def _citation_variants(text: str) -> list[str]:
+    """The sentence as it stands, and with its `[id]` tags taken out (joining the letters either side, and leaving
+    a space), because a tag set into a label ("sa[R]fe", "production [R] ready") is not part of what a reader
+    takes the label to say. The tag stays in the first reading, since "[safe]" looks like a tag and is not one."""
+    if not CITATION.search(text):
+        return [text]
+    return list(dict.fromkeys([text, CITATION.sub("", text), CITATION.sub(" ", text)]))
+
+
 def status_claim(sentence: str) -> str:
     """The status label a sentence makes on its own, or empty. A label inside a citation's quoted
     text is still a claim here: the Watcher repeats nothing it cannot cite as a report of a label.
@@ -311,21 +326,82 @@ def status_claim(sentence: str) -> str:
     when it carries bidirectional controls, in the order it is displayed (letters stored as "efas" after a
     right-to-left override show as "safe").
     """
-    unescaped = html.unescape(sentence)
-    blanks = ("", " ") if _BLANKS.intersection(unicodedata.normalize("NFKC", unescaped)) else ("",)
-    orders = (False, True) if _BIDI.search(unescaped) else (False,)
-    normal = unicodedata.normalize("NFKD", unicodedata.normalize("NFKC", unescaped)).casefold()
-    alts = (0, 1) if _AMBIGUOUS.intersection(normal) else (0,)
-    for visual, blank, alt in itertools.product(orders, blanks, alts):
-        read = _as_read(sentence, visual=visual, blank=blank, alt=alt)
-        for reading in (read, read.translate(_LEET)):
-            m = _STATUS.search(reading)
-            if m:
-                return m.group(0)
-            m = _STATUS_SQUEEZED.search(_squeezed(reading))
-            if m:
-                return m.group(0)
+    for text in _citation_variants(_prepared(sentence)):
+        blanks = ("", " ") if _BLANKS.intersection(unicodedata.normalize("NFKC", text)) else ("",)
+        orders = (False, True) if _BIDI.search(text) else (False,)
+        normal = unicodedata.normalize("NFKD", unicodedata.normalize("NFKC", text)).casefold()
+        alts = (0, 1) if _AMBIGUOUS.intersection(normal) else (0,)
+        for visual, blank, alt in itertools.product(orders, blanks, alts):
+            read = _as_read(text, visual=visual, blank=blank, alt=alt, prepared=True)
+            for reading in (read, read.translate(_LEET)):
+                m = _STATUS.search(reading)
+                if m:
+                    return m.group(0)
+                m = _STATUS_SQUEEZED.search(_squeezed(reading))
+                if m:
+                    return m.group(0)
     return ""
+
+
+_LEADER = re.compile(r"^(?:[-*\u2022]+|#{1,6}|\d+[.)])\s*")
+_TERMINAL = (".", "!", "?", ":", ";")
+_EDGE_WORDS = 8
+
+
+def _bare(unit: str) -> str:
+    """A line as the words it holds: no bullet or heading mark, no `[id]` tags."""
+    return CITATION.sub("", _LEADER.sub("", unit.strip())).strip()
+
+
+def _split_labels(units: list[str], claimed: list[bool]) -> dict[int, str]:
+    """Labels set across lines, which no one line holds: a bullet for each letter of "safe", "sa" over "fe",
+    "production" at the end of one line and "ready" at the start of the next. Returns the index of every line
+    that is part of such a label, with the label. A line that is a claim by itself is not looked at again, and a
+    pair is only read at its seam, so an honest line is not dropped for what its neighbour says."""
+    bare = [_bare(u) for u in units]
+    found: dict[int, str] = {}
+    ends = [" ".join(b.split()[-_EDGE_WORDS:]) for b in bare]  # what a label that starts on this line could use
+    starts = [" ".join(b.split()[:_EDGE_WORDS]) for b in bare]  # and what one that ends on this line could use
+    seen: dict[str, bool] = {}
+
+    def by_itself(text: str) -> bool:
+        if text not in seen:
+            seen[text] = bool(status_claim(text))
+        return seen[text]
+
+    for i in range(len(units) - 1):
+        if claimed[i] or claimed[i + 1] or not bare[i] or not bare[i + 1] or bare[i].endswith(_TERMINAL):
+            continue
+        if by_itself(ends[i]) or by_itself(starts[i + 1]):
+            continue
+        for joiner in ("", " "):
+            claim = status_claim(ends[i] + joiner + starts[i + 1])
+            if claim:
+                found[i] = found[i + 1] = claim
+                break
+    live = [k for k in range(len(units)) if bare[k]]  # a bare "1." or "-" is a mark, not a word
+    i = 0
+    while i < len(live):  # a run of lines of one or two letters each: the letters of a word, a bullet apiece
+        j = i
+        while j < len(live) and not claimed[live[j]] and len(bare[live[j]]) <= 2:
+            j += 1
+        if j - i >= 3:
+            run = live[i:j]
+            body = [bare[k] for k in run]
+            before = live[i - 1] if i > 0 and not claimed[live[i - 1]] else None  # "It is s" over "a", "f", "e"
+            for lead in ([None, before] if before is not None else [None]):
+                for joiner in ("", " "):
+                    text = joiner.join(body) if lead is None else ends[lead] + joiner + joiner.join(body)
+                    claim = status_claim(text)
+                    if claim:
+                        for k in run if lead is None else [lead, *run]:
+                            found[k] = claim
+                        break
+                else:
+                    continue
+                break
+        i = max(j, i + 1)
+    return found
 
 
 def enforce(text: str, citations: Mapping[str, object], headings_allowed: bool = True) -> Enforced:
@@ -333,10 +409,16 @@ def enforce(text: str, citations: Mapping[str, object], headings_allowed: bool =
     kept: list[str] = []
     dropped: list[Dropped] = []
     known = set(citations)
-    for sentence in sentences(text):
-        claim = status_claim(sentence)
+    units = sentences(text)
+    claims = [status_claim(u) for u in units]
+    split = _split_labels(units, [bool(c) for c in claims])
+    for n, sentence in enumerate(units):
+        claim = claims[n]
         if claim:
             dropped.append(Dropped(sentence, f"status claim of its own: {claim!r}"))
+            continue
+        if n in split:
+            dropped.append(Dropped(sentence, f"status claim of its own, set across lines: {split[n]!r}"))
             continue
         ids = CITATION.findall(sentence)
         if not ids:

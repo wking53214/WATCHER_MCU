@@ -458,3 +458,73 @@ def test_the_generated_table_is_well_formed_and_holds_the_cherokee_lookalikes():
 ])
 def test_ordinary_text_in_other_alphabets_is_not_turned_into_a_label(line):
     assert enforce(line, INDEX).kept == (line,)
+
+
+# --- round 3: a citation set into the label, and a label set across lines ------------------------------------------
+
+@pytest.mark.parametrize("line", [
+    "This repository is production [R] ready.",
+    "Ship [R] it.",
+    "It is sa[R]fe.",
+    "L[R]GTM.",
+    "This is production[N1]ready.",
+    "It is battle [R]-[N1] tested.",
+    "It is s[R] a[R] f[R] e.",
+    "It is[R]safe.",
+    "It is prod[ghost-1b3766cb418b]uction ready.",
+    "Production [R] ready [N1].",
+])
+def test_a_citation_inside_a_label_does_not_hide_it(line):
+    out = enforce(line, INDEX)
+    assert out.kept == (), line
+    assert out.dropped[0].reason.startswith("status claim of its own"), line
+
+
+def test_a_bracketed_word_that_is_not_a_tag_is_still_read():
+    assert status_claim("It is [safe] [R].") == "safe"
+
+
+def test_a_citation_is_still_required_for_a_kept_sentence():
+    assert enforce("It ended REJECT.", INDEX).kept == ()
+    assert enforce("It ended REJECT [S9].", INDEX).dropped[0].reason == "cites what is not in the record: S9"
+    assert enforce("It ended REJECT [R].", INDEX).kept == ("It ended REJECT [R].",)
+
+
+@pytest.mark.parametrize("text", [
+    "- s [R]\n- a [R]\n- f [R]\n- e [R]",
+    "- s\n- a\n- f\n- e",
+    "- S [R]\n- A [R]\n- F [R]\n- E [R]",
+    "* s [R]\n* a [R]\n* f [R]\n* e [R]",
+    "1. s [R]\n2. a [R]\n3. f [R]\n4. e [R]",
+    "- sa [R]\n- fe [R]",
+    "- Verdict: ship [R]\n- it [R]",
+    "This run is production [R]\nready [R]",
+    "This run is production\nready [R]",
+    "\n".join(f"- {c} [R]" for c in "production ready" if c != " "),
+    "- L [R]\n- G [R]\n- T [R]\n- M [R]",
+    "- It is s [R]\n- a [R]\n- f [R]\n- e [R]",
+])
+def test_a_label_set_across_lines_drops_every_line_of_it(text):
+    out = enforce(text, INDEX)
+    assert out.kept == (), text
+    # a bare "1." has nothing to cite and says so; every line that carries a letter is dropped as the label
+    lettered = [d for d in out.dropped if re.search(r"[a-z]", d.sentence, re.I)]
+    assert all("status claim of its own" in d.reason for d in lettered), text
+
+
+def test_the_reason_for_a_label_set_across_lines_says_so():
+    out = enforce("- s [R]\n- a [R]\n- f [R]\n- e [R]", INDEX)
+    assert {d.reason for d in out.dropped} == {"status claim of its own, set across lines: 'safe'"}
+
+
+@pytest.mark.parametrize("text", [
+    "- Ghost observed 3 findings [R]\n- The Judge said INSUFFICIENT [V]".replace("[V]", "[N1]"),
+    "- Plan A [R]\n- B [R]\n- C [R]",
+    "- 3 [R]\n- 5 [R]\n- 7 [R]",
+    "The decision was ACCEPT [R].\nIt is ready for the Judge.".replace("It is ready for the Judge.", "Next [N1]."),
+    "- The run is a [R]\n- ship that sailed [N1]",
+    "- Nothing here was the production [R]\n- readiness of anything [N1]",
+])
+def test_neighbouring_lines_that_are_honest_are_kept(text):
+    out = enforce(text, INDEX)
+    assert out.dropped == (), text
