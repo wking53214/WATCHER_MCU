@@ -381,3 +381,25 @@ def test_a_record_that_is_a_folder_is_not_called_json(tmp_path, capsys):
     assert main(["narrate", str(tmp_path), "--no-model"]) == EXIT_USAGE
     err = capsys.readouterr().err
     assert "cannot be read:" in err and "JSON" not in err
+
+
+def test_a_target_that_does_not_exist_is_refused_with_one_line_and_nothing_is_written(tmp_path, capsys):
+    """A mistyped `--target` used to exit 0 and guard nothing: `--out` could go into the folder really governed."""
+    real = tmp_path / "project"
+    real.mkdir()
+    typo = tmp_path / "projcet"
+    assert not typo.exists()
+    out = real / "WATCHER.md"
+    code = main(["narrate", str(FIXTURE), "--target", str(typo), "--out", str(out), "--no-model"])
+    err = capsys.readouterr().err
+    assert code == 2 and not out.exists() and list(real.iterdir()) == []
+    assert err.count("\n") == 1 and f"--target {typo} does not exist" in err
+    # also without --out: a record read with a target that is not there is not a quiet success
+    assert main(["narrate", str(FIXTURE), "--target", str(typo), "--no-model"]) == 2
+    assert capsys.readouterr().out == ""
+
+
+def test_a_target_that_exists_is_still_accepted(tmp_path):
+    real = tmp_path / "project"
+    real.mkdir()
+    assert main(["narrate", str(FIXTURE), "--target", str(real), "--out", str(tmp_path / "a.md"), "--no-model"]) == 0

@@ -81,7 +81,7 @@ default); `--effort` low to max.
 |---|---|
 | 0 | An account was written (or printed). |
 | 1 | An internal error, a bug in the Watcher, reported in one line (`--verbose` adds the traceback). Nothing was written. A malformed record is never this; it is 2. |
-| 2 | Usage: a record that is missing ("file not found"), unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), an `--out` inside a forbidden folder or on top of the record it reads, an `--out` whose folder does not exist (unless `--create-out-dir` is given), an `--out` that cannot be written, a bad option. |
+| 2 | Usage: a record that is missing ("file not found"), unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), a `--target` that does not exist, an `--out` inside a forbidden folder or on top of the record it reads, an `--out` whose folder does not exist (unless `--create-out-dir` is given), an `--out` that cannot be written, a bad option. |
 | 3 | No account could be had from a model: no credentials and no `--no-model`, the model could not be reached (connection, timeout, API error, or a response that cannot be decoded as JSON or is not a message) or it declined. Nothing was written. |
 | 4 | The oath dropped every sentence, so there is no account to give. The file is still written and shows what was dropped. |
 
@@ -226,4 +226,6 @@ The arrow into the Watcher is the only one. Nothing comes back.
   reason quoted as "safe to merge") is dropped, like any other use of it. A quoted denial ("cannot be shown
   safe") is kept.
 - `--target` is needed for the governed folder because Warden's record does not name it; the
-  instrument and joined paths are refused from the record alone.
+  instrument and joined paths are refused from the record alone. A `--target` that does not exist is refused
+  (exit 2), because a guard on a folder that is not there would let `--out` into the real one under another name.
+  The Watcher does not check that `--target` is the folder that was governed, only that it exists.
