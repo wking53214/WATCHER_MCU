@@ -19,8 +19,10 @@ Diagnostics go to standard error through the `watcher` logger; --verbose turns o
 from __future__ import annotations
 
 import argparse
+import contextlib
 import logging
 import os
+import secrets
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -121,6 +123,21 @@ def _model_errors() -> tuple[type[BaseException], ...]:
     return (anthropic.AnthropicError, ModelResponseError)
 
 
+def _write_atomically(path: Path, text: str) -> None:
+    """Write `text` to `path` through a temporary file in the same folder, then `os.replace` it into place, so a
+    failure at any point leaves no partial file at `path` and no temporary file behind. A symlink at `path` is
+    written through, as a plain write would. Durability against a crash of the machine is not claimed."""
+    dest = Path(os.path.realpath(path))
+    tmp = dest.with_name(f".watcher-{secrets.token_hex(6)}.tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, dest)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
+        raise
+
+
 def write_account(evidence: Evidence, narrator: Narrator | None, model: str, effort: str) -> tuple[str, int]:
     """The rendered account and the exit code: 0, or 4 when nothing survived the oath."""
     raw = narrate(evidence, narrator, model=model, effort=effort)
@@ -181,7 +198,7 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
         try:
             if args.create_out_dir:
                 args.out.parent.mkdir(parents=True, exist_ok=True)
-            args.out.write_text(text, encoding="utf-8")
+            _write_atomically(args.out, text)
         except OSError as err:
             print(f"watcher: cannot write {args.out}: {type(err).__name__}: {err}", file=sys.stderr)
             return EXIT_USAGE

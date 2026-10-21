@@ -38,7 +38,9 @@ def test_only_the_cli_writes_and_only_the_account():
         calls = [n.func.attr for n in ast.walk(tree) if isinstance(n, ast.Call)
                  and isinstance(n.func, ast.Attribute) and n.func.attr in WRITERS]
         if path.name == "cli.py":
-            assert sorted(calls) == ["mkdir", "write_text"]
+            # mkdir for --create-out-dir; write_text and unlink for the account written through a temporary file
+            # that is removed again if the write fails (the account is then moved into place with os.replace)
+            assert sorted(calls) == ["mkdir", "unlink", "write_text"]
         else:
             assert calls == [], f"{path.name} writes: {calls}"
 

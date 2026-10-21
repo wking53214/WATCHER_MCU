@@ -34,7 +34,10 @@ watcher --verbose narrate run.json --no-model   # diagnostics on standard error
 `--out` writes into an existing folder only. A missing folder is refused (exit 2), not created, so a typo
 cannot make the Watcher build a directory tree somewhere unintended; pass `--create-out-dir` to have it
 create the folder and its parents. The folder checks (the governed folder, every checkout the record names,
-the record itself) run first and are not lifted by the flag.
+the record itself) run first and are not lifted by the flag. The file is written to a temporary file in the same
+folder and moved into place, so a write that fails leaves no partial account, no temporary file, and an earlier
+account at the same path whole (a symlink at `--out` is written through). The write is not synced to disk, so a crash
+of the machine mid-write is not covered.
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from
 its git URL pinned by the release tag `v1.9.0`
