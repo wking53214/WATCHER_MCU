@@ -3,9 +3,40 @@
 All notable changes to the Watcher are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/). The version lives in one place, `watcher.__version__`;
-`pyproject.toml` reads it. No release of this repository is tagged; tagging is the owner's decision.
+`pyproject.toml` reads it. Releases are tagged by the owner; check the repository's tags and releases on GitHub for what exists.
 
 ## [Unreleased]
+
+## [0.3.8] - 2026-10-22
+
+### Changed
+- The CNS pin moves from the tag `v1.9.0` to the tag `v2.0.0`: `cns @ git+https://github.com/wking53214/CNS.git@v2.0.0`,
+  with the comment `# v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1` in `pyproject.toml`, the same spelling as the
+  other repositories of the circuit. README, STACK and `tests/test_pins.py` follow. The Watcher imports only `cns.run`
+  and the suite passes against the installed cns 2.0.0 (`direct_url.json`: requested revision `v2.0.0`, commit
+  `b13e5d2f9e0e4291725f82794b89117c3d840ac1`) with no change to the code. (Step 1)
+- CI, README, STACK, the `watcher/oath.py` comment and the tests name Warden 0.13.9 (not tagged) at commit
+  `b57b81e1c98333c43d422666c89a8fcf3ae6eaca` (was 0.13.8 at `380894f0304ef40587dd29efd41b4ceccf94a5d3`). That Warden pins
+  CNS `v2.0.0`, so pip resolves the Watcher and Warden together with one CNS and `pip check` is clean. The end-to-end
+  version assertion expects 0.13.9. The Watcher has no pin to ghost_tools, SWIZZLE or ASSAY. (Step 2)
+
+### Documentation
+- README rewritten to state what works (each line names its test or CI job), what does not work or is not proven, the
+  open defects, what broke and how it was fixed (checked against this changelog, `git log` and the tests), what is and is
+  not recorded about the circuit governing this repository (Warden's registry rows 5 and 6 do not list it, and they
+  predate the current rules), and the ceilings code cannot fix. The install commands were run in a fresh virtual
+  environment. Removed because they could not be verified here: that the label list is a superset of Ghost Tools' list,
+  a date on the SWIZZLE fixture, and a count of other languages. Two statements were corrected: the `[CV]` defect fixed in
+  0.3.7 described the last cycle that had observed anything, not the first cycle; and the `--out` defect of 0.3.7 was
+  introduced by the atomic write of 0.3.6. (Step 3)
+- This file no longer says whether a release is tagged (the statement goes stale). Past entries are unchanged.
+
+### Tests
+- New: `tests/test_readme_ledger.py` (the sections exist, the tests the README names exist, the ledger's versions and
+  dates match this changelog, the numbers it states match the code, no marketing words, no claim about tags).
+- Pre-existing tests edited, each to assert the new behaviour and nothing else: `tests/test_pins.py` (the CNS tag and
+  commit, Step 1; the Warden commit and version, Step 2) and `tests/test_warden_e2e.py` (the expected Warden version,
+  Step 2).
 
 ## [0.3.7] - 2026-10-22
 

@@ -7,7 +7,7 @@ for a person. It can use a Claude model through the official SDK, or write the a
 It has no authority: nothing in the circuit reads what it writes, and every sentence it keeps cites a measurement in the
 record by id, or is dropped before anyone reads it.
 
-Version `0.3.7` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.8` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 

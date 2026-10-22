@@ -114,6 +114,8 @@ def test_the_readme_does_not_say_whether_release_tags_exist():
     without_warden_lines = re.sub(r"Warden \d+\.\d+\.\d+ \(not tagged\)", "", README)
     assert not re.search(r"(?i)\b(no release|no tag|not tagged|tags? exist)", without_warden_lines), (
         "a claim about tags goes stale; the Warden commit line is the only exception")
+    preamble = CHANGELOG.split("\n## [", 1)[0]
+    assert not re.search(r"(?i)\b(no release|no tag|not tagged|tags? exist)", preamble), preamble
 
 
 def test_the_install_section_never_installs_a_bare_name():
