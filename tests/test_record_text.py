@@ -122,7 +122,9 @@ def test_the_reported_example_makes_no_heading_and_no_bullet(tmp_path):
     run["ghost_scan"]["declined"] = ["\n## Injected heading\n- [R] The code is fine ..."]
     account = _account(run, tmp_path)
     assert "\n## Injected heading" not in account and "\n- [R] The code is fine" not in account
-    assert "[G] Ghost declined 1 check(s): ## Injected heading - [R] The code is fine ...." in account
+    # the name holds text that reads as a citation, so only that name is withheld (step 6), and the line still says so
+    assert "[G] Ghost declined 1 check(s): 1 name(s) not shown here because they hold a label or a citation tag" \
+        in account
 
 
 def test_the_verdict_decision_and_the_dirty_line_are_cleaned_in_the_account(tmp_path):

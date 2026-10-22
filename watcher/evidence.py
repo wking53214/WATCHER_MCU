@@ -19,6 +19,8 @@ from typing import Any
 
 from cns.run import RunRecord
 
+from .oath import CITATION, status_claim
+
 log = logging.getLogger(__name__)
 
 
@@ -67,42 +69,115 @@ def _declined(scan: Mapping[str, Any]) -> list[str]:
     return [str(name) for name in declined] if isinstance(declined, (list, tuple)) else []
 
 
+#: How many of the names already shown a declined name is read with.
+_NEIGHBOURS = 24
+
+
+def declined_checks(scan: Mapping[str, Any]) -> tuple[list[str], int]:
+    """(the declined checks the account may name, how many it may not). Each name is cleaned. A name is withheld, and
+    only that name, when the oath would drop a line that repeats it: it holds a status label (or reads as one with its
+    neighbours, as letters set apart do) or it holds text that reads as a citation. Without this, one such name in a
+    list of seven made the oath drop the whole line, and the account said nothing of the other six."""
+    shown: list[str] = []
+    for name in map(clean, _declined(scan)):
+        # A label can be spelled across neighbouring names (single letters set apart), so a name is read with the
+        # last names shown, not alone; the window keeps a very long list from costing a quadratic reading.
+        if CITATION.search(name) or status_claim(", ".join([*shown[-_NEIGHBOURS:], name])):
+            continue
+        shown.append(name)
+    return shown, len(_declined(scan)) - len(shown)
+
+
+def declined_phrase(scan: Mapping[str, Any]) -> str:
+    """The declined checks as one phrase for a line of the account: the names that may be repeated, and, when any were
+    withheld, how many (the record has them)."""
+    shown, withheld = declined_checks(scan)
+    phrase = ", ".join(shown)
+    if withheld:
+        note = f"{withheld} name(s) not shown here because they hold a label or a citation tag, the record has them"
+        phrase = f"{phrase}; {note}" if phrase else note
+    return phrase
+
+
 def _dirty(entry: Mapping[str, Any]) -> bool:
-    """Whether the record flags this checkout as having uncommitted changes. Only `true` says so: null is unknown."""
+    """Whether the record flags this checkout as having uncommitted changes: `dirty` is the boolean true."""
     return entry.get("dirty") is True
+
+
+def _unreadable(entry: Mapping[str, Any]) -> bool:
+    """Whether the record's `dirty` flag is something other than true, false or null (the text "true", the number 1,
+    a list...). Warden writes a boolean or null; anything else is not a flag the Watcher can read, so the part is
+    treated as possibly dirty, and said to be."""
+    flag = entry.get("dirty")
+    return flag is not None and flag is not True and flag is not False
 
 
 #: What the account says beside a part whose `dirty` flag is true.
 DIRTY_MARK = "DIRTY: uncommitted changes"
 
 
-def dirty_parts(run: Mapping[str, Any]) -> list[tuple[str, str]]:
-    """(name, citation id) of every part of `versions` the record flags `dirty: true`: the four named entries and the
-    seats under [W], each join under its [J<n>]. Nothing is added that the record does not hold."""
-    out: list[tuple[str, str]] = []
+def _mark(entry: Mapping[str, Any]) -> str:
+    """What the account says beside a part of `versions` about its `dirty` flag: nothing when it is false or null."""
+    if _dirty(entry):
+        return f" ({DIRTY_MARK})"
+    if _unreadable(entry):
+        return f" ({UNREADABLE_MARK}: the dirty flag is {type(entry.get('dirty')).__name__}, not true or false)"
+    return ""
+
+
+#: What the account says beside a part whose `dirty` flag is neither true, false nor null.
+UNREADABLE_MARK = "DIRTY OR UNREADABLE"
+
+
+def _parts(run: Mapping[str, Any]) -> list[tuple[str, str, Mapping[str, Any]]]:
+    """(name, citation id, entry) of every part of `versions` that carries a dirty flag: the four named entries and
+    the seats under [W], each join under its [J<n>]."""
+    out: list[tuple[str, str, Mapping[str, Any]]] = []
     versions = run.get("versions")
     if not isinstance(versions, Mapping):
         return out
     for name in ("warden", "ghost_tools", "swizzle", "assay"):
         v = versions.get(name)
-        if isinstance(v, Mapping) and _dirty(v):
-            out.append((name, "W"))
+        if isinstance(v, Mapping):
+            out.append((name, "W", v))
     seats = versions.get("seats")
     if isinstance(seats, Mapping):
-        out += [(f"{clean(role)} seat", "W") for role, seat in seats.items()
-                if isinstance(seat, Mapping) and _dirty(seat)]
+        out += [(f"{clean(role)} seat", "W", seat) for role, seat in seats.items() if isinstance(seat, Mapping)]
     for n, join in enumerate(versions.get("joins") or (), start=1):
-        if isinstance(join, Mapping) and _dirty(join):
-            out.append((f"join {clean(join.get('path'))}", f"J{n}"))
+        if isinstance(join, Mapping):
+            out.append((f"join {clean(join.get('path'))}", f"J{n}", join))
     return out
+
+
+def dirty_parts(run: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """(name, citation id) of every part of `versions` the record flags `dirty: true`. Nothing is added that the
+    record does not hold."""
+    return [(name, cid) for name, cid, entry in _parts(run) if _dirty(entry)]
+
+
+def unreadable_dirty_parts(run: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """(name, citation id) of every part of `versions` whose `dirty` flag is neither true, false nor null."""
+    return [(name, cid) for name, cid, entry in _parts(run) if _unreadable(entry)]
+
+
+def _at(entry: Mapping[str, Any]) -> str:
+    """" at <12 characters of the commit>", or ", commit not recorded" when the record holds none (a Warden that is
+    not a git checkout records null)."""
+    commit = entry.get("commit")
+    return f" at {str(commit)[:12]}" if commit not in (None, "") else ", commit not recorded"
+
+
+def _version(entry: Mapping[str, Any]) -> str:
+    version = entry.get("version")
+    return str(version) if version not in (None, "") else "version not recorded"
 
 
 def index(run: Mapping[str, Any]) -> dict[str, Citation]:
     """Every citable thing in a run record, keyed by id. Ids are stable for a given record."""
     out: dict[str, Citation] = {}
 
-    def put(cid: str, kind: str, text: str) -> None:
-        out[cid] = Citation(cid, kind, clean(text))
+    def put(cid: str, kind: str, text: str, limit: int = 400) -> None:
+        out[cid] = Citation(cid, kind, clean(text, limit))
 
     put("R", "decision", f"decision {run.get('decision')!s}; reason: {run.get('reason')!s}")
     verdict = run.get("verdict")
@@ -126,11 +201,11 @@ def index(run: Mapping[str, Any]) -> dict[str, Citation]:
         put("U", "unmeasured", "not measured: " + (", ".join(map(str, unmeasured)) or "nothing listed in the record"))
     scan = run.get("ghost_scan")
     if isinstance(scan, Mapping):
-        declined = _declined(scan)
+        declined = declined_phrase(scan)
         put("G", "ghost_scan", f"Ghost scan {scan.get('status')}: {scan.get('files_scanned')} file(s) scanned, "
                                f"{scan.get('files_unparsable')} unparsable; gaps: "
                                f"{'; '.join(map(str, scan.get('gaps') or ())) or 'none'}"
-                               + (f"; declined, so not run: {', '.join(declined)}" if declined else ""))
+                               + (f"; declined, so not run: {declined}" if _declined(scan) else ""))
     baseline = run.get("ghost_baseline")
     if isinstance(baseline, Mapping):
         put("B", "ghost_baseline", f"Ghost baseline before/after: {json.dumps(baseline, sort_keys=True)}")
@@ -144,19 +219,17 @@ def index(run: Mapping[str, Any]) -> dict[str, Citation]:
         for name in ("warden", "ghost_tools", "swizzle", "assay"):
             v = versions.get(name)
             if isinstance(v, Mapping):
-                parts.append(f"{name} {v.get('version')} at {str(v.get('commit'))[:12]}"
-                             + (f" ({DIRTY_MARK})" if _dirty(v) else ""))
+                parts.append(f"{name} {_version(v)}{_at(v)}{_mark(v)}")
         seats = versions.get("seats")
         if isinstance(seats, Mapping):
             for role, seat in seats.items():  # a seat that was not loaded is null in the record
                 if isinstance(seat, Mapping):
-                    parts.append(f"{role} seat {seat.get('spec')} {seat.get('version')} "
-                                 f"at {str(seat.get('commit'))[:12]}" + (f" ({DIRTY_MARK})" if _dirty(seat) else ""))
-        put("W", "versions", "took part: " + ("; ".join(parts) or "unknown"))
+                    parts.append(f"{role} seat {seat.get('spec')} {_version(seat)}{_at(seat)}{_mark(seat)}")
+        # No parts are cut from this line: a part cut off would lose its dirty mark with it.
+        put("W", "versions", "took part: " + ("; ".join(parts) or "unknown"), limit=4000)
         for n, join in enumerate(versions.get("joins") or (), start=1):
             if isinstance(join, Mapping):
-                put(f"J{n}", "join", f"joined for Ghost: {join.get('path')} at {str(join.get('commit'))[:12]}"
-                                     + (f" ({DIRTY_MARK})" if _dirty(join) else ""))
+                put(f"J{n}", "join", f"joined for Ghost: {join.get('path')}{_at(join)}{_mark(join)}")
     for key, prefix, kind in (("attacks", "A", "attack"), ("swizzle_proofs", "P", "proof")):
         rows = run.get(key)
         if isinstance(rows, (list, tuple)):
@@ -286,5 +359,5 @@ def load(path: Path, target: Path | None = None) -> Evidence:
     return Evidence(run=run, citations=citations, forbidden_paths=forbidden)
 
 
-__all__ = ["DIRTY_MARK", "Citation", "Evidence", "UnreadableRecord", "clean", "dirty_parts", "forbidden_paths", "index",
-           "load"]
+__all__ = ["DIRTY_MARK", "UNREADABLE_MARK", "Citation", "Evidence", "UnreadableRecord", "clean", "declined_checks",
+           "declined_phrase", "dirty_parts", "forbidden_paths", "index", "load", "unreadable_dirty_parts"]

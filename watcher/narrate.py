@@ -15,7 +15,15 @@ import os
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from .evidence import DIRTY_MARK, Evidence, clean, dirty_parts
+from .evidence import (
+    DIRTY_MARK,
+    UNREADABLE_MARK,
+    Evidence,
+    clean,
+    declined_phrase,
+    dirty_parts,
+    unreadable_dirty_parts,
+)
 from .oath import CITATION
 
 log = logging.getLogger(__name__)
@@ -207,15 +215,20 @@ def template(evidence: Evidence) -> str:
         out.append(fact("AU"))  # an instrument Warden cannot name was allowed on request
     scan = run.get("ghost_scan")
     declined = scan.get("declined") if isinstance(scan, Mapping) else None
-    if "G" in c and isinstance(declined, list) and declined:  # checks left out of the scan
-        names = ", ".join(map(clean, declined))
-        out.append(f"- [G] Ghost declined {len(declined)} check(s): {names}. A declined check "
+    if "G" in c and isinstance(scan, Mapping) and isinstance(declined, list) and declined:  # checks left out
+        out.append(f"- [G] Ghost declined {len(declined)} check(s): {declined_phrase(scan)}. A declined check "
                    "was not run, so the absence of findings from it means nothing.")
     dirty = dirty_parts(run)
     if dirty:  # the record flags uncommitted changes in a part that took part
         ids = "".join(f"[{cid}]" for cid in dict.fromkeys(cid for _, cid in dirty))
         out.append(f"- {ids} {DIRTY_MARK} (dirty: true) in {', '.join(name for name, _ in dirty)}; "
                    "the commit shown for each is not the whole of what ran.")
+    unreadable = unreadable_dirty_parts(run)
+    if unreadable:  # a flag that is not true, false or null: possibly dirty, and said to be
+        ids = "".join(f"[{cid}]" for cid in dict.fromkeys(cid for _, cid in unreadable))
+        out.append(f"- {ids} {UNREADABLE_MARK} (the dirty flag is not true or false) in "
+                   f"{', '.join(name for name, _ in unreadable)}; whether the commit shown for each is the whole of "
+                   "what ran is not known.")
     out += [fact(cid) for cid, cit in c.items()
             if cit.kind == "note" and cid not in measured
             and ("gap" in cit.text.lower() or "not measured" in cit.text.lower()

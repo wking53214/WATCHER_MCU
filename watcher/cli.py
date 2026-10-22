@@ -4,10 +4,10 @@ Exit codes (the README table is tested against this list):
   0  an account was written (or printed).
   1  an internal error: a bug in the Watcher, reported in one line (add --verbose for the traceback).
      Nothing was written. A malformed record is never this; it is 2.
-  2  usage: a record that is missing, unreadable or malformed, a --target that does not exist, an --out inside a
-     forbidden folder or on top of the record itself, an --out that exists and is not a regular file (a folder,
-     a named pipe, a device, or a symlink that resolves to one), an --out whose folder does not exist (unless
-     --create-out-dir is given), an --out that cannot be written, a bad option.
+  2  usage: a record that is missing, unreadable or malformed, a --target that does not exist or is not a folder,
+     an --out inside a forbidden folder or on top of the record itself, an --out that exists and is not a regular
+     file (a folder, a named pipe, a device, or a symlink that resolves to one), an --out whose folder does not
+     exist (unless --create-out-dir is given), an --out that cannot be written, a bad option.
   3  no account could be had from a model: no credentials and --no-model was not given, the model
      could not be reached (connection, timeout, an API error, a response that cannot be decoded or is not
      a message) or it declined. Nothing was written.
@@ -188,6 +188,11 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
     if args.target is not None and not args.target.expanduser().exists():
         # A guard built on a folder that is not there protects nothing: --out could be inside the real one.
         print(f"watcher: refused: --target {args.target} does not exist, so it cannot be guarded; "
+              "give the folder that was governed", file=sys.stderr)
+        return EXIT_USAGE
+    if args.target is not None and not args.target.expanduser().is_dir():
+        # The guard is a folder: --out is refused when it is inside it. A file guards nothing.
+        print(f"watcher: refused: --target {args.target} is not a folder, so it cannot be guarded; "
               "give the folder that was governed", file=sys.stderr)
         return EXIT_USAGE
     if args.out is not None:
