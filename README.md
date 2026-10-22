@@ -48,8 +48,8 @@ its git URL pinned by the release tag `v2.0.0`
 against the installed 2.0.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned
 one. Installing needs access to that repository.
 
-CI runs the end-to-end job and the co-install job against Warden 0.13.8 (not tagged) at commit
-`380894f0304ef40587dd29efd41b4ceccf94a5d3` (the tested set; it may be one or more
+CI runs the end-to-end job and the co-install job against Warden 0.13.9 (not tagged) at commit
+`b57b81e1c98333c43d422666c89a8fcf3ae6eaca` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.0.0`, `b13e5d2`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
@@ -236,7 +236,7 @@ The arrow into the Watcher is the only one. Nothing comes back.
   own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
   approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
   "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
-  (strings in Warden 0.13.8 at 380894f; `tests/test_warden_e2e.py` checks they are still in the installed
+  (strings in Warden 0.13.9 at b57b81e; `tests/test_warden_e2e.py` checks they are still in the installed
   Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
   The disguises it does read through are listed above and tested. It is a superset of Ghost Tools' list as of
   2026-10-15, and a new label there should be added here. The citation requirement and the shown "dropped"

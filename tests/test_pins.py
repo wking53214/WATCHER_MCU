@@ -52,9 +52,9 @@ def test_every_ci_job_that_checks_out_warden_uses_one_full_commit_that_the_readm
     assert refs[0] in (ROOT / "STACK.md").read_text(encoding="utf-8")
 
 
-#: The tested Warden: Warden 0.13.8, not tagged (its warden/__init__.py says so at this commit). Bump with the workflow.
-WARDEN_PIN = "380894f0304ef40587dd29efd41b4ceccf94a5d3"
-WARDEN_VERSION = "0.13.8"
+#: The tested Warden: Warden 0.13.9, not tagged (its warden/__init__.py says so at this commit). Bump with the workflow.
+WARDEN_PIN = "b57b81e1c98333c43d422666c89a8fcf3ae6eaca"
+WARDEN_VERSION = "0.13.9"
 
 
 def test_the_pinned_warden_is_the_expected_commit_and_every_doc_names_its_version():

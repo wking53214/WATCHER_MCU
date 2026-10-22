@@ -39,7 +39,7 @@ def _warden(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
 def test_the_installed_warden_is_the_tested_one():
     from importlib import metadata
 
-    assert metadata.version("warden") == "0.13.8", "the e2e job tests the Warden that tests/test_pins.py names"
+    assert metadata.version("warden") == "0.13.9", "the e2e job tests the Warden that tests/test_pins.py names"
 
 
 def test_a_record_from_a_target_that_does_not_exist(tmp_path, capsys):
