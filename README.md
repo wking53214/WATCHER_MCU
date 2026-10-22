@@ -78,7 +78,7 @@ sentence that a declined check was not run, so the absence of findings from it m
 nothing as unmeasured and still decline checks, and the account says both); any part of `versions` (Warden,
 the instruments, the seats, each joined checkout) whose `dirty` flag is `true`, marked "DIRTY: uncommitted
 changes" in `[W]` and `[J<n>]` and named in a line of its own (`null` means the record could not tell, and
-is not reported as dirty); and, when `converged` is true while a cycle still observed findings, that converged
+is not reported as dirty); and, when `converged` is true while the final cycle of the record still observed findings (the last one in its list), that converged
 is not zero findings (`[CV]`), together with Warden's own note saying so. The account also lists every cycle
 of the record (`[C1]`, `[C2]`, ... with no cap), says when `put_back` or `finished` is true, says that
 `swizzle_sound` is false (SWIZZLE's proofs did not hold) or null (no result) and shows the notes that say a step

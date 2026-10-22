@@ -143,3 +143,62 @@ def test_the_command_line_account_says_it_too(tmp_path, capsys):
     assert "Ghost declined 7 check(s)" in text and "converged is not zero findings" in text
     assert "Nothing. Every sentence cited the record" in text
     assert capsys.readouterr().err.count("account written") == 1
+
+
+# [CV] describes the FINAL cycle: the earlier cycles are listed as [C<n>] lines, and a cycle that observed findings
+# before the last one is not what the run ended with. The first version took the last cycle that had observed
+# anything, so a run whose cycle 1 observed 2 findings and whose cycle 2 observed none was said to have "still
+# observed 2 in cycle 1".
+TAGTEAM = Path(__file__).parent / "fixtures" / "warden_tagteam_seats_run.json"
+
+
+def _cv_line(run: dict[str, Any], tmp_path: Path) -> str | None:
+    lines = [ln for ln in template(_load(run, tmp_path)).splitlines() if ln.startswith("- [CV]")]
+    assert len(lines) <= 1
+    return lines[0] if lines else None
+
+
+def _cycles(*observed: int) -> list[dict[str, Any]]:
+    return [{"number": n, "outcome": "APPLIED", "observed": k} for n, k in enumerate(observed, start=1)]
+
+
+def test_a_real_clean_run_whose_final_cycle_observed_nothing_says_nothing_of_findings_left(tmp_path):
+    run = json.loads(TAGTEAM.read_text(encoding="utf-8"))
+    assert run["converged"] is True and [c["observed"] for c in run["cycles"]] == [1, 0]
+    assert _cv_line(run, tmp_path) is None
+
+
+def test_cycle_one_observing_two_and_cycle_two_observing_none_makes_no_false_claim(tmp_path):
+    run = _run()
+    run["cycles"] = _cycles(2, 0)
+    assert _cv_line(run, tmp_path) is None
+    assert "still observed 2" not in template(_load(run, tmp_path))
+
+
+def test_the_line_names_the_final_cycle_and_what_it_observed(tmp_path):
+    run = _run()
+    run["cycles"] = _cycles(5, 3, 1)
+    assert _cv_line(run, tmp_path) == ("- [CV] Converged is true and converged is not zero findings: Ghost still "
+                                       "observed 1 finding(s) in cycle 3 [C3].")
+    run["cycles"] = _cycles(0, 0, 4)
+    line = _cv_line(run, tmp_path)
+    assert line is not None and "observed 4 finding(s) in cycle 3 [C3]" in line
+    run["cycles"] = _cycles(*range(1, 11))
+    line = _cv_line(run, tmp_path)
+    assert line is not None and "observed 10 finding(s) in cycle 10 [C10]" in line
+
+
+def test_the_line_follows_the_list_order_not_the_cycle_numbers(tmp_path):
+    run = _run()
+    run["cycles"] = [{"number": 2, "outcome": "APPLIED", "observed": 6},
+                     {"number": 1, "outcome": "APPLIED", "observed": 0}]
+    assert _cv_line(run, tmp_path) is None  # the last cycle in the record observed none
+
+
+def test_a_final_cycle_with_no_count_adds_no_claim(tmp_path):
+    run = _run()
+    run["cycles"] = [{"number": 1, "outcome": "APPLIED", "observed": 4},
+                     {"number": 2, "outcome": "APPLIED", "observed": None}]
+    assert _cv_line(run, tmp_path) is None
+    run["cycles"] = []
+    assert _cv_line(run, tmp_path) is None

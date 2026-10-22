@@ -118,15 +118,17 @@ def credentials_present() -> bool:
     return os.path.isdir(profile) and any(os.scandir(profile))
 
 
-def _cycles_that_observed(run: Mapping[str, Any]) -> list[tuple[int, int]]:
-    """(cycle number, findings Ghost observed) for each cycle of the record that observed any."""
-    out: list[tuple[int, int]] = []
-    for cycle in run.get("cycles") or ():
-        if isinstance(cycle, Mapping) and isinstance(cycle.get("number"), int):
-            n = cycle.get("observed")
-            if isinstance(n, int) and not isinstance(n, bool) and n > 0:
-                out.append((cycle["number"], n))
-    return out
+def _final_cycle(run: Mapping[str, Any]) -> tuple[int, int] | None:
+    """(cycle number, findings Ghost observed) for the FINAL cycle of the record, the last one in its list, when it
+    observed any. A cycle that observed findings before the last one is not what the run ended with."""
+    cycles = [c for c in run.get("cycles") or () if isinstance(c, Mapping) and isinstance(c.get("number"), int)]
+    if not cycles:
+        return None
+    last = cycles[-1]
+    n = last.get("observed")
+    if isinstance(n, int) and not isinstance(n, bool) and n > 0:
+        return last["number"], n
+    return None
 
 
 #: How many finding ids the template names for one list of the record (`observed`, `reobserved`); the rest are counted,
@@ -174,9 +176,9 @@ def template(evidence: Evidence) -> str:
     if "V" in c:
         out.append(f"- [V] The Judge said {clean(run['verdict'].get('decision'))}.")
     out += [fact(cid) for cid, cit in c.items() if cit.kind == "cycle"]  # every cycle the record holds, in its order
-    seen = _cycles_that_observed(run)
-    if run.get("converged") is True and seen:  # converged is "no proposals left"; the record shows findings left
-        number, count = seen[-1]
+    final = _final_cycle(run)
+    if run.get("converged") is True and final:  # converged is "no proposals left"; the final cycle shows findings left
+        number, count = final
         out.append(f"- [CV] Converged is true and converged is not zero findings: Ghost still observed {count} "
                    f"finding(s) in cycle {number} [C{number}].")
     if run.get("put_back") is True and "PB" in c:
