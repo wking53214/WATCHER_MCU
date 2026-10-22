@@ -36,8 +36,11 @@ cannot make the Watcher build a directory tree somewhere unintended; pass `--cre
 create the folder and its parents. The folder checks (the governed folder, every checkout the record names,
 the record itself) run first and are not lifted by the flag. The file is written to a temporary file in the same
 folder and moved into place, so a write that fails leaves no partial account, no temporary file, and an earlier
-account at the same path whole (a symlink at `--out` is written through). The write is not synced to disk, so a crash
-of the machine mid-write is not covered.
+account at the same path whole (a symlink at `--out` is written through). The move replaces its target, so an `--out`
+that exists and is not a regular file (a folder, a named pipe, a device node, or a symlink that resolves to one) is
+refused (exit 2, one line, nothing written, no temporary file); it is checked again just before the move. An existing
+file keeps its permission bits (a private `0600` account stays `0600`); a new file gets the ordinary default. The write
+is not synced to disk, so a crash of the machine mid-write is not covered.
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from
 its git URL pinned by the release tag `v1.9.0`
@@ -84,7 +87,7 @@ default); `--effort` low to max.
 |---|---|
 | 0 | An account was written (or printed). |
 | 1 | An internal error, a bug in the Watcher, reported in one line (`--verbose` adds the traceback). Nothing was written. A malformed record is never this; it is 2. |
-| 2 | Usage: a record that is missing ("file not found"), unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), a `--target` that does not exist, an `--out` inside a forbidden folder or on top of the record it reads, an `--out` whose folder does not exist (unless `--create-out-dir` is given), an `--out` that cannot be written, a bad option. |
+| 2 | Usage: a record that is missing ("file not found"), unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), a `--target` that does not exist, an `--out` inside a forbidden folder or on top of the record it reads, an `--out` that exists and is not a regular file, an `--out` whose folder does not exist (unless `--create-out-dir` is given), an `--out` that cannot be written, a bad option. |
 | 3 | No account could be had from a model: no credentials and no `--no-model`, the model could not be reached (connection, timeout, API error, or a response that cannot be decoded as JSON or is not a message) or it declined. Nothing was written. |
 | 4 | The oath dropped every sentence, so there is no account to give. The file is still written and shows what was dropped. |
 

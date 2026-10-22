@@ -39,8 +39,9 @@ def test_only_the_cli_writes_and_only_the_account():
                  and isinstance(n.func, ast.Attribute) and n.func.attr in WRITERS]
         if path.name == "cli.py":
             # mkdir for --create-out-dir; write_text and unlink for the account written through a temporary file
-            # that is removed again if the write fails (the account is then moved into place with os.replace)
-            assert sorted(calls) == ["mkdir", "unlink", "write_text"]
+            # that is removed again if the write fails (the account is then moved into place with os.replace), and
+            # chmod on that temporary file only, to give it the permission bits of the file it replaces
+            assert sorted(calls) == ["chmod", "mkdir", "unlink", "write_text"]
         else:
             assert calls == [], f"{path.name} writes: {calls}"
 

@@ -5,7 +5,8 @@ Exit codes (the README table is tested against this list):
   1  an internal error: a bug in the Watcher, reported in one line (add --verbose for the traceback).
      Nothing was written. A malformed record is never this; it is 2.
   2  usage: a record that is missing, unreadable or malformed, a --target that does not exist, an --out inside a
-     forbidden folder or on top of the record itself, an --out whose folder does not exist (unless
+     forbidden folder or on top of the record itself, an --out that exists and is not a regular file (a folder,
+     a named pipe, a device, or a symlink that resolves to one), an --out whose folder does not exist (unless
      --create-out-dir is given), an --out that cannot be written, a bad option.
   3  no account could be had from a model: no credentials and --no-model was not given, the model
      could not be reached (connection, timeout, an API error, a response that cannot be decoded or is not
@@ -23,6 +24,7 @@ import contextlib
 import logging
 import os
 import secrets
+import stat
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -123,14 +125,45 @@ def _model_errors() -> tuple[type[BaseException], ...]:
     return (anthropic.AnthropicError, ModelResponseError)
 
 
+def _not_regular(path: Path) -> str:
+    """What `path` is when it exists and is not a regular file, else "". A symlink is followed, as the write
+    follows it. A path that does not exist (yet) is fine; one that cannot be looked at is not safe to replace."""
+    try:
+        mode = os.stat(path).st_mode
+    except (FileNotFoundError, NotADirectoryError):
+        return ""
+    except OSError as err:
+        return f"something that cannot be examined ({err.strerror or type(err).__name__})"
+    if stat.S_ISREG(mode):
+        return ""
+    for check, name in ((stat.S_ISDIR, "a folder"), (stat.S_ISFIFO, "a named pipe (FIFO)"),
+                        (stat.S_ISCHR, "a character device"), (stat.S_ISBLK, "a block device"),
+                        (stat.S_ISSOCK, "a socket")):
+        if check(mode):
+            return name
+    return "not a regular file"
+
+
 def _write_atomically(path: Path, text: str) -> None:
     """Write `text` to `path` through a temporary file in the same folder, then `os.replace` it into place, so a
     failure at any point leaves no partial file at `path` and no temporary file behind. A symlink at `path` is
-    written through, as a plain write would. Durability against a crash of the machine is not claimed."""
+    written through, as a plain write would. The rename would swap a folder, a named pipe or a device node for a
+    regular file, so a target that exists and is not a regular file is refused (before anything is written, and
+    again just before the rename), and an existing file keeps its permission bits. Durability against a crash of
+    the machine is not claimed."""
     dest = Path(os.path.realpath(path))
+    kind = _not_regular(dest)
+    if kind:
+        raise OSError(f"{str(path)!r} is {kind}, not a regular file, so it was not replaced")
     tmp = dest.with_name(f".watcher-{secrets.token_hex(6)}.tmp")
     try:
         tmp.write_text(text, encoding="utf-8")
+        # An existing file keeps its bits; a new file keeps the mode it was created with.
+        with contextlib.suppress(FileNotFoundError, NotADirectoryError):
+            tmp.chmod(stat.S_IMODE(os.stat(dest).st_mode))
+        kind = _not_regular(dest)
+        if kind:
+            raise OSError(f"{str(path)!r} became {kind}, not a regular file, so it was not replaced")
         os.replace(tmp, dest)
     except BaseException:
         with contextlib.suppress(OSError):
@@ -167,6 +200,12 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
         if source is not None:
             print(f"watcher: refused: --out {args.out} is the record it was asked to read ({source}); "
                   "the Watcher never overwrites what it reads", file=sys.stderr)
+            return EXIT_USAGE
+        kind = _not_regular(Path(os.path.realpath(args.out)))
+        if kind:
+            print(f"watcher: refused: --out {args.out} is {kind}, not a regular file, and the Watcher replaces "
+                  "its target when it writes; name a regular file or a path that does not exist yet",
+                  file=sys.stderr)
             return EXIT_USAGE
         if not args.out.parent.is_dir() and not args.create_out_dir:
             print(f"watcher: refused: the folder for --out ({args.out.parent}) does not exist; create it, or pass "
