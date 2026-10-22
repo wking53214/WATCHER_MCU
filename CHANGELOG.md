@@ -7,6 +7,51 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-10-22
+
+### Changed
+- CI, README, STACK, the `watcher/oath.py` comment and the tests name Warden 0.13.8 (not tagged) at commit
+  `380894f0304ef40587dd29efd41b4ceccf94a5d3` (was 0.13.7 at `1636e1a21f124eedbf6e158db95dc75344f4308d`). The CNS pin is
+  unchanged: the tag `v1.9.0`. The end-to-end version assertion expects 0.13.8. (Step 1)
+- The template account is complete about what the record says, from the record only. It lists every cycle of the record
+  (it listed C1 to C3; there is no cap now). It says when `put_back` is true and when `finished` is true, says that
+  `swizzle_sound` is false (SWIZZLE's proofs did not hold) or null (no result) and, when true, that its proofs held, and
+  shows the notes that say a step failed, was skipped, was not run, was not enforced or was not sound (for example a
+  SWIZZLE proofs note with "3 FAILED"). The lines of `drafter_skipped` and `informational` are shown in a section
+  labelled as information, not gaps. The finding ids of `observed` and `reobserved` are named, the first 20 distinct
+  ones of each with a count of the rest; README, WHAT IS NOT PROVEN, says so. (Step 4)
+
+### Fixed
+- `--out` replaced whatever stood at its path. The account is moved into place with `os.replace` on the resolved path,
+  so a named pipe, a device node or a symlink resolving to one was swapped for a regular file (a folder gave a raw
+  `IsADirectoryError`), and an existing `0600` account was rewritten as `0644`. A target that exists and is not a
+  regular file, resolved through symlinks, is now refused (exit 2, one line, nothing written, no temporary file), checked
+  again just before the move. An existing file keeps its permission bits; a new file keeps the default. README and the
+  exit-code text say so. (Step 2)
+- Text the record supplies could add structure to the account. The template built the declined line, the dirty line (a
+  join path, a seat) and the Judge's decision from raw record strings, so a declined entry of
+  `"\n## Injected heading\n- [R] The code is fine ..."` made a heading and a bullet that the oath kept as a fact. Every
+  record-derived string is now reduced to one plain line (`watcher.evidence.clean`, the cleaning the citations already
+  had, which also turns other control characters into spaces and removes bidirectional controls) before it is put in
+  a line, so the oath reads the text that is rendered. The `--out` refusal line cleans the path it names. (Step 3)
+- `[CV]` said "Ghost still observed N finding(s) in cycle k" for the last cycle that had observed anything, so cycle 1
+  observing 2 and cycle 2 observing 0 gave "still observed 2 in cycle 1", which is false. It now describes the final
+  cycle of the record (the last in its list) and is absent when that cycle observed none. (Step 5)
+- Four small defects. Warden's commit rendered as "at None" when the record holds none; it now says "commit not
+  recorded" (and "version not recorded" for a missing version), and the `[W]` line is no longer cut at 400 characters.
+  `dirty` was honoured only for the boolean true; any value other than true, false or null (the text "true", the number
+  1) is now marked "DIRTY OR UNREADABLE", named in a line of its own and treated as possibly dirty. `--target` may no
+  longer be a file: it must be a folder (exit 2 otherwise). A `[G]` line was dropped whole when one declined name
+  tripped the oath's denylist; only that name is withheld now (with the number withheld), and the other names stay.
+  (Step 6)
+
+### Tests
+- New: `tests/test_atomic_out.py` (special files, symlinks to them, permission bits), `tests/test_record_text.py`,
+  `tests/test_account_completeness.py`, `tests/test_minor_fixes.py`, and cases in `tests/test_account_honesty.py` for
+  `[CV]`. Pre-existing tests edited, each to assert the new behaviour and nothing else: `tests/test_pins.py` and
+  `tests/test_warden_e2e.py` (the Warden pin and version, Step 1) and `tests/test_charter.py` (the list of write calls in
+  `cli.py` gains `chmod`, Step 2).
+
 ## [0.3.6] - 2026-10-21
 
 ### Changed

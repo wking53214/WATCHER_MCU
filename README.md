@@ -9,7 +9,7 @@ every sentence it keeps cites a measurement in the record by id. A sentence that
 cites something that is not there, or makes a status claim of its own is dropped before anyone reads
 it, and the account says how many were dropped and why.
 
-Version `0.3.6` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.7` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
