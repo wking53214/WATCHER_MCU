@@ -63,7 +63,8 @@ in part. The account is Markdown:
 1. **The account.** The kept sentences. Each carries at least one id in square brackets: `[R]` the
    decision, `[V]` the Judge's verdict, `[N7]` a note, `[C1]` a cycle, `[ghost-1b3766cb418b]` a
    finding, `[U]` the unmeasured list, `[G]` the scan summary, `[J3]` a checkout joined for Ghost,
-   `[W]` what took part, `[CV]` the `converged` flag.
+   `[W]` what took part, `[CV]` the `converged` flag, `[PB]` `put_back`, `[FN]` `finished`, `[SS]`
+   `swizzle_sound`, `[D1]` a line of `drafter_skipped`, `[I1]` a line of `informational`.
 2. **Dropped by the oath.** Every sentence that was written and not kept, with its reason: cites
    nothing, cites what is not in the record, or claims a status of its own.
 3. **Citations used.** The ids the account cites, each with the text in the record it points at.
@@ -78,7 +79,13 @@ nothing as unmeasured and still decline checks, and the account says both); any 
 the instruments, the seats, each joined checkout) whose `dirty` flag is `true`, marked "DIRTY: uncommitted
 changes" in `[W]` and `[J<n>]` and named in a line of its own (`null` means the record could not tell, and
 is not reported as dirty); and, when `converged` is true while a cycle still observed findings, that converged
-is not zero findings (`[CV]`), together with Warden's own note saying so. `--model` chooses the Claude model (`watcher narrate --help` shows the
+is not zero findings (`[CV]`), together with Warden's own note saying so. The account also lists every cycle
+of the record (`[C1]`, `[C2]`, ... with no cap), says when `put_back` or `finished` is true, says that
+`swizzle_sound` is false (SWIZZLE's proofs did not hold) or null (no result) and shows the notes that say a step
+failed, was skipped, was not run or was not enforced (for example a SWIZZLE proofs note with "3 FAILED"). The lines of
+`drafter_skipped` and `informational`, which Warden says are information and not gaps, are in a section of their own
+labelled so. It names the finding ids of `observed` (at the start) and `reobserved` (at the end), the first 20 of each
+and a count of the rest. `--model` chooses the Claude model (`watcher narrate --help` shows the
 default); `--effort` low to max.
 
 Text the record supplies cannot add structure to the account. Every string taken from the record and shown (the
@@ -176,8 +183,11 @@ The arrow into the Watcher is the only one. Nothing comes back.
   shows findings left. It says nothing about what a declined check would have found, and it reports only what
   the record holds: a record that lists nothing and declines nothing gets no such line, which is not proof
   that everything ran. The template account also keeps only the notes whose text mentions a suite, an
-  observation, a gap, "not measured", uncommitted instruments or "not zero findings"; the other notes are in
-  the record and in the model's prompt, not in the template.
+  observation, a gap, "not measured", uncommitted instruments, "not zero findings", "failed", "not sound",
+  "not run", "not enforced" or "skipped"; the other notes are in
+  the record and in the model's prompt, not in the template. Of the finding ids the record lists, the template
+  names the first 20 distinct ones of `observed` and of `reobserved` and says how many more the record holds; a
+  record's cycles are all listed, with no cap.
 - That the model writes a good account. It is trusted to write, never to be right; the oath bounds
   what reaches a reader, not how useful it is. No live run against the API is in the tests (none is
   possible without a key), so the request shape is tested against a fake client only.

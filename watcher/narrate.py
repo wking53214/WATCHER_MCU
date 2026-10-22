@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from typing import Any, Protocol
 
 from .evidence import DIRTY_MARK, Evidence, clean, dirty_parts
+from .oath import CITATION
 
 log = logging.getLogger(__name__)
 
@@ -128,6 +129,36 @@ def _cycles_that_observed(run: Mapping[str, Any]) -> list[tuple[int, int]]:
     return out
 
 
+#: How many finding ids the template names for one list of the record (`observed`, `reobserved`); the rest are counted,
+#: said to be left out, and remain in the record. A bullet that cited hundreds of ids would bury the account.
+FINDING_IDS_SHOWN = 20
+
+#: Words of a note that say a step failed, or was not run or not enforced. Such a note is a statement of something not
+#: done or gone wrong, so the template shows it under "What was not" (when it is not already shown under "measured").
+_NOT_DONE_WORDS = ("failed", "not sound", "not run", "not enforced", "skipped")
+
+
+def _finding_ids(evidence: Evidence, key: str) -> list[str]:
+    """The ids the record lists under `key`, each once, in order, that can be cited: an id that is not a citable token
+    (or that the index gave to something else) is not named."""
+    ids = evidence.run.get(key)
+    if not isinstance(ids, list):
+        return []
+    citable = [i for i in dict.fromkeys(ids) if isinstance(i, str) and CITATION.fullmatch(f"[{i}]")]
+    return [i for i in citable if i in evidence.citations and evidence.citations[i].kind == "finding"]
+
+
+def _finding_line(evidence: Evidence, key: str, when: str) -> str | None:
+    ids = _finding_ids(evidence, key)
+    if not ids:
+        return None
+    shown = ids[:FINDING_IDS_SHOWN]
+    tags = "".join(f"[{i}]" for i in shown)
+    more = len(ids) - len(shown)
+    tail = f"; {more} more are not shown, the record lists them" if more else ""
+    return f"- {tags} Ghost finding id(s) observed {when} ({len(ids)} distinct): {', '.join(shown)}{tail}."
+
+
 def template(evidence: Evidence) -> str:
     """A cited account written from the index alone. Deterministic; no model. Each fact is one bullet,
     which the oath reads as one unit however many sentences the record's text holds."""
@@ -142,20 +173,34 @@ def template(evidence: Evidence) -> str:
     out = ["## What happened", f"- [R] The run ended {clean(run.get('decision'))}."]
     if "V" in c:
         out.append(f"- [V] The Judge said {clean(run['verdict'].get('decision'))}.")
-    out += [fact(cid) for cid in ("C1", "C2", "C3") if cid in c]
+    out += [fact(cid) for cid, cit in c.items() if cit.kind == "cycle"]  # every cycle the record holds, in its order
     seen = _cycles_that_observed(run)
     if run.get("converged") is True and seen:  # converged is "no proposals left"; the record shows findings left
         number, count = seen[-1]
         out.append(f"- [CV] Converged is true and converged is not zero findings: Ghost still observed {count} "
                    f"finding(s) in cycle {number} [C{number}].")
+    if run.get("put_back") is True and "PB" in c:
+        out.append("- [PB] put_back is true: edits had been made and the whole tree was restored because the run did "
+                   "not end accepted.")
+    if run.get("finished") is True and "FN" in c:
+        out.append("- [FN] finished is true: the finishing change was applied.")
     out.append("## What was measured")
-    out += [fact(cid) for cid, cit in c.items()
-            if cit.kind == "note" and ("suite" in cit.text.lower() or "observed" in cit.text.lower())]
+    measured = [cid for cid, cit in c.items()
+                if cit.kind == "note" and ("suite" in cit.text.lower() or "observed" in cit.text.lower())]
+    out += [fact(cid) for cid in measured]
+    if run.get("swizzle_sound") is True and "SS" in c:
+        out.append("- [SS] swizzle_sound is true: SWIZZLE's proofs held.")
+    out += [line for line in (_finding_line(evidence, "observed", "at the start"),
+                              _finding_line(evidence, "reobserved", "at the end")) if line]
     if "G" in c:
         out.append(fact("G"))
     out.append("## What was not")
     if "U" in c:
         out.append(fact("U"))
+    if "SS" in c and run.get("swizzle_sound") is False:
+        out.append("- [SS] swizzle_sound is false: SWIZZLE's proofs did not hold.")
+    elif "SS" in c and run.get("swizzle_sound") is None:
+        out.append("- [SS] swizzle_sound is null: the record holds no result of SWIZZLE's proofs.")
     if run.get("allow_uncommitted_instruments") is True and "AU" in c:
         out.append(fact("AU"))  # an instrument Warden cannot name was allowed on request
     scan = run.get("ghost_scan")
@@ -170,9 +215,15 @@ def template(evidence: Evidence) -> str:
         out.append(f"- {ids} {DIRTY_MARK} (dirty: true) in {', '.join(name for name, _ in dirty)}; "
                    "the commit shown for each is not the whole of what ran.")
     out += [fact(cid) for cid, cit in c.items()
-            if cit.kind == "note" and ("gap" in cit.text.lower() or "not measured" in cit.text.lower()
-                                       or "uncommitted-instruments" in cit.text.lower()
-                                       or "not zero findings" in cit.text.lower())]
+            if cit.kind == "note" and cid not in measured
+            and ("gap" in cit.text.lower() or "not measured" in cit.text.lower()
+                 or "uncommitted-instruments" in cit.text.lower() or "not zero findings" in cit.text.lower()
+                 or any(word in cit.text.lower() for word in _NOT_DONE_WORDS))]
+    info = [(cid, cit) for cid, cit in c.items() if cit.kind in ("drafter_skipped", "informational")]
+    if info:  # said by Warden to change no decision: information, not a gap
+        out.append("## Information, not gaps")
+        out += [f"- [{cid}] {'The Drafter left a finding alone' if cit.kind == 'drafter_skipped' else 'Warden noted'}"
+                f" (information, not a gap): {cit.text}" for cid, cit in info]
     joins = [cid for cid, cit in c.items() if cit.kind == "join"]
     if joins:
         out.append("## What was joined")
