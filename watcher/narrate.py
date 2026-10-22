@@ -15,7 +15,7 @@ import os
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from .evidence import DIRTY_MARK, Evidence, dirty_parts
+from .evidence import DIRTY_MARK, Evidence, clean, dirty_parts
 
 log = logging.getLogger(__name__)
 
@@ -137,9 +137,11 @@ def template(evidence: Evidence) -> str:
     def fact(cid: str) -> str:
         return f"- [{cid}] {c[cid].text}"
 
-    out = ["## What happened", f"- [R] The run ended {run.get('decision')}."]
+    # Every string the record supplies is cleaned (`clean`) before it is put in a line, so that the text the oath reads
+    # is the text that is rendered and no value can open a heading or a bullet of its own.
+    out = ["## What happened", f"- [R] The run ended {clean(run.get('decision'))}."]
     if "V" in c:
-        out.append(f"- [V] The Judge said {run['verdict'].get('decision')}.")
+        out.append(f"- [V] The Judge said {clean(run['verdict'].get('decision'))}.")
     out += [fact(cid) for cid in ("C1", "C2", "C3") if cid in c]
     seen = _cycles_that_observed(run)
     if run.get("converged") is True and seen:  # converged is "no proposals left"; the record shows findings left
@@ -159,7 +161,8 @@ def template(evidence: Evidence) -> str:
     scan = run.get("ghost_scan")
     declined = scan.get("declined") if isinstance(scan, Mapping) else None
     if "G" in c and isinstance(declined, list) and declined:  # checks left out of the scan
-        out.append(f"- [G] Ghost declined {len(declined)} check(s): {', '.join(map(str, declined))}. A declined check "
+        names = ", ".join(map(clean, declined))
+        out.append(f"- [G] Ghost declined {len(declined)} check(s): {names}. A declined check "
                    "was not run, so the absence of findings from it means nothing.")
     dirty = dirty_parts(run)
     if dirty:  # the record flags uncommitted changes in a part that took part

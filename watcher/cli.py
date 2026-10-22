@@ -30,7 +30,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from . import __version__
-from .evidence import Evidence, UnreadableRecord, load
+from .evidence import Evidence, UnreadableRecord, clean, load
 from .narrate import (
     DEFAULT_EFFORT,
     DEFAULT_MODEL,
@@ -193,7 +193,7 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
     if args.out is not None:
         hit = _inside(args.out, evidence.forbidden_paths)
         if hit is not None:
-            print(f"watcher: refused: --out {args.out} is inside {hit}, which the Watcher never writes into",
+            print(f"watcher: refused: --out {args.out} is inside {clean(hit)}, which the Watcher never writes into",
                   file=sys.stderr)
             return EXIT_USAGE
         source = _is_input(args.out, [args.record])

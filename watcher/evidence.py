@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import unicodedata
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -46,8 +47,17 @@ class UnreadableRecord(ValueError):
     """The file is not a Warden run record."""
 
 
-def _clean(value: Any, limit: int = 400) -> str:
-    text = " ".join(str(value).split())
+#: Bidirectional controls: text between them can be shown in another order, including the words around it.
+_BIDI_CONTROLS = frozenset("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")
+
+
+def clean(value: Any, limit: int = 400) -> str:
+    """A string of the record as one plain line: every run of whitespace (a newline included) is one space, any other
+    control character is a space, bidirectional controls are gone, and a long one is cut. Every string that the record
+    supplies and the account shows goes through this, so that a value cannot start a heading, a bullet or a second
+    record line of its own."""
+    text = "".join(" " if unicodedata.category(ch) == "Cc" else ch for ch in str(value) if ch not in _BIDI_CONTROLS)
+    text = " ".join(text.split())
     return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
@@ -79,10 +89,11 @@ def dirty_parts(run: Mapping[str, Any]) -> list[tuple[str, str]]:
             out.append((name, "W"))
     seats = versions.get("seats")
     if isinstance(seats, Mapping):
-        out += [(f"{role} seat", "W") for role, seat in seats.items() if isinstance(seat, Mapping) and _dirty(seat)]
+        out += [(f"{clean(role)} seat", "W") for role, seat in seats.items()
+                if isinstance(seat, Mapping) and _dirty(seat)]
     for n, join in enumerate(versions.get("joins") or (), start=1):
         if isinstance(join, Mapping) and _dirty(join):
-            out.append((f"join {join.get('path')}", f"J{n}"))
+            out.append((f"join {clean(join.get('path'))}", f"J{n}"))
     return out
 
 
@@ -91,7 +102,7 @@ def index(run: Mapping[str, Any]) -> dict[str, Citation]:
     out: dict[str, Citation] = {}
 
     def put(cid: str, kind: str, text: str) -> None:
-        out[cid] = Citation(cid, kind, _clean(text))
+        out[cid] = Citation(cid, kind, clean(text))
 
     put("R", "decision", f"decision {run.get('decision')!s}; reason: {run.get('reason')!s}")
     verdict = run.get("verdict")
@@ -275,4 +286,5 @@ def load(path: Path, target: Path | None = None) -> Evidence:
     return Evidence(run=run, citations=citations, forbidden_paths=forbidden)
 
 
-__all__ = ["DIRTY_MARK", "Citation", "Evidence", "UnreadableRecord", "dirty_parts", "forbidden_paths", "index", "load"]
+__all__ = ["DIRTY_MARK", "Citation", "Evidence", "UnreadableRecord", "clean", "dirty_parts", "forbidden_paths", "index",
+           "load"]

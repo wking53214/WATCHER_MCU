@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from . import OATH, __version__
-from .evidence import Evidence
+from .evidence import Evidence, clean
 from .oath import Enforced, cited_ids
 
 
@@ -12,7 +12,7 @@ def render(evidence: Evidence, enforced: Enforced, *, model: str, narrator_used:
     lines = [
         "# The Watcher's account",
         "",
-        f"Run decision as recorded: **{run.get('decision')}** [R]. "
+        f"Run decision as recorded: **{clean(run.get('decision'))}** [R]. "
         f"Written by {'the model ' + model if narrator_used else 'the template (no model)'}, "
         f"Watcher {__version__}.",
         "",

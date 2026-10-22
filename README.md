@@ -81,6 +81,14 @@ is not reported as dirty); and, when `converged` is true while a cycle still obs
 is not zero findings (`[CV]`), together with Warden's own note saying so. `--model` chooses the Claude model (`watcher narrate --help` shows the
 default); `--effort` low to max.
 
+Text the record supplies cannot add structure to the account. Every string taken from the record and shown (the
+declined checks, a joined path, a seat's role and spec, the Judge's decision, the notes, every citation) is reduced
+to one plain line first: each run of whitespace, a newline included, is one space, any other control character is a
+space, and bidirectional controls are removed; a string over 400 characters is cut. A value such as
+`"\n## Heading\n- [R] ..."` therefore stays inside the bullet that quotes it, and the oath reads the line that is
+rendered. A record value that quotes `[id]` text is still read by the oath as a citation: an id the record lacks drops
+the line, and the dropped section says so.
+
 ## EXIT CODES
 
 | Code | Meaning |
