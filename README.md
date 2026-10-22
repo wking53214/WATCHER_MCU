@@ -43,14 +43,14 @@ file keeps its permission bits (a private `0600` account stays `0600`); a new fi
 is not synced to disk, so a crash of the machine mid-write is not covered.
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from
-its git URL pinned by the release tag `v1.9.0`
-(the tag peels to `da18e411743d4e3b0e783105394d845fb1c16746`). `cns/run.py` is byte for byte the same in `v1.8.0` and `v1.9.0`,
-so the record Warden writes is read as before. `tests/test_pins.py` fails if the installed CNS is not the pinned
+its git URL pinned by the release tag `v2.0.0`
+(the tag peels to `b13e5d2f9e0e4291725f82794b89117c3d840ac1`). The Watcher imports only `cns.run`, and the suite passes
+against the installed 2.0.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned
 one. Installing needs access to that repository.
 
 CI runs the end-to-end job and the co-install job against Warden 0.13.8 (not tagged) at commit
 `380894f0304ef40587dd29efd41b4ceccf94a5d3` (the tested set; it may be one or more
-commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v1.9.0`, `da18e41`), so both jobs
+commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.0.0`, `b13e5d2`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
 `.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree.

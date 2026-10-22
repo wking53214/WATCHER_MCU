@@ -9,8 +9,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PIN = re.compile(r"cns @ git\+https://github\.com/wking53214/CNS\.git@(v\d+\.\d+\.\d+)\"\]")
-#: The commit the tag v1.9.0 peels to (git ls-remote ... 'refs/tags/v1.9.0^{}'); the installed CNS must be this commit.
-CNS_COMMIT = "da18e411743d4e3b0e783105394d845fb1c16746"
+#: The commit the tag v2.0.0 peels to (git ls-remote ... 'refs/tags/v2.0.0^{}'); the installed CNS must be this commit.
+CNS_COMMIT = "b13e5d2f9e0e4291725f82794b89117c3d840ac1"
 
 
 def _declared() -> tuple[str, str]:
@@ -22,10 +22,10 @@ def _declared() -> tuple[str, str]:
 
 def test_cns_is_pinned_by_its_release_tag():
     sha, tag = _declared()
-    assert tag == "v1.9.0" and len(sha) == 40
-    assert sha == "da18e411743d4e3b0e783105394d845fb1c16746"
+    assert tag == "v2.0.0" and len(sha) == 40
+    assert sha == "b13e5d2f9e0e4291725f82794b89117c3d840ac1"
     deps = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["dependencies"]
-    assert "cns @ git+https://github.com/wking53214/CNS.git@v1.9.0" in deps
+    assert "cns @ git+https://github.com/wking53214/CNS.git@v2.0.0" in deps
 
 
 def test_the_installed_cns_is_the_pinned_one():
