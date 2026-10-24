@@ -7,6 +7,36 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-10-24
+
+### Fixed
+- `watcher narrate RECORD --no-model | head -c0` printed "internal error: BrokenPipeError ... Nothing was written." and
+  exited 1 (the exit table says 1 is a bug in the Watcher), with and without `PYTHONUNBUFFERED=1`; a closed standard
+  output gave the same message for an `AttributeError`. A broken pipe now prints nothing and keeps the earned code (0, or
+  4 when the oath kept nothing). Any other failed delivery on standard output (closed, or a failing write such as a full
+  device) is one plain line on standard error and exit 2, because an account that was not delivered was not given. `main`
+  does not replace `sys.stdout`. Found by the round-6 audit; reproduced first. (Step 1)
+
+### Changed
+- Warden is pinned at 0.13.10, commit `9ecd1124e6c1b1c4ad7daed37b17f9009662dd9d` (was 0.13.9 at
+  `b57b81e1c98333c43d422666c89a8fcf3ae6eaca`), in the workflow, README, STACK, the `watcher/oath.py` comment and the
+  tests. CNS stays `@v2.0.0`. (Step 3)
+
+### Documentation
+- SELF-HOSTING cites the CNS repository's `docs/evidence/SELFHOSTING_2026-10-23.md` (on the CNS branch until merged):
+  ACCEPT twice at 0.3.8, 701 passed with 0 skipped, 41 Ghost findings standing, 7 declined checks, and what an ACCEPT
+  with 7 gaps does not mean. The caveat about `--target` is written once. Six paraphrases that pass the oath filter when
+  cited are listed as a known defect, and the README lists as a drift risk that the Watcher reads the declined checks,
+  dirty flags and gaps itself instead of calling CNS 2.0.0's `RunRecord.declined`, `gaps()` and `dirty_parts()`. (Step 2)
+- A ledger entry for 0.3.9 and a line for `tests/test_delivery.py` under WHAT WORKS. (Step 4)
+
+### Tests
+- New: `tests/test_delivery.py` (Step 1) and `tests/test_oath_known_gaps.py` (Step 2, documents current behaviour as a
+  known gap).
+- Pre-existing tests edited, each to assert the new behaviour and nothing else: `tests/test_readme_ledger.py`, the
+  self-hosting test now holds the new paragraph and the recorded numbers (Step 2); `tests/test_pins.py` and
+  `tests/test_warden_e2e.py`, the Warden commit and version (Step 3).
+
 ## [0.3.8] - 2026-10-22
 
 ### Changed

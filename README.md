@@ -7,7 +7,7 @@ for a person. It can use a Claude model through the official SDK, or write the a
 It has no authority: nothing in the circuit reads what it writes, and every sentence it keeps cites a measurement in the
 record by id, or is dropped before anyone reads it.
 
-Version `0.3.8` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.9` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
@@ -214,6 +214,8 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - `tests/test_account_honesty.py`, `tests/test_account_completeness.py`, `tests/test_minor_fixes.py`: on real records, the
   template account names every declined check and says it was not run, names dirty parts, says when `converged` is not
   zero findings, lists every cycle, and says when `put_back`, `finished` or a failed SWIZZLE proof is in the record.
+- `tests/test_delivery.py`: a reader that left keeps the earned exit code, and a closed or failing standard output is one
+  plain line and exit 2, never a traceback or an "internal error".
 - `tests/test_atomic_out.py`, `tests/test_record_text.py`: `--out` never replaces a file that is not a regular one and
   keeps permission bits; a value in the record cannot add a heading or a bullet to the account.
 - `tests/test_readme_ledger.py`: the sections named in this README exist, the tests named here exist, the versions and dates in the
@@ -322,6 +324,21 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 Newest first. Each entry says what was wrong, how it was found when the history says, the version that fixed it, and
 what now stops it coming back: a named test, or "no test yet". The sources are `CHANGELOG.md`, `git log` and the tests.
 Where a fix was wrong or overstated and corrected later, the entry says so. Open problems are under KNOWN DEFECTS.
+
+**0.3.9** (2026-10-24)
+- *A gone reader was reported as a bug in the Watcher.* `watcher narrate RECORD --no-model | head -c0` printed
+  "internal error: BrokenPipeError ... Nothing was written." and exited 1, which the exit table says means a bug in the
+  Watcher; a closed standard output gave the same message for an `AttributeError`. Found by the round-6 audit
+  (2026-10-23/24) and reproduced before the change, with and without `PYTHONUNBUFFERED=1`. Now a broken pipe keeps the
+  earned code and prints nothing, and any other failed delivery is one line and exit 2. Guard:
+  `tests/test_delivery.py::test_a_reader_that_left_keeps_the_earned_code_and_prints_nothing`,
+  `tests/test_delivery.py::test_a_closed_standard_output_is_one_plain_line_and_exit_2` and
+  `tests/test_delivery.py::test_a_write_that_fails_for_another_reason_is_one_plain_line_and_exit_2`.
+- *The README's self-hosting text was stale* ("no fresh run is recorded yet") after the full circuit governed this
+  repository twice. It now cites the recorded runs. Guard:
+  `tests/test_readme_ledger.py::test_self_hosting_holds_the_recorded_numbers_and_says_what_the_record_does_not_mean`.
+- *One caveat was written twice* (that `--target` is not checked against the folder that was governed). One remains.
+  No test yet.
 
 **0.3.7** (2026-10-22)
 - *`--out` replaced whatever stood at its path.* The atomic write added in 0.3.6 moved the account into place with
