@@ -125,9 +125,15 @@ the line, and the dropped section says so.
 |---|---|
 | 0 | An account was written (or printed). |
 | 1 | An internal error, a bug in the Watcher, reported in one line (`--verbose` adds the traceback). Nothing was written. A malformed record is never this; it is 2. |
-| 2 | Usage: a record that is missing ("file not found"), unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), a `--target` that does not exist or is not a folder, an `--out` inside a forbidden folder or on top of the record it reads, an `--out` that exists and is not a regular file, an `--out` whose folder does not exist (unless `--create-out-dir` is given), an `--out` that cannot be written, a bad option. |
+| 2 | Usage: a record that is missing ("file not found"), unreadable or malformed (not JSON, not `cns.run/1`, a field of the wrong shape), a `--target` that does not exist or is not a folder, an `--out` inside a forbidden folder or on top of the record it reads, an `--out` that exists and is not a regular file, an `--out` whose folder does not exist (unless `--create-out-dir` is given), an `--out` that cannot be written, a bad option, an account that could not be delivered on standard output (it is closed, or a write to it fails, as on a full device). |
 | 3 | No account could be had from a model: no credentials and no `--no-model`, the model could not be reached (connection, timeout, API error, or a response that cannot be decoded as JSON or is not a message) or it declined. Nothing was written. |
 | 4 | The oath dropped every sentence, so there is no account to give. The file is still written and shows what was dropped. |
+
+Delivery on standard output (no `--out`): if the reader goes away (`watcher narrate RECORD | head`, a broken pipe), nothing
+is printed on standard error and the exit code stays the one earned, 0 or 4. If standard output is closed, or a write to
+it fails for any other reason, one plain line goes to standard error and the exit code is 2, whatever the account was,
+because an account that was not delivered was not given. If standard error is also unusable, that line is lost and the
+exit code is unchanged. `tests/test_delivery.py` holds all of this.
 
 `tests/test_docs.py` fails if this table and the code disagree.
 
