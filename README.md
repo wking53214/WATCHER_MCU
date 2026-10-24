@@ -305,10 +305,17 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   (exit 2), because a guard on a folder that is not there would let `--out` into the real one under another name.
   The Watcher does not check that `--target` is the folder that was governed, only that it exists and is a folder.
 - The status-claim filter is a denylist, so a paraphrase that is not listed passes if it cites the record (see
-  WHAT DOES NOT WORK / NOT PROVEN for what it does and does not read).
+  WHAT DOES NOT WORK / NOT PROVEN for what it does and does not read). Each of these was tried with a citation and is
+  kept today: "All green [R].", "Everything checks out, nothing left to do [R].", "This is solid [R].", "No further action
+  is required [R].", "Nothing is wrong [R].", "Cleared for release [R].". They read as a grade and are not dropped.
+  `tests/test_oath_known_gaps.py` holds this as a known gap: it fails the day one of them is dropped, so this list can
+  be corrected then.
+- The Watcher reads `ghost_scan.declined`, the `dirty` flags and the gap lists from the record itself
+  (`watcher/evidence.py`) and uses `RunRecord.from_dict` only to refuse a record that is not `cns.run/1`. CNS 2.0.0's
+  `RunRecord` has `declined`, `gaps()` and `dirty_parts()` that answer the same questions. Nothing compares the two, so
+  they can drift apart. The Watcher was not changed to call them.
 - The account is written to a temporary file and moved into place, but the write is not synced to disk, so a crash of
   the machine in the middle of a write is not covered.
-- Nothing checks that the folder given as `--target` is the folder that was governed; only that it exists and is a folder.
 
 ## WHAT BROKE AND HOW IT WAS FIXED
 
@@ -405,12 +412,17 @@ Where a fix was wrong or overstated and corrected later, the entry says so. Open
 
 ## SELF-HOSTING
 
-Whether this circuit governs the Watcher's own repository has not been established by a recent run. Warden's
-`docs/REGISTRY.json` records two earlier runs (rows 5 and 6, dated 2026-10-14, made before Warden 0.13.0) in which the
-circuit governed fresh clones of its own repositories. The repositories named there are ASSAY, JUDGE, BURNISH, DRAFTER,
-SWIZZLE, WARDEN and ghost_tools, so this repository is not among them. Row 6 records only that WATCHER_MCU 0.1.0 wrote an
-account of each run from its record. Those runs predate the current rules and no fresh run is recorded yet. The CNS
-repository is at https://github.com/wking53214/CNS. This README states no result for a fresh run.
+The full circuit has governed a fresh clone of this repository, twice. The record is the CNS repository's
+`docs/evidence/SELFHOSTING_2026-10-23.md`, which is on the CNS branch `claude/horsemen-production-status-5wsndb` until it
+is merged (https://github.com/wking53214/CNS/blob/claude/horsemen-production-status-5wsndb/docs/evidence/SELFHOSTING_2026-10-23.md);
+the run records are copied beside it. Both runs were at version 0.3.8, commit `b25d8522301005ba764783927f43abfeb9f18f5c`.
+Run 1 had Burnish 0.3.11 as the finisher and run 2 had Burnish 0.3.12. Each ended with decision ACCEPT: the suite was
+701 passed with 0 skipped, Ghost reported 41 findings at the start and 41 at the end with none new, and 7 checks were
+declined (mutate, kernel, structure, tests, project, secrets, correlate), which makes 7 gaps. The finisher's README edit
+was kept each time. What this does not mean: an ACCEPT that carries 7 gaps does not mean there are no secrets, no weak
+tests, no mutation survivors and no structural problems, because those checks did not run; and the 41 findings still
+stand, because the Judge measures "none new". The runs cover that commit only, not the commits after it, and a person
+did not review the kept README edit.
 
 ## CEILINGS CODE CANNOT FIX
 

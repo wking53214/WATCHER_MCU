@@ -98,14 +98,25 @@ def test_the_readme_uses_no_marketing_words_outside_quoted_labels():
     assert not found, found
 
 
-def test_self_hosting_says_what_the_registry_holds_and_links_the_cns_root_only():
+#: Copied from the CNS repository, docs/evidence/SELFHOSTING_2026-10-23.md (WATCHER_MCU rows, run 1 and run 2). The
+#: README states exactly these, so a change to either must change both.
+SELFHOSTING_COMMIT = "b25d8522301005ba764783927f43abfeb9f18f5c"
+SELFHOSTING_VERSION = "0.3.8"
+SELFHOSTING_SUITE = "701 passed with 0 skipped"
+SELFHOSTING_FINDINGS = "41 findings at the start and 41 at the end"
+SELFHOSTING_DECLINED = ("mutate", "kernel", "structure", "tests", "project", "secrets", "correlate")
+
+
+def test_self_hosting_holds_the_recorded_numbers_and_says_what_the_record_does_not_mean():
     text = " ".join(section("SELF-HOSTING").split())
-    assert "rows 5 and 6" in text and "docs/REGISTRY.json" in text
-    assert "before Warden 0.13.0" in text and "no fresh run is recorded yet" in text
-    assert "https://github.com/wking53214/CNS" in text
-    links = re.findall(r"https://github\.com/wking53214/CNS\S*", text)
-    assert links and all(link.rstrip(".") == "https://github.com/wking53214/CNS" for link in links), links
-    assert "STATUS" not in text
+    assert "docs/evidence/SELFHOSTING_2026-10-23.md" in text and "until it is merged" in text
+    assert SELFHOSTING_COMMIT in text and f"version {SELFHOSTING_VERSION}" in text
+    assert SELFHOSTING_SUITE in text and SELFHOSTING_FINDINGS in text
+    assert "7 checks were declined" in text and "7 gaps" in text
+    assert all(name in text for name in SELFHOSTING_DECLINED) and len(SELFHOSTING_DECLINED) == 7
+    assert "decision ACCEPT" in text and "Burnish 0.3.11" in text and "Burnish 0.3.12" in text
+    assert "does not mean there are no secrets, no weak tests" in text
+    assert "no fresh run" not in text
 
 
 def test_the_readme_does_not_say_whether_release_tags_exist():
