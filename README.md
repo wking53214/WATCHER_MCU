@@ -40,7 +40,7 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout b57b81e1c98333c43d422666c89a8fcf3ae6eaca
+git -C WARDEN checkout 9ecd1124e6c1b1c4ad7daed37b17f9009662dd9d
 pip install -e . ./WARDEN
 pip check
 ```
@@ -52,8 +52,8 @@ pinned by the release tag `v2.0.0`
 the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
-CI runs the end-to-end job and the co-install job against Warden 0.13.9 (not tagged) at commit
-`b57b81e1c98333c43d422666c89a8fcf3ae6eaca` (the tested set; it may be one or more
+CI runs the end-to-end job and the co-install job against Warden 0.13.10 (not tagged) at commit
+`9ecd1124e6c1b1c4ad7daed37b17f9009662dd9d` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.0.0`, `b13e5d2`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
@@ -202,7 +202,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - `tests/test_warden_e2e.py`: the real Warden writes a record (for a target that does not exist, and for a small git
   project run with no Drafter) and the Watcher narrates it; the installed Warden is the tested one; each of Warden's own
   standard sentences that the oath allows is still a string in Warden's source. It runs in the `warden-e2e` CI job and
-  was also run on 3.11, 3.12 and 3.13 against Warden 0.13.9 for this release. The `coinstall-warden` job checks that pip
+  was also run on 3.11, 3.12 and 3.13 against Warden 0.13.10 for this release. The `coinstall-warden` job checks that pip
   resolves the Watcher and Warden together and that `pip check` is clean.
 - `tests/test_narrate_and_cli.py`: the model is shown the index and the oath only; what it writes is
   filtered and the filtering is shown; an emptied account is exit 4; the CLI refuses an `--out`
@@ -275,7 +275,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
   approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
   "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
-  (strings in Warden 0.13.9 at b57b81e; `tests/test_warden_e2e.py` checks they are still in the installed
+  (strings in Warden 0.13.10 at 9ecd112; `tests/test_warden_e2e.py` checks they are still in the installed
   Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
   The disguises it does read through are listed above and tested. The citation requirement and the shown "dropped"
   appendix are the other defences; a reader should still check the cited text.
