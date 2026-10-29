@@ -7,6 +7,8 @@ for a person. It can use a Claude model through the official SDK, or write the a
 It has no authority: nothing in the circuit reads what it writes, and every sentence it keeps cites a measurement in the
 record by id, or is dropped before anyone reads it.
 
+**Status: released from the circuit (2026-10-29).** The Watcher was the narrator seat in the Horsemen circuit, and the owner has released it from the circuit. Released means removed from the circuit and nothing else: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. In the circuit, Warden 0.15.0 lets a pinned manifest leave the Watcher out; until the pins move, the circuit still installs it. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
+
 Version `0.3.9` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
@@ -446,6 +448,7 @@ did not review the kept README edit.
 - The repository is young. Its history starts on 2026-10-14.
 - It has one human maintainer, and most commits were written with an AI assistant (the commit trailers say so).
 - It has no known outside users.
+- The owner released it from the Horsemen circuit on 2026-10-29 (see the status note under WHAT THIS IS). Nothing in it was removed, and it keeps working on its own.
 - Releases are tagged by the owner, not by the code. Check the repository's tags and releases on GitHub for what exists.
 
 Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Copyright 2026 William N. King.
