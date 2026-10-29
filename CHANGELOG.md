@@ -7,6 +7,17 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.11] - 2026-10-29, not tagged
+
+### Changed
+- The CNS pin is the tag `v2.1.0` (`cns @ git+https://github.com/wking53214/CNS.git@v2.1.0`, comment
+  `v2.1.0 = fde931ffa89aebec95647742256ad53033bd3d02`), from `v2.0.0`, and the tested Warden moves from 0.14.0
+  (`68f2a955f486a8ebb230c4395c88f7e99ee47c48`) to 0.15.1 (`fe9c8b35778de680d04b2a57775ac6a6831f4799`) in both CI jobs,
+  the README, `STACK.md`, the comment on Warden's own sentences in `watcher/oath.py` and `tests/test_pins.py`. No Watcher
+  code changed. Pre-existing tests edited under the exact-behaviour rule, pin and version text only:
+  `tests/test_pins.py` and `tests/test_warden_e2e.py`. (Pin21 step 1)
+- Version 0.3.11 and this entry. (Pin21 step 2)
+
 ## [0.3.10] - 2026-10-29, not tagged
 
 ### Changed

@@ -9,7 +9,7 @@ record by id, or is dropped before anyone reads it.
 
 **Status: released from the circuit (2026-10-29).** The Watcher was the narrator seat in the Horsemen circuit, and the owner has released it from the circuit. Released means removed from the circuit and nothing else: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. In the circuit, Warden 0.15.0 lets a pinned manifest leave the Watcher out; until the pins move, the circuit still installs it. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
 
-Version `0.3.10` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.11` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
