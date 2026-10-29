@@ -7,6 +7,16 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.10] - 2026-10-29, not tagged
+
+### Changed
+- The README says, in WHAT THIS IS and in CEILINGS CODE CANNOT FIX, that the owner released the Watcher from the Horsemen
+  circuit on 2026-10-29. Released means removed from the circuit and nothing else: no code, test, history or CI was changed.
+  Nothing in the circuit reads what the Watcher writes. It still works on its own (`watcher narrate` on any run record).
+  Warden 0.15.0 lets a pinned manifest leave the Watcher out; until the pins move, the circuit still installs it. The Watcher
+  is free to be reborn elsewhere, as intent only. (Step R1)
+- Version 0.3.10 and this entry. No pin changed. (Step R2)
+
 ## [0.3.9] - 2026-10-24
 
 ### Fixed
