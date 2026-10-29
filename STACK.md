@@ -22,8 +22,8 @@ watcher narrate run.json --target PATH --out account.md
 
 CNS holds the interoperability contracts. No repository in the circuit modifies it. The Watcher reads
 the run record through it: `watcher.evidence` imports `cns.run` and refuses any record that is not
-`cns.run/1`. CNS is installed from its git URL, pinned by the release tag `v2.0.0`
-(the tag peels to `b13e5d2f9e0e4291725f82794b89117c3d840ac1`); installing the Watcher needs access to that repository.
-CI tests the Watcher against Warden 0.14.0 (not tagged) at commit `68f2a955f486a8ebb230c4395c88f7e99ee47c48` (the tested
-set, possibly behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.0.0`, `b13e5d2`), so CI installs
+`cns.run/1`. CNS is installed from its git URL, pinned by the release tag `v2.1.0`
+(the tag peels to `fde931ffa89aebec95647742256ad53033bd3d02`); installing the Watcher needs access to that repository.
+CI tests the Watcher against Warden 0.15.1 (not tagged) at commit `fe9c8b35778de680d04b2a57775ac6a6831f4799` (the tested
+set, possibly behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.1.0`, `fde931f`), so CI installs
 the Watcher and Warden together with full dependency resolution and `pip check` is clean.
