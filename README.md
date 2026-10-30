@@ -42,21 +42,22 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout fe9c8b35778de680d04b2a57775ac6a6831f4799
+git -C WARDEN checkout fade3ca5ee6435393d0588782929ff8de72f988f
 pip install -e . ./WARDEN
 pip check
 ```
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from its git URL
-pinned by the release tag `v2.1.0`
-(the tag peels to `fde931ffa89aebec95647742256ad53033bd3d02`). Migration note: the pin moved from `v1.9.0` to
-`v2.0.0` in 0.3.8, and from `v2.0.0` to `v2.1.0` in 0.3.11. The Watcher imports only `cns.run`, and the suite passes
-against the installed 2.1.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
+pinned by the release tag `v2.2.0`
+(a lightweight tag, so the tag is the commit `ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`). Migration note: the pin moved from `v1.9.0` to
+`v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, and from `v2.1.0` to `v2.2.0` in 0.3.12 (the `cns` package at
+v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.run`, and the suite passes
+against the installed 2.2.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
-CI runs the end-to-end job and the co-install job against Warden 0.15.1 (not tagged) at commit
-`fe9c8b35778de680d04b2a57775ac6a6831f4799` (the tested set; it may be one or more
-commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.1.0`, `fde931f`), so both jobs
+CI runs the end-to-end job and the co-install job against Warden 0.16.1 (not tagged) at commit
+`fade3ca5ee6435393d0588782929ff8de72f988f` (the tested set; it may be one or more
+commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.2.0`, `ce6bd05`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
 `.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree.
@@ -279,7 +280,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
   approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
   "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
-  (strings in Warden 0.15.1 at fe9c8b3; `tests/test_warden_e2e.py` checks they are still in the installed
+  (strings in Warden 0.16.1 at fade3ca; `tests/test_warden_e2e.py` checks they are still in the installed
   Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
   The disguises it does read through are listed above and tested. The citation requirement and the shown "dropped"
   appendix are the other defences; a reader should still check the cited text.
