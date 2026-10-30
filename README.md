@@ -7,13 +7,13 @@ for a person. It can use a Claude model through the official SDK, or write the a
 It has no authority: nothing in the circuit reads what it writes, and every sentence it keeps cites a measurement in the
 record by id, or is dropped before anyone reads it.
 
-**Status: released from the circuit (2026-10-29).** The Watcher was the narrator seat in the Horsemen circuit, and the owner has released it from the circuit. Released means removed from the circuit and nothing else: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. In the circuit, Warden 0.15.0 lets a pinned manifest leave the Watcher out; until the pins move, the circuit still installs it. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
+**Status: released from the circuit (2026-10-29).** The Watcher narrates a Warden run record. It was never a seat of the circuit Warden runs (Warden has no Watcher seat and no concept of one, its manifest rule releases only `drafter` and `burnish`, and CNS's `contracts/warden-stack.json` and `contracts/install-stack.txt` do not name it), and the owner has released it from the circuit's roster. Released means removed from the roster and nothing else: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. The Watcher is not a seat and was never one; the circuit is five repositories (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN), and CNS's `docs/RELEASED_SEATS.md` says the Watcher is not a Warden seat. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
 
 Version `0.3.13` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
-The circuit (Ghost Tools, SWIZZLE, Warden, the Drafter, the Judge, Burnish, ASSAY) is designed so that
+The circuit (ghost_tools, SWIZZLE, ASSAY, Warden and the Judge; the Drafter, Burnish and the Watcher are released from it) is designed so that
 no model grades anything; this repository does not check that of the others. Its output is JSON that a
 person has to read. People trust fluent prose more than JSON, and that is exactly why a model has
 never been allowed near the verdict: a paraphrase would be believed over the measurement.
@@ -171,7 +171,7 @@ every sentence the oath dropped with its reason.
 ## HOW IT FITS THE CIRCUIT
 
 ```
-SWIZZLE prove -> ASSAY grade -> loop (Ghost, Drafter, suite, apply) -> Burnish -> governor -> Judge
+SWIZZLE prove -> ASSAY grade -> claim seat (any actor's real change) -> Warden (Ghost, suite, apply) -> Judge
                                                                                           |
                                                                               run.json (Warden)
                                                                                           |
@@ -196,7 +196,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - `tests/test_evidence.py`: a real run record (SWIZZLE, joined through a stack manifest)
   indexes every kind of thing with stable ids; forbidden paths are the governed folder and every
   checkout the record names; the instruments and the Drafter, Burnish and Judge seats of a record
-  written by Warden's own writer are all listed as having taken part.
+  written by Warden's own writer (a fixture from the old circuit, which seated all three) are all listed as having taken part.
 - `tests/test_refusals.py`: a table of malformed fields (wrong type for every field the index reads)
   is exit 2 with one line and no traceback; an unreachable model is exit 3; `--out` on top of the
   record is refused however it is spelled.
@@ -205,7 +205,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - `tests/test_warden_e2e.py`: the real Warden writes a record (for a target that does not exist, and for a small git
   project run with no Drafter) and the Watcher narrates it; the installed Warden is the tested one; each of Warden's own
   standard sentences that the oath allows is still a string in Warden's source. It runs in the `warden-e2e` CI job and
-  was also run on 3.11, 3.12 and 3.13 against Warden 0.13.10 for this release. The `coinstall-warden` job checks that pip
+  was also run on 3.11, 3.12 and 3.13 against Warden 0.16.3 for 0.3.14 (the three pytest runs are recorded in this release's CHANGELOG entry). The `coinstall-warden` job checks that pip
   resolves the Watcher and Warden together and that `pip check` is clean.
 - `tests/test_narrate_and_cli.py`: the model is shown the index and the oath only; what it writes is
   filtered and the filtering is shown; an emptied account is exit 4; the CLI refuses an `--out`
@@ -269,7 +269,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   same clause. A clause start ("and", "but", "so", "that", a comma, a colon) ends the reach; a cancelling word
   after the negator ("not only", "no doubt", "nobody doubts", "nothing stops", "nothing is more") and two
   negators ("not not safe") leave the label standing; a denial of a bad word ("not unsafe", "never risky",
-  "nothing here is unsafe") is dropped as a claim. This is a rule of thumb, not a parser. It can let a claim
+  "nothing here is unsafe") is dropped as a claim in the forms tested (one form is kept, see KNOWN DEFECTS). This is a rule of thumb, not a parser. It can let a claim
   through: a sentence in which a negator within four words does not deny the label, in a form the
   cancelling words do not name. It can drop an honest sentence: the ones the audit found that are still
   dropped are "all clear of edits", "all good checks are listed", a keyword quoted as a keyword ("a 'robust' keyword"), "hardened-runtime flag", "safe-mode flag", "OK to use the cached baseline" and "no problems
@@ -315,6 +315,15 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   is required [R].", "Nothing is wrong [R].", "Cleared for release [R].". They read as a grade and are not dropped.
   `tests/test_oath_known_gaps.py` holds this as a known gap: it fails the day one of them is dropped, so this list can
   be corrected then.
+- The status-claim filter can be got past by spelling a two-word label out with dots or dashes. Tried with
+  `watcher.oath.enforce` on a cited sentence and kept today: "p.r.o.d.u.c.t.i.o.n ready [R]", "production r.e.a.d.y [R]"
+  and "p-r-o-d-u-c-t-i-o-n ready [R]". The same spelling in a single-word label is dropped ("s.a.f.e [R]",
+  "r-o-b-u-s-t [R]"), so only the two-word form gets through.
+- A denial of a bad word is not always dropped, although the sentence above says it is: "no one would call this unsafe [R]" is
+  kept today ("not unsafe" and "nothing here is unsafe" are dropped).
+- More paraphrases that read as a grade and are kept when they cite the record: "Good to merge [R]", "Merge it [R]" and
+  "No action needed [R]" (the same kind of gap as the list above).
+- These are documented only. The oath, its labels and its rules were not changed for them; replacing the denylist is parked.
 - The Watcher reads `ghost_scan.declined`, the `dirty` flags and the gap lists from the record itself
   (`watcher/evidence.py`) and uses `RunRecord.from_dict` only to refuse a record that is not `cns.run/1`. CNS 2.0.0's
   `RunRecord` has `declined`, `gaps()` and `dirty_parts()` that answer the same questions. Nothing compares the two, so
@@ -432,7 +441,7 @@ Where a fix was wrong or overstated and corrected later, the entry says so. Open
 
 ## SELF-HOSTING
 
-The full circuit has governed a fresh clone of this repository, twice. The record is the CNS repository's
+The old circuit (before the owner's ruling of 2026-10-29 released the Drafter, Burnish and the Watcher from the roster; the Watcher itself was never a seat) governed a fresh clone of this repository, twice. This is a dated record. The record is the CNS repository's
 `docs/evidence/SELFHOSTING_2026-10-23.md`, which is on the CNS branch `claude/horsemen-production-status-5wsndb` until it
 is merged (https://github.com/wking53214/CNS/blob/claude/horsemen-production-status-5wsndb/docs/evidence/SELFHOSTING_2026-10-23.md);
 the run records are copied beside it. Both runs were at version 0.3.8, commit `b25d8522301005ba764783927f43abfeb9f18f5c`.

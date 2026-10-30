@@ -51,3 +51,37 @@ def test_cns_has_the_record_methods_the_readme_says_the_watcher_does_not_call():
     source = (ROOT / "watcher" / "evidence.py").read_text(encoding="utf-8")
     assert "RunRecord.from_dict" in source
     assert ".gaps(" not in source and ".dirty_parts(" not in source and "record.declined" not in source
+
+
+#: Bypasses an audit demonstrated on a cited sentence (round 7). Held as known gaps, like the paraphrases above: the
+#: oath was not changed for them. If one starts being dropped, remove it here and from KNOWN DEFECTS in the README.
+SPELLED_OUT_TWO_WORD_LABELS = (
+    "p.r.o.d.u.c.t.i.o.n ready",
+    "production r.e.a.d.y",
+    "p-r-o-d-u-c-t-i-o-n ready",
+)
+KEPT_DENIAL_AND_SIGN_OFFS = (
+    "no one would call this unsafe",
+    "Good to merge",
+    "Merge it",
+    "No action needed",
+)
+
+
+@pytest.mark.parametrize("phrase", SPELLED_OUT_TWO_WORD_LABELS + KEPT_DENIAL_AND_SIGN_OFFS)
+def test_the_round_7_bypasses_are_kept_today(phrase):
+    evidence = load(FIXTURE)
+    result = enforce(f"{phrase} [R].", evidence.citations)
+    assert result.kept == (f"{phrase} [R].",), "now dropped: move it out of the known gap (README KNOWN DEFECTS)"
+
+
+@pytest.mark.parametrize("phrase", ["s.a.f.e", "r-o-b-u-s-t"])
+def test_the_same_spelling_in_a_single_word_label_is_dropped(phrase):
+    evidence = load(FIXTURE)
+    assert enforce(f"{phrase} [R].", evidence.citations).kept == ()
+
+
+def test_the_readme_lists_the_round_7_bypasses_as_known_defects():
+    known = " ".join(README.split("## KNOWN DEFECTS", 1)[1].split("\n## ", 1)[0].split())
+    for phrase in SPELLED_OUT_TWO_WORD_LABELS + KEPT_DENIAL_AND_SIGN_OFFS:
+        assert f'"{phrase} [R]"' in known, phrase
