@@ -42,7 +42,7 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout fade3ca5ee6435393d0588782929ff8de72f988f
+git -C WARDEN checkout df212db32c230a00cf4100038637be873262a816
 pip install -e . ./WARDEN
 pip check
 ```
@@ -55,8 +55,8 @@ v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.r
 against the installed 2.2.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
-CI runs the end-to-end job and the co-install job against Warden 0.16.1 (not tagged) at commit
-`fade3ca5ee6435393d0588782929ff8de72f988f` (the tested set; it may be one or more
+CI runs the end-to-end job and the co-install job against Warden 0.16.2 (not tagged) at commit
+`df212db32c230a00cf4100038637be873262a816` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.2.0`, `ce6bd05`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
@@ -280,7 +280,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
   approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
   "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
-  (strings in Warden 0.16.1 at fade3ca; `tests/test_warden_e2e.py` checks they are still in the installed
+  (strings in Warden 0.16.2 at df212db; `tests/test_warden_e2e.py` checks they are still in the installed
   Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
   The disguises it does read through are listed above and tested. The citation requirement and the shown "dropped"
   appendix are the other defences; a reader should still check the cited text.

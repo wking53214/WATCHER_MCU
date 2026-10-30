@@ -393,7 +393,7 @@ _FOREIGN = _foreign()
 
 
 #: Sentences Warden itself writes, which say that nothing was approved or that something could not be done
-#: safely. They are fragments of the exact strings in Warden 0.16.1 (fade3ca); each is taken out of the reading
+#: safely. They are fragments of the exact strings in Warden 0.16.2 (df212db); each is taken out of the reading
 #: before the labels are looked for, so it cannot be mistaken for the Watcher grading a run, and it hides only
 #: itself. The negation rule (`_negated`) keeps these too; the list is the exact-text check beside it, and
 #: tests/test_oath.py holds the sources.
