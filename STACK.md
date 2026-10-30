@@ -2,7 +2,7 @@
 
 Five repositories make the circuit; the Watcher is not one of them. It was never a seat of the circuit Warden runs:
 it narrates a Warden run record, downstream, with nothing coming back. It is released from the circuit's roster by
-owner ruling (2026-10-29), along with DRAFTER and BURNISH; nothing was deleted and each still works on its own.
+owner ruling (2026-10-29), along with DRAFTER and BURNISH; nothing was deleted and each still works on its own. CNS's `contracts/warden-stack.json` does not name the Watcher, and the header comment of `contracts/install-stack.txt` mentions it only as released and not installed.
 
 | Repository | Role |
 |---|---|
@@ -29,6 +29,6 @@ CNS holds the interoperability contracts. No repository in the circuit modifies 
 the run record through it: `watcher.evidence` imports `cns.run` and refuses any record that is not
 `cns.run/1`. CNS is installed from its git URL, pinned by the release tag `v2.2.0`
 (a lightweight tag, so the tag is the commit `ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`); installing the Watcher needs access to that repository.
-CI tests the Watcher against Warden 0.16.3 (not tagged) at commit `cb45681ea80f845fb8f23bb091bda7f587c6a547` (the tested
+CI tests the Watcher against Warden 0.16.4 (not tagged) at commit `57f7bb7b12314f0ba30697cff9a846c749e3d606` (the tested
 set, possibly behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.2.0`, `ce6bd05`), so CI installs
 the Watcher and Warden together with full dependency resolution and `pip check` is clean.

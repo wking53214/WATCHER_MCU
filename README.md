@@ -7,9 +7,9 @@ for a person. It can use a Claude model through the official SDK, or write the a
 It has no authority: nothing in the circuit reads what it writes, and every sentence it keeps cites a measurement in the
 record by id, or is dropped before anyone reads it.
 
-**Status: released from the circuit (2026-10-29).** The Watcher narrates a Warden run record. It was never a seat of the circuit Warden runs (Warden has no Watcher seat and no concept of one, its manifest rule releases only `drafter` and `burnish`, and CNS's `contracts/warden-stack.json` and `contracts/install-stack.txt` do not name it), and the owner has released it from the circuit's roster. Released means removed from the roster and nothing else: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. The Watcher is not a seat and was never one; the circuit is five repositories (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN), and CNS's `docs/RELEASED_SEATS.md` says the Watcher is not a Warden seat. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
+**Status: released from the circuit (2026-10-29).** The Watcher narrates a Warden run record. It was never a seat of the circuit Warden runs (Warden has no Watcher seat and no concept of one, its manifest rule releases only `drafter` and `burnish`, and CNS's `contracts/warden-stack.json` does not name it; the header comment of `contracts/install-stack.txt` mentions it only to say that it is released and not installed), and the owner has released it from the circuit's roster. The Watcher was never a seat, so the release took it off the roster (the list of repositories the circuit is described as having) and changed nothing in the circuit Warden runs. Nothing about the Watcher was removed: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. The Watcher is not a seat and was never one; the circuit is five repositories (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN), and CNS's `docs/RELEASED_SEATS.md` says the Watcher is not a Warden seat. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
 
-Version `0.3.14` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.15` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
@@ -42,7 +42,7 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout cb45681ea80f845fb8f23bb091bda7f587c6a547
+git -C WARDEN checkout 57f7bb7b12314f0ba30697cff9a846c749e3d606
 pip install -e . ./WARDEN
 pip check
 ```
@@ -55,8 +55,8 @@ v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.r
 against the installed 2.2.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
-CI runs the end-to-end job and the co-install job against Warden 0.16.3 (not tagged) at commit
-`cb45681ea80f845fb8f23bb091bda7f587c6a547` (the tested set; it may be one or more
+CI runs the end-to-end job and the co-install job against Warden 0.16.4 (not tagged) at commit
+`57f7bb7b12314f0ba30697cff9a846c749e3d606` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.2.0`, `ce6bd05`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
@@ -205,7 +205,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - `tests/test_warden_e2e.py`: the real Warden writes a record (for a target that does not exist, and for a small git
   project run with no Drafter) and the Watcher narrates it; the installed Warden is the tested one; each of Warden's own
   standard sentences that the oath allows is still a string in Warden's source. It runs in the `warden-e2e` CI job and
-  was also run on 3.11, 3.12 and 3.13 against Warden 0.16.3 for 0.3.14 (the three pytest runs are recorded in this release's CHANGELOG entry). The `coinstall-warden` job checks that pip
+  was also run on 3.11, 3.12 and 3.13 against Warden 0.16.4 for 0.3.14 (the three pytest runs are recorded in this release's CHANGELOG entry). The `coinstall-warden` job checks that pip
   resolves the Watcher and Warden together and that `pip check` is clean.
 - `tests/test_narrate_and_cli.py`: the model is shown the index and the oath only; what it writes is
   filtered and the filtering is shown; an emptied account is exit 4; the CLI refuses an `--out`
@@ -280,7 +280,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
   approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
   "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
-  (strings in Warden 0.16.3 at cb45681; `tests/test_warden_e2e.py` checks they are still in the installed
+  (strings in Warden 0.16.4 at 57f7bb7; `tests/test_warden_e2e.py` checks they are still in the installed
   Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
   The disguises it does read through are listed above and tested. The citation requirement and the shown "dropped"
   appendix are the other defences; a reader should still check the cited text.
@@ -323,6 +323,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   kept today ("not unsafe" and "nothing here is unsafe" are dropped).
 - More paraphrases that read as a grade and are kept when they cite the record: "Good to merge [R]", "Merge it [R]" and
   "No action needed [R]" (the same kind of gap as the list above).
+- More ways past the status-claim filter, tried with `watcher.oath.enforce` on a cited sentence and kept today: "production, ready [R]", "Ready (for production) [R]", "Production readiness: yes [R]", "pro duction ready [R]" and "productionn ready [R]" (a comma, brackets, a different word form, a space inside the word and a doubled letter). Documented only: the oath, its labels and its rules were not changed for them, and no test holds them.
 - These are documented only. The oath, its labels and its rules were not changed for them; replacing the denylist is parked.
 - The Watcher reads `ghost_scan.declined`, the `dirty` flags and the gap lists from the record itself
   (`watcher/evidence.py`) and uses `RunRecord.from_dict` only to refuse a record that is not `cns.run/1`. CNS 2.0.0's
@@ -458,7 +459,7 @@ did not review the kept README edit.
 - The repository is young. Its history starts on 2026-10-14.
 - It has one human maintainer, and most commits were written with an AI assistant (the commit trailers say so).
 - It has no known outside users.
-- The owner released it from the Horsemen circuit on 2026-10-29 (see the status note under WHAT THIS IS). Nothing in it was removed, and it keeps working on its own.
+- The owner released it from the circuit's roster on 2026-10-29 (see the status note under WHAT THIS IS). It was never a seat of the circuit Warden runs. Nothing in it was removed, and it keeps working on its own.
 - Releases are tagged by the owner, not by the code. Check the repository's tags and releases on GitHub for what exists.
 
 Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Copyright 2026 William N. King.

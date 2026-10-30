@@ -7,6 +7,15 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.15] - 2026-10-30, not tagged
+
+### Changed
+
+- The Warden pin moves from 0.16.3 (`cb45681ea80f845fb8f23bb091bda7f587c6a547`) to 0.16.4 (`57f7bb7b12314f0ba30697cff9a846c749e3d606`) in both CI jobs, the README, `STACK.md`, the comment on the oath fragments in `watcher/oath.py` and the tested-set constants. Pre-existing tests edited under the exact-behaviour rule: `tests/test_pins.py` (`WARDEN_PIN` and `WARDEN_VERSION`) and `tests/test_warden_e2e.py` (the installed Warden version), nothing else about them changed. No Watcher code changed.
+- README and `STACK.md` say exactly what CNS says about the Watcher: `contracts/warden-stack.json` does not name it, and the header comment of `contracts/install-stack.txt` mentions it only to say it is released and not installed. "Released from the roster" is reconciled with "never a seat": the Watcher was never a seat of the circuit Warden runs; the release took it off the roster.
+- KNOWN DEFECTS gains five more ways past the status-claim filter, found by the round-8 audit with `watcher.oath.enforce` ("production, ready [R]", "Ready (for production) [R]", "Production readiness: yes [R]", "pro duction ready [R]", "productionn ready [R]"). Documented only: the oath was not changed.
+- Version 0.3.15 (`watcher/__init__.py`, README).
+
 ## [0.3.14] - 2026-10-30, not tagged
 
 Documentation and pins only. No code and no oath rule changed.
