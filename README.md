@@ -9,7 +9,7 @@ record by id, or is dropped before anyone reads it.
 
 **Status: released from the circuit (2026-10-29).** The Watcher narrates a Warden run record. It was never a seat of the circuit Warden runs (Warden has no Watcher seat and no concept of one, its manifest rule releases only `drafter` and `burnish`, and CNS's `contracts/warden-stack.json` and `contracts/install-stack.txt` do not name it), and the owner has released it from the circuit's roster. Released means removed from the roster and nothing else: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. The Watcher is not a seat and was never one; the circuit is five repositories (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN), and CNS's `docs/RELEASED_SEATS.md` says the Watcher is not a Warden seat. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
 
-Version `0.3.13` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.14` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 

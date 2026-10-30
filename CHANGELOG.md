@@ -7,6 +7,38 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.14] - 2026-10-30, not tagged
+
+Documentation and pins only. No code and no oath rule changed.
+
+### Changed
+- The tested Warden moves from 0.16.2 (`df212db32c230a00cf4100038637be873262a816`) to 0.16.3
+  (`cb45681ea80f845fb8f23bb091bda7f587c6a547`) in both CI jobs, the README, `STACK.md`, the comment on Warden's own
+  sentences in `watcher/oath.py` and `tests/test_pins.py`. Pre-existing tests edited under the exact-behaviour rule, pin and
+  version text only: `tests/test_pins.py` (`WARDEN_PIN`, `WARDEN_VERSION` and the comment) and `tests/test_warden_e2e.py`
+  (the installed Warden version). The full suite and the end-to-end tests (`-m e2e`) were run on Python 3.11, 3.12 and 3.13
+  against Warden 0.16.3 for this release: the default `pytest -q` run (727 passed, 5 deselected) and `-m e2e tests/test_warden_e2e.py` (5 passed) on each of
+  the three, with `pip check` clean, ruff and mypy clean. (Stage 4 wave 3)
+- `STACK.md` and the README say the circuit is five repositories (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN) and that
+  the Watcher is not part of it and never was a seat: it narrates a Warden run record. The old diagram, which put the Drafter
+  and Burnish in the loop, is replaced; the README's self-hosting section is labelled the dated record of the old circuit.
+- The README's KNOWN DEFECTS lists four oath bypasses an audit demonstrated with `watcher.oath.enforce` on a cited sentence,
+  documented only (the oath was not changed; replacing the denylist is parked): a two-word label spelled out with dots or
+  dashes is kept ("p.r.o.d.u.c.t.i.o.n ready", "production r.e.a.d.y", "p-r-o-d-u-c-t-i-o-n ready"; the same spelling in a
+  single-word label is dropped), "no one would call this unsafe" is kept although the README says a denial of a bad word is
+  dropped, and the paraphrases "Good to merge", "Merge it" and "No action needed" are kept. A test holds these as known gaps.
+- The README's claim that the end-to-end tests were run against Warden 0.13.10 is replaced by the 0.3.14 run above.
+- Version 0.3.14 and this entry.
+
+### Correction
+- The 0.3.10 entry below (step R1) and the README sentence it describes said "Warden 0.15.0 lets a pinned manifest leave
+  the Watcher out; until the pins move, the circuit still installs it." That sentence was wrong. Warden
+  never had a Watcher seat or any concept of one: its manifest rule releases only `drafter` and `burnish`, and CNS's
+  `contracts/warden-stack.json` and `contracts/install-stack.txt` already exclude the Watcher; CNS's `docs/RELEASED_SEATS.md`
+  says the Watcher is not a Warden seat. The 0.3.10 entry is history and is left as written. The true statement: the Watcher
+  was never a seat of the circuit Warden runs; it narrates a Warden run record and is released from the circuit's roster.
+  The README called it "the narrator seat" in one place and "Not a seat" in another; it now says not a seat in both.
+
 ## [0.3.13] - 2026-10-30, not tagged
 
 ### Changed
