@@ -1,22 +1,27 @@
 # The circuit, and where the Watcher stands
 
-Seven repositories make the circuit; the Watcher is outside it, downstream, with nothing coming back.
+Five repositories make the circuit; the Watcher is not one of them. It was never a seat of the circuit Warden runs:
+it narrates a Warden run record, downstream, with nothing coming back. It is released from the circuit's roster by
+owner ruling (2026-10-29), along with DRAFTER and BURNISH; nothing was deleted and each still works on its own.
 
 | Repository | Role |
 |---|---|
-| ASSAY | the answer key: specimens with known failure modes |
-| ghost_tools | the scanner: Ghost reports, never writes |
+| ASSAY | the answer key: specimens with known failure modes (an instrument, not released) |
+| ghost_tools | the scanner: Ghost observes and reports, never writes |
 | SWIZZLE | the attacker: proves, grades Ghost against ASSAY, attacks Warden |
-| WARDEN | the governor: the only writer, the only orchestrator |
-| DRAFTER | proposes fixes, never writes |
-| JUDGE | reads the evidence, says ACCEPT, REJECT or INSUFFICIENT |
-| BURNISH | the finisher: writes only through Warden |
-| **WATCHER_MCU** | **reads Warden's record, tells a person, interferes with nothing** |
+| WARDEN | the governor: applies, measures, refuses and puts the tree back; the only writer; any actor's real change enters through its claim seat (`--claim-commit` or `--claim-diff`) |
+| JUDGE | reads the evidence, says ACCEPT, REJECT or INSUFFICIENT (Warden reports INSUFFICIENT as a hold) |
+| **WATCHER_MCU** | **not part of the circuit: reads Warden's record, tells a person, interferes with nothing** |
+
+DRAFTER and BURNISH are released from the circuit too. A bare `--stack` still requires all six checkouts (drafter and
+burnish included); only a pinned `--stack-manifest` that omits them, with a folder that lacks them, runs without them, and
+the run record lists `released_seats`. Every Warden run declines eight Ghost checks (mutate, kernel, structure, tests,
+project, secrets, correlate, ledger) since ghost_tools 1.10.11; text that says seven describes a dated earlier run.
 
 Run the circuit, then the Watcher:
 
 ```
-warden tagteam PATH --stack FOLDER --stack-manifest stack.json --authorize "Your Name" --reason "why" --scope code > run.json
+warden tagteam PATH --stack FOLDER --stack-manifest stack.json --claim-commit SHA --authorize "Your Name" --reason "why" --scope code > run.json
 watcher narrate run.json --target PATH --out account.md
 ```
 
