@@ -7,6 +7,22 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.12] - 2026-10-30, not tagged
+
+### Changed
+- The CNS pin is the tag `v2.2.0` (`cns @ git+https://github.com/wking53214/CNS.git@v2.2.0`, comment
+  `v2.2.0 = ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`, a lightweight tag), from `v2.1.0`; the `cns` package at v2.2.0
+  equals v2.1.0 except its version string. The tested Warden moves from 0.15.1 (`fe9c8b35778de680d04b2a57775ac6a6831f4799`)
+  to 0.16.1 (`fade3ca5ee6435393d0588782929ff8de72f988f`) in both CI jobs, the README, `STACK.md`, the comment on
+  Warden's own sentences in `watcher/oath.py` and `tests/test_pins.py`. No Watcher code changed. Pre-existing tests edited
+  under the exact-behaviour rule, pin and version text only: `tests/test_pins.py` and `tests/test_warden_e2e.py`. The
+  end-to-end tests (`-m e2e`) pass against Warden 0.16.1. (Pin22 step 1)
+- Version 0.3.12 and this entry. (Pin22 step 2)
+- Runs of the Watcher over a Warden record may list eight declined checks (`mutate`, `kernel`, `structure`, `tests`,
+  `project`, `secrets`, `correlate`, `ledger`), not seven, because ghost_tools 1.10.11 lists the ledger as declined under
+  `--no-ledger`. The Watcher states no such count in its text and its code is unchanged. The README quotes the 2026-10-22
+  and 2026-10-23 runs as recorded.
+
 ## [0.3.11] - 2026-10-29, not tagged
 
 ### Changed
