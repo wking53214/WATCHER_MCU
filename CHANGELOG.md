@@ -7,6 +7,17 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.13] - 2026-10-30, not tagged
+
+### Changed
+- The tested Warden moves from 0.16.1 (`fade3ca5ee6435393d0588782929ff8de72f988f`) to 0.16.2
+  (`df212db32c230a00cf4100038637be873262a816`) in both CI jobs, the README, `STACK.md`, the comment on Warden's own
+  sentences in `watcher/oath.py` and `tests/test_pins.py`. Warden 0.16.2 refuses a `--stack` folder that holds a seat the
+  pinned manifest omits even when an option supplies the seat. No Watcher code changed. Pre-existing tests edited under the
+  exact-behaviour rule, pin and version text only: `tests/test_pins.py` and `tests/test_warden_e2e.py`. The end-to-end tests
+  (`-m e2e`) pass against Warden 0.16.2. (Stage 3 wave 2 step 1)
+- Version 0.3.13 and this entry. (Stage 3 wave 2 step 2)
+
 ## [0.3.12] - 2026-10-30, not tagged
 
 ### Changed
