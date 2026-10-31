@@ -42,7 +42,7 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout 0e28e9a77bb04a4d3c7c1ac156f0b506365de6b9
+git -C WARDEN checkout 1a263fbefd164dff40b7064ab5381cda281694f2
 pip install -e . ./WARDEN
 pip check
 ```
@@ -56,7 +56,7 @@ against the installed 2.3.0 with no change to the Watcher's code. `tests/test_pi
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 0.16.4 (not tagged) at commit
-`0e28e9a77bb04a4d3c7c1ac156f0b506365de6b9` (the tested set; it may be one or more
+`1a263fbefd164dff40b7064ab5381cda281694f2` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.3.0`, `41592fb`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
@@ -280,7 +280,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
   approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
   "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
-  (strings in Warden 0.16.4 at 0e28e9a; `tests/test_warden_e2e.py` checks they are still in the installed
+  (strings in Warden 0.16.4 at 1a263fb; `tests/test_warden_e2e.py` checks they are still in the installed
   Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
   The disguises it does read through are listed above and tested. The citation requirement and the shown "dropped"
   appendix are the other defences; a reader should still check the cited text.

@@ -29,6 +29,6 @@ CNS holds the interoperability contracts. No repository in the circuit modifies 
 the run record through it: `watcher.evidence` imports `cns.run` and refuses any record that is not
 `cns.run/1`. CNS is installed from its git URL, pinned by the release tag `v2.3.0`
 (a lightweight tag, so the tag is the commit `41592fb7b6735abe140f745353c09ba3eed8e7a2`); installing the Watcher needs access to that repository.
-CI tests the Watcher against Warden 0.16.4 (not tagged) at commit `0e28e9a77bb04a4d3c7c1ac156f0b506365de6b9` (the tested
+CI tests the Watcher against Warden 0.16.4 (not tagged) at commit `1a263fbefd164dff40b7064ab5381cda281694f2` (the tested
 set, possibly behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.3.0`, `41592fb`), so CI installs
 the Watcher and Warden together with full dependency resolution and `pip check` is clean.
