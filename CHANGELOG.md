@@ -7,6 +7,13 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.16] - 2026-11-04, not tagged
+
+### Changed
+
+- The Warden pin moves from 0.16.4 (`1a263fbefd164dff40b7064ab5381cda281694f2`) to 0.16.5 (`84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4`), which refuses a pinned stack manifest that omits any of the five circuit members, WARDEN included, in both CI jobs, the README, `STACK.md`, the comment on the oath fragments in `watcher/oath.py` and the tested-set constants. Pre-existing tests edited under the exact-behaviour rule: `tests/test_pins.py` (`WARDEN_PIN` and `WARDEN_VERSION`) and `tests/test_warden_e2e.py` (the installed Warden version), nothing else about them changed. No Watcher code changed. The CNS pin (`v2.3.0`) is not moved. The ledger in the README lists fixed defects only, and this release fixes none.
+- Version 0.3.16 (`watcher/__init__.py`, README).
+
 ## [0.3.15] - 2026-10-30, not tagged
 
 ### Changed

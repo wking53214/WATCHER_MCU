@@ -9,7 +9,7 @@ record by id, or is dropped before anyone reads it.
 
 **Status: released from the circuit (2026-10-29).** The Watcher narrates a Warden run record. It was never a seat of the circuit Warden runs (Warden has no Watcher seat and no concept of one, its manifest rule releases only `drafter` and `burnish`, and CNS's `contracts/warden-stack.json` does not name it; the header comment of `contracts/install-stack.txt` mentions it only to say that it is released and not installed), and the owner has released it from the circuit's roster. The Watcher was never a seat, so the release took it off the roster (the list of repositories the circuit is described as having) and changed nothing in the circuit Warden runs. Nothing about the Watcher was removed: the code, the tests, the history and the CI are intact, and the Watcher still works on its own as described below. The reason, with the evidence: nothing in the circuit reads what it writes. What remains usable on its own: `watcher narrate` on any run record. The Watcher is not a seat and was never one; the circuit is five repositories (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN), and CNS's `docs/RELEASED_SEATS.md` says the Watcher is not a Warden seat. The Watcher is free to be reborn elsewhere; that is the owner's intent, not a plan or a promise.
 
-Version `0.3.15` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
+Version `0.3.16` (reads `cns.run/1`). Apache-2.0. Copyright 2026 William N. King.
 
 ## WHY IT EXISTS
 
@@ -42,7 +42,7 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout 1a263fbefd164dff40b7064ab5381cda281694f2
+git -C WARDEN checkout 84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4
 pip install -e . ./WARDEN
 pip check
 ```
@@ -55,8 +55,8 @@ v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.r
 against the installed 2.3.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
-CI runs the end-to-end job and the co-install job against Warden 0.16.4 (not tagged) at commit
-`1a263fbefd164dff40b7064ab5381cda281694f2` (the tested set; it may be one or more
+CI runs the end-to-end job and the co-install job against Warden 0.16.5 (not tagged) at commit
+`84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.3.0`, `41592fb`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
@@ -280,7 +280,7 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   own sentences are excused by exact text: "Nothing was approved", "The run was stopped and nothing was
   approved", "The run is an ERROR and nothing was approved", "the held result cannot be applied safely",
   "Warden could not make a safe place for its lock and journal", "the lock file could not be opened safely"
-  (strings in Warden 0.16.4 at 1a263fb; `tests/test_warden_e2e.py` checks they are still in the installed
+  (strings in Warden 0.16.5 at 84cb89b; `tests/test_warden_e2e.py` checks they are still in the installed
   Warden). A new sentence of Warden's that grades or denies in other words is not covered until it is added.
   The disguises it does read through are listed above and tested. The citation requirement and the shown "dropped"
   appendix are the other defences; a reader should still check the cited text.
