@@ -3,9 +3,159 @@
 All notable changes to the Watcher are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/). The version lives in one place, `watcher.__version__`;
-`pyproject.toml` reads it. No release of this repository is tagged; tagging is the owner's decision.
+`pyproject.toml` reads it. Releases are tagged by the owner; check the repository's tags and releases on GitHub for what exists.
 
 ## [Unreleased]
+
+## [0.3.15] - 2026-10-30, not tagged
+
+### Changed
+
+- The Warden pin moves from 0.16.3 (`cb45681ea80f845fb8f23bb091bda7f587c6a547`) to 0.16.4 (`57f7bb7b12314f0ba30697cff9a846c749e3d606`) in both CI jobs, the README, `STACK.md`, the comment on the oath fragments in `watcher/oath.py` and the tested-set constants. Pre-existing tests edited under the exact-behaviour rule: `tests/test_pins.py` (`WARDEN_PIN` and `WARDEN_VERSION`) and `tests/test_warden_e2e.py` (the installed Warden version), nothing else about them changed. No Watcher code changed.
+- README and `STACK.md` say exactly what CNS says about the Watcher: `contracts/warden-stack.json` does not name it, and the header comment of `contracts/install-stack.txt` mentions it only to say it is released and not installed. "Released from the roster" is reconciled with "never a seat": the Watcher was never a seat of the circuit Warden runs; the release took it off the roster.
+- KNOWN DEFECTS gains five more ways past the status-claim filter, found by the round-8 audit with `watcher.oath.enforce` ("production, ready [R]", "Ready (for production) [R]", "Production readiness: yes [R]", "pro duction ready [R]", "productionn ready [R]"). Documented only: the oath was not changed.
+- Version 0.3.15 (`watcher/__init__.py`, README).
+
+## [0.3.14] - 2026-10-30, not tagged
+
+Documentation and pins only. No code and no oath rule changed.
+
+### Changed
+- The tested Warden moves from 0.16.2 (`df212db32c230a00cf4100038637be873262a816`) to 0.16.3
+  (`cb45681ea80f845fb8f23bb091bda7f587c6a547`) in both CI jobs, the README, `STACK.md`, the comment on Warden's own
+  sentences in `watcher/oath.py` and `tests/test_pins.py`. Pre-existing tests edited under the exact-behaviour rule, pin and
+  version text only: `tests/test_pins.py` (`WARDEN_PIN`, `WARDEN_VERSION` and the comment) and `tests/test_warden_e2e.py`
+  (the installed Warden version). The full suite and the end-to-end tests (`-m e2e`) were run on Python 3.11, 3.12 and 3.13
+  against Warden 0.16.3 for this release: the default `pytest -q` run (727 passed, 5 deselected) and `-m e2e tests/test_warden_e2e.py` (5 passed) on each of
+  the three, with `pip check` clean, ruff and mypy clean. (Stage 4 wave 3)
+- `STACK.md` and the README say the circuit is five repositories (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN) and that
+  the Watcher is not part of it and never was a seat: it narrates a Warden run record. The old diagram, which put the Drafter
+  and Burnish in the loop, is replaced; the README's self-hosting section is labelled the dated record of the old circuit.
+- The README's KNOWN DEFECTS lists four oath bypasses an audit demonstrated with `watcher.oath.enforce` on a cited sentence,
+  documented only (the oath was not changed; replacing the denylist is parked): a two-word label spelled out with dots or
+  dashes is kept ("p.r.o.d.u.c.t.i.o.n ready", "production r.e.a.d.y", "p-r-o-d-u-c-t-i-o-n ready"; the same spelling in a
+  single-word label is dropped), "no one would call this unsafe" is kept although the README says a denial of a bad word is
+  dropped, and the paraphrases "Good to merge", "Merge it" and "No action needed" are kept. A test holds these as known gaps.
+- The README's claim that the end-to-end tests were run against Warden 0.13.10 is replaced by the 0.3.14 run above.
+- Version 0.3.14 and this entry.
+
+### Correction
+- The 0.3.10 entry below (step R1) and the README sentence it describes said "Warden 0.15.0 lets a pinned manifest leave
+  the Watcher out; until the pins move, the circuit still installs it." That sentence was wrong. Warden
+  never had a Watcher seat or any concept of one: its manifest rule releases only `drafter` and `burnish`, and CNS's
+  `contracts/warden-stack.json` and `contracts/install-stack.txt` already exclude the Watcher; CNS's `docs/RELEASED_SEATS.md`
+  says the Watcher is not a Warden seat. The 0.3.10 entry is history and is left as written. The true statement: the Watcher
+  was never a seat of the circuit Warden runs; it narrates a Warden run record and is released from the circuit's roster.
+  The README called it "the narrator seat" in one place and "Not a seat" in another; it now says not a seat in both.
+
+## [0.3.13] - 2026-10-30, not tagged
+
+### Changed
+- The tested Warden moves from 0.16.1 (`fade3ca5ee6435393d0588782929ff8de72f988f`) to 0.16.2
+  (`df212db32c230a00cf4100038637be873262a816`) in both CI jobs, the README, `STACK.md`, the comment on Warden's own
+  sentences in `watcher/oath.py` and `tests/test_pins.py`. Warden 0.16.2 refuses a `--stack` folder that holds a seat the
+  pinned manifest omits even when an option supplies the seat. No Watcher code changed. Pre-existing tests edited under the
+  exact-behaviour rule, pin and version text only: `tests/test_pins.py` and `tests/test_warden_e2e.py`. The end-to-end tests
+  (`-m e2e`) pass against Warden 0.16.2. (Stage 3 wave 2 step 1)
+- Version 0.3.13 and this entry. (Stage 3 wave 2 step 2)
+
+## [0.3.12] - 2026-10-30, not tagged
+
+### Changed
+- The CNS pin is the tag `v2.2.0` (`cns @ git+https://github.com/wking53214/CNS.git@v2.2.0`, comment
+  `v2.2.0 = ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`, a lightweight tag), from `v2.1.0`; the `cns` package at v2.2.0
+  equals v2.1.0 except its version string. The tested Warden moves from 0.15.1 (`fe9c8b35778de680d04b2a57775ac6a6831f4799`)
+  to 0.16.1 (`fade3ca5ee6435393d0588782929ff8de72f988f`) in both CI jobs, the README, `STACK.md`, the comment on
+  Warden's own sentences in `watcher/oath.py` and `tests/test_pins.py`. No Watcher code changed. Pre-existing tests edited
+  under the exact-behaviour rule, pin and version text only: `tests/test_pins.py` and `tests/test_warden_e2e.py`. The
+  end-to-end tests (`-m e2e`) pass against Warden 0.16.1. (Pin22 step 1)
+- Version 0.3.12 and this entry. (Pin22 step 2)
+- Runs of the Watcher over a Warden record may list eight declined checks (`mutate`, `kernel`, `structure`, `tests`,
+  `project`, `secrets`, `correlate`, `ledger`), not seven, because ghost_tools 1.10.11 lists the ledger as declined under
+  `--no-ledger`. The Watcher states no such count in its text and its code is unchanged. The README quotes the 2026-10-22
+  and 2026-10-23 runs as recorded.
+
+## [0.3.11] - 2026-10-29, not tagged
+
+### Changed
+- The CNS pin is the tag `v2.1.0` (`cns @ git+https://github.com/wking53214/CNS.git@v2.1.0`, comment
+  `v2.1.0 = fde931ffa89aebec95647742256ad53033bd3d02`), from `v2.0.0`, and the tested Warden moves from 0.14.0
+  (`68f2a955f486a8ebb230c4395c88f7e99ee47c48`) to 0.15.1 (`fe9c8b35778de680d04b2a57775ac6a6831f4799`) in both CI jobs,
+  the README, `STACK.md`, the comment on Warden's own sentences in `watcher/oath.py` and `tests/test_pins.py`. No Watcher
+  code changed. Pre-existing tests edited under the exact-behaviour rule, pin and version text only:
+  `tests/test_pins.py` and `tests/test_warden_e2e.py`. (Pin21 step 1)
+- Version 0.3.11 and this entry. (Pin21 step 2)
+
+## [0.3.10] - 2026-10-29, not tagged
+
+### Changed
+- The README says, in WHAT THIS IS and in CEILINGS CODE CANNOT FIX, that the owner released the Watcher from the Horsemen
+  circuit on 2026-10-29. Released means removed from the circuit and nothing else: no code, test, history or CI was changed.
+  Nothing in the circuit reads what the Watcher writes. It still works on its own (`watcher narrate` on any run record).
+  Warden 0.15.0 lets a pinned manifest leave the Watcher out; until the pins move, the circuit still installs it. The Watcher
+  is free to be reborn elsewhere, as intent only. (Step R1)
+- Version 0.3.10 and this entry. No pin changed. (Step R2)
+
+## [0.3.9] - 2026-10-24
+
+### Fixed
+- `watcher narrate RECORD --no-model | head -c0` printed "internal error: BrokenPipeError ... Nothing was written." and
+  exited 1 (the exit table says 1 is a bug in the Watcher), with and without `PYTHONUNBUFFERED=1`; a closed standard
+  output gave the same message for an `AttributeError`. A broken pipe now prints nothing and keeps the earned code (0, or
+  4 when the oath kept nothing). Any other failed delivery on standard output (closed, or a failing write such as a full
+  device) is one plain line on standard error and exit 2, because an account that was not delivered was not given. `main`
+  does not replace `sys.stdout`. Found by the round-6 audit; reproduced first. (Step 1)
+
+### Changed
+- Warden is pinned at 0.13.10, commit `9ecd1124e6c1b1c4ad7daed37b17f9009662dd9d` (was 0.13.9 at
+  `b57b81e1c98333c43d422666c89a8fcf3ae6eaca`), in the workflow, README, STACK, the `watcher/oath.py` comment and the
+  tests. CNS stays `@v2.0.0`. (Step 3)
+
+### Documentation
+- SELF-HOSTING cites the CNS repository's `docs/evidence/SELFHOSTING_2026-10-23.md` (on the CNS branch until merged):
+  ACCEPT twice at 0.3.8, 701 passed with 0 skipped, 41 Ghost findings standing, 7 declined checks, and what an ACCEPT
+  with 7 gaps does not mean. The caveat about `--target` is written once. Six paraphrases that pass the oath filter when
+  cited are listed as a known defect, and the README lists as a drift risk that the Watcher reads the declined checks,
+  dirty flags and gaps itself instead of calling CNS 2.0.0's `RunRecord.declined`, `gaps()` and `dirty_parts()`. (Step 2)
+- A ledger entry for 0.3.9 and a line for `tests/test_delivery.py` under WHAT WORKS. (Step 4)
+
+### Tests
+- New: `tests/test_delivery.py` (Step 1) and `tests/test_oath_known_gaps.py` (Step 2, documents current behaviour as a
+  known gap).
+- Pre-existing tests edited, each to assert the new behaviour and nothing else: `tests/test_readme_ledger.py`, the
+  self-hosting test now holds the new paragraph and the recorded numbers (Step 2); `tests/test_pins.py` and
+  `tests/test_warden_e2e.py`, the Warden commit and version (Step 3).
+
+## [0.3.8] - 2026-10-22
+
+### Changed
+- The CNS pin moves from the tag `v1.9.0` to the tag `v2.0.0`: `cns @ git+https://github.com/wking53214/CNS.git@v2.0.0`,
+  with the comment `# v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1` in `pyproject.toml`, the same spelling as the
+  other repositories of the circuit. README, STACK and `tests/test_pins.py` follow. The Watcher imports only `cns.run`
+  and the suite passes against the installed cns 2.0.0 (`direct_url.json`: requested revision `v2.0.0`, commit
+  `b13e5d2f9e0e4291725f82794b89117c3d840ac1`) with no change to the code. (Step 1)
+- CI, README, STACK, the `watcher/oath.py` comment and the tests name Warden 0.13.9 (not tagged) at commit
+  `b57b81e1c98333c43d422666c89a8fcf3ae6eaca` (was 0.13.8 at `380894f0304ef40587dd29efd41b4ceccf94a5d3`). That Warden pins
+  CNS `v2.0.0`, so pip resolves the Watcher and Warden together with one CNS and `pip check` is clean. The end-to-end
+  version assertion expects 0.13.9. The Watcher has no pin to ghost_tools, SWIZZLE or ASSAY. (Step 2)
+
+### Documentation
+- README rewritten to state what works (each line names its test or CI job), what does not work or is not proven, the
+  open defects, what broke and how it was fixed (checked against this changelog, `git log` and the tests), what is and is
+  not recorded about the circuit governing this repository (Warden's registry rows 5 and 6 do not list it, and they
+  predate the current rules), and the ceilings code cannot fix. The install commands were run in a fresh virtual
+  environment. Removed because they could not be verified here: that the label list is a superset of Ghost Tools' list,
+  a date on the SWIZZLE fixture, and a count of other languages. Two statements were corrected: the `[CV]` defect fixed in
+  0.3.7 described the last cycle that had observed anything, not the first cycle; and the `--out` defect of 0.3.7 was
+  introduced by the atomic write of 0.3.6. (Step 3)
+- This file no longer says whether a release is tagged (the statement goes stale). Past entries are unchanged.
+
+### Tests
+- New: `tests/test_readme_ledger.py` (the sections exist, the tests the README names exist, the ledger's versions and
+  dates match this changelog, the numbers it states match the code, no marketing words, no claim about tags).
+- Pre-existing tests edited, each to assert the new behaviour and nothing else: `tests/test_pins.py` (the CNS tag and
+  commit, Step 1; the Warden commit and version, Step 2) and `tests/test_warden_e2e.py` (the expected Warden version,
+  Step 2).
 
 ## [0.3.7] - 2026-10-22
 

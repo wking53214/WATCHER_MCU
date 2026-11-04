@@ -1,29 +1,34 @@
 # The circuit, and where the Watcher stands
 
-Seven repositories make the circuit; the Watcher is outside it, downstream, with nothing coming back.
+Five repositories make the circuit; the Watcher is not one of them. It was never a seat of the circuit Warden runs:
+it narrates a Warden run record, downstream, with nothing coming back. It is released from the circuit's roster by
+owner ruling (2026-10-29), along with DRAFTER and BURNISH; nothing was deleted and each still works on its own. CNS's `contracts/warden-stack.json` does not name the Watcher, and the header comment of `contracts/install-stack.txt` mentions it only as released and not installed.
 
 | Repository | Role |
 |---|---|
-| ASSAY | the answer key: specimens with known failure modes |
-| ghost_tools | the scanner: Ghost reports, never writes |
+| ASSAY | the answer key: specimens with known failure modes (an instrument, not released) |
+| ghost_tools | the scanner: Ghost observes and reports, never writes |
 | SWIZZLE | the attacker: proves, grades Ghost against ASSAY, attacks Warden |
-| WARDEN | the governor: the only writer, the only orchestrator |
-| DRAFTER | proposes fixes, never writes |
-| JUDGE | reads the evidence, says ACCEPT, REJECT or INSUFFICIENT |
-| BURNISH | the finisher: writes only through Warden |
-| **WATCHER_MCU** | **reads Warden's record, tells a person, interferes with nothing** |
+| WARDEN | the governor: applies, measures, refuses and puts the tree back; the only writer; any actor's real change enters through its claim seat (`--claim-commit` or `--claim-diff`) |
+| JUDGE | reads the evidence, says ACCEPT, REJECT or INSUFFICIENT (Warden reports INSUFFICIENT as a hold) |
+| **WATCHER_MCU** | **not part of the circuit: reads Warden's record, tells a person, interferes with nothing** |
+
+DRAFTER and BURNISH are released from the circuit too. A bare `--stack` still requires all six checkouts (drafter and
+burnish included); only a pinned `--stack-manifest` that omits them, with a folder that lacks them, runs without them, and
+the run record lists `released_seats`. Every Warden run declines eight Ghost checks (mutate, kernel, structure, tests,
+project, secrets, correlate, ledger) since ghost_tools 1.10.11; text that says seven describes a dated earlier run.
 
 Run the circuit, then the Watcher:
 
 ```
-warden tagteam PATH --stack FOLDER --stack-manifest stack.json --authorize "Your Name" --reason "why" --scope code > run.json
+warden tagteam PATH --stack FOLDER --stack-manifest stack.json --claim-commit SHA --authorize "Your Name" --reason "why" --scope code > run.json
 watcher narrate run.json --target PATH --out account.md
 ```
 
 CNS holds the interoperability contracts. No repository in the circuit modifies it. The Watcher reads
 the run record through it: `watcher.evidence` imports `cns.run` and refuses any record that is not
-`cns.run/1`. CNS is installed from its git URL, pinned by the release tag `v1.9.0`
-(the tag peels to `da18e411743d4e3b0e783105394d845fb1c16746`); installing the Watcher needs access to that repository.
-CI tests the Watcher against Warden 0.13.8 (not tagged) at commit `380894f0304ef40587dd29efd41b4ceccf94a5d3` (the tested
-set, possibly behind WARDEN's branch head). That Warden commit pins the same CNS (`v1.9.0`, `da18e41`), so CI installs
+`cns.run/1`. CNS is installed from its git URL, pinned by the release tag `v2.3.0`
+(a lightweight tag, so the tag is the commit `41592fb7b6735abe140f745353c09ba3eed8e7a2`); installing the Watcher needs access to that repository.
+CI tests the Watcher against Warden 0.16.4 (not tagged) at commit `1a263fbefd164dff40b7064ab5381cda281694f2` (the tested
+set, possibly behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.3.0`, `41592fb`), so CI installs
 the Watcher and Warden together with full dependency resolution and `pip check` is clean.

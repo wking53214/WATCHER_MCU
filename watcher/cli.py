@@ -7,7 +7,10 @@ Exit codes (the README table is tested against this list):
   2  usage: a record that is missing, unreadable or malformed, a --target that does not exist or is not a folder,
      an --out inside a forbidden folder or on top of the record itself, an --out that exists and is not a regular
      file (a folder, a named pipe, a device, or a symlink that resolves to one), an --out whose folder does not
-     exist (unless --create-out-dir is given), an --out that cannot be written, a bad option.
+     exist (unless --create-out-dir is given), an --out that cannot be written, a bad option; also an account
+     that could not be delivered on standard output (it is closed, or a write to it fails, as on a full device).
+     A reader that went away (a broken pipe, as in `watcher narrate RECORD | head`) is not an error: the exit
+     code stays the one earned, 0 or 4, and nothing is printed.
   3  no account could be had from a model: no credentials and --no-model was not given, the model
      could not be reached (connection, timeout, an API error, a response that cannot be decoded or is not
      a message) or it declined. Nothing was written.
@@ -50,6 +53,15 @@ EFFORTS = ("low", "medium", "high", "xhigh", "max")
 EXIT_OK, EXIT_INTERNAL, EXIT_USAGE, EXIT_NO_MODEL, EXIT_NOTHING_KEPT = 0, 1, 2, 3, 4
 
 log = logging.getLogger("watcher")
+
+#: What `_deliver` answers when the reader of standard output went away (a broken pipe).
+_READER_LEFT = "reader left"
+
+
+def _say(line: str) -> None:
+    """One line on standard error. If standard error is unusable too, the line is lost and nothing else changes."""
+    with contextlib.suppress(OSError, ValueError, AttributeError):
+        print(line, file=sys.stderr)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -171,6 +183,30 @@ def _write_atomically(path: Path, text: str) -> None:
         raise
 
 
+def _deliver(text: str) -> str | None:
+    """Print `text` on standard output: None when delivered, `_READER_LEFT` on a broken pipe, else why it was not.
+
+    The text is flushed here, inside the guard, so a failure of the buffered write is seen now and not at interpreter
+    exit. After a failed write on the process's real standard output the stream is closed, which drops the bytes that
+    could not be written; otherwise the interpreter tries them again at exit and ends with status 120."""
+    out = sys.stdout
+    if out is None:
+        return "standard output is closed"
+    try:
+        out.write(text)
+        out.flush()
+        return None
+    except BrokenPipeError:
+        failure = _READER_LEFT
+    except (OSError, ValueError) as err:  # ValueError: the stream was closed under us
+        failure = f"{type(err).__name__}: {err}"
+    real = sys.__stdout__
+    if real is not None and out is real:
+        with contextlib.suppress(OSError, ValueError):
+            real.close()
+    return failure
+
+
 def write_account(evidence: Evidence, narrator: Narrator | None, model: str, effort: str) -> tuple[str, int]:
     """The rendered account and the exit code: 0, or 4 when nothing survived the oath."""
     raw = narrate(evidence, narrator, model=model, effort=effort)
@@ -237,7 +273,11 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
               "Pass --no-model for the template account.", file=sys.stderr)
         return EXIT_NO_MODEL
     if args.out is None:
-        sys.stdout.write(text)
+        failure = _deliver(text)
+        if failure is not None and failure != _READER_LEFT:
+            _say(f"watcher: the account could not be delivered on standard output ({failure}). Nothing was given.")
+            return EXIT_USAGE
+        # A reader that left (`watcher narrate RECORD | head`) chose to stop reading: the earned code stays.
     else:
         try:
             if args.create_out_dir:
