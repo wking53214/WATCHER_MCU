@@ -7,6 +7,13 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.17] - 2026-11-11, not tagged
+
+### Changed
+
+- The Warden pin moves from 0.16.5 (`84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4`) to 0.16.6 (`4869ca3ccb5433cf6bb448e20e43042aadcf389c`), which ignores `git replace` refs in every git call it makes, in both CI jobs, the README and `STACK.md`. No Watcher code changed. The two tests that name the pin (`tests/test_pins.py`, `tests/test_warden_e2e.py`) were edited to the new commit and version, nothing else.
+- Version 0.3.17 (`watcher/__init__.py`, README).
+
 ## [0.3.16] - 2026-11-04, not tagged
 
 ### Changed
