@@ -48,11 +48,11 @@ pip check
 ```
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from its git URL
-pinned by the release tag `v2.3.0`
-(a lightweight tag, so the tag is the commit `41592fb7b6735abe140f745353c09ba3eed8e7a2`). Migration note: the pin moved from `v1.9.0` to
-`v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, and from `v2.2.0` to `v2.3.0` on 2026-10-31, when the circuit moved to one CNS release (the `cns` package at
+pinned by the release tag `v3.0.0`
+(an annotated tag that peels to the commit `31cb6f568219ef62cf3748701c895aa086abf1b8`). Migration note: the pin moved from `v1.9.0` to
+`v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, when the circuit moved to one CNS release (the `cns` package at
 v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.run`, and the suite passes
-against the installed 2.3.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
+against the installed 3.0.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 0.16.6 (not tagged) at commit

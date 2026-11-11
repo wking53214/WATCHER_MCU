@@ -12,6 +12,10 @@ All notable changes to the Watcher are recorded here. The format follows
 - `watcher/port.py`: a generic port, `complete(mapping)`, that sends one model call through the narrator's SDK path for a caller in another repository and returns a mapping (`text`, `provider_id` and `provider_kind` `"watcher_mcu"`, `adapter_version`, `model_requested`, `model_reported`, `finish_reason`, `usage`, the caller's `request_digest` echoed, `response_digest` as the SHA-256 of the text, `is_live`). The call takes `instructions`, `inputs`, `model`, `max_output_tokens`, `request_digest` and an optional `effort`; any other key is refused. Failures are `PortFormatError` (`format`), `PortTooLarge` (`too_large`: over 200000 bytes of input or over 16000 output tokens), `PortRefused` (`refused`) and `PortUnavailable` (`unavailable`: no credentials, an SDK error, a response that is not a message); nothing is sent for an invalid call. The port is a transport boundary: it does not apply the oath, filter or grade, and the cite-or-drop rule stays specific to narration. It has never made a live call; `tests/test_port.py` uses fakes. Nothing in the circuit calls it.
 - `watcher/narrate.py`: `AnthropicNarrator.complete(system, prompt, model, effort, max_tokens)` returns the text with the model, stop reason and token counts the API reported. It and `narrate()` share one private method, `_message`, which holds the SDK call that `narrate()` held; `MAX_TOKENS` names the 16000 that call used. `narrate()` sends what it sent before and returns what it returned before, and no oath rule, CLI behaviour or pre-existing test changed.
 
+### Changed
+
+- The CNS pin moves from the tag `v2.3.0` (`41592fb7b6735abe140f745353c09ba3eed8e7a2`) to the tag `v3.0.0` (peeled commit `31cb6f568219ef62cf3748701c895aa086abf1b8`): `cns @ git+https://github.com/wking53214/CNS.git@v3.0.0`, in `pyproject.toml`, the README and `STACK.md`. The one test that names the pin (`tests/test_pins.py`, tag and commit) was edited to the new values, nothing else about it changed. No Watcher code changed.
+
 ## [0.3.17] - 2026-11-11, not tagged
 
 ### Changed
