@@ -180,6 +180,22 @@ SWIZZLE prove -> ASSAY grade -> claim seat (any actor's real change) -> Warden (
 
 The arrow into the Watcher is the only one. Nothing comes back.
 
+## THE GENERIC PORT
+
+`watcher.port.complete(mapping)` sends one model call through the same SDK path the narrator uses, for a caller in
+another repository, and returns a mapping. It is in this branch for the owner's review; nothing in the circuit calls it.
+
+- What it is: a transport boundary. The Watcher holds the credentials, makes the SDK call, limits the size (at most
+  200000 bytes of UTF-8 in `instructions` and `inputs` together, at most 16000 output tokens), turns a refusal and a
+  failure into four exceptions with a stable `code` (`format`, `too_large`, `refused`, `unavailable`), and reports
+  where the answer came from: the model asked for, the model the API says answered, the stop reason, the token counts
+  and the SHA-256 of the text. The caller's `request_digest` is echoed back.
+- What it is NOT: it does not apply the oath and it does not grade. The text comes back as the model wrote it,
+  unfiltered and uninterpreted. The cite-or-drop rule stays specific to narration (`watcher narrate`), where it is
+  unchanged. The port takes no tools, does no streaming and reads no files.
+- The wire format is plain JSON-shaped mappings, written out in the docstring of `watcher/port.py`. A key the format
+  does not name is refused and nothing is sent. Neither side imports the other.
+
 ## WHAT WORKS
 
 Each line names the test file that shows it. The suite runs in the `check` CI job on Python 3.11, 3.12 and 3.13 beside
@@ -212,6 +228,10 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   inside the governed folder or a named checkout and leaves it untouched; without credentials it
   exits 3 and writes nothing; the SDK request is the documented shape (no thinking override, server
   fallbacks on) and a refusal becomes an error.
+- `tests/test_port.py`: the generic port, with a narrator that is a fake: a valid call returns every field with the
+  digest of the text and the echo of the caller's digest; each wrong shape, an unknown key, too much input and too many
+  output tokens are refused before anything is sent; a refusal, an unusable response, an SDK error and missing
+  credentials each carry their code; the text of an SDK error is not repeated; the text is not filtered.
 - `tests/test_charter.py`: the source imports nothing of the circuit, only `cli.py` writes, and only
   the account; no subprocess, no network of its own.
 - `tests/test_account_honesty.py`, `tests/test_account_completeness.py`, `tests/test_minor_fixes.py`: on real records, the
@@ -293,6 +313,10 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - The end-to-end and co-install CI jobs run on Python 3.13 only. The end-to-end tests were run by hand on 3.11 and 3.12
   for this release, which is not a CI result.
 - Sentences with no citation are dropped by the oath, but nothing here shows that the template account reads well.
+- The generic port (`watcher/port.py`) has never made a live model call. Its tests use a narrator that is a fake, or
+  the SDK narrator over a client that is a fake. That the real API accepts the call the port makes (a system prompt
+  left out when `instructions` is empty, a caller's `max_output_tokens`), and that the real response has the `model`
+  and `usage` fields the port reads, is not shown by any test here.
 
 ## KNOWN DEFECTS
 
