@@ -7,6 +7,11 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `watcher/port.py`: a generic port, `complete(mapping)`, that sends one model call through the narrator's SDK path for a caller in another repository and returns a mapping (`text`, `provider_id` and `provider_kind` `"watcher_mcu"`, `adapter_version`, `model_requested`, `model_reported`, `finish_reason`, `usage`, the caller's `request_digest` echoed, `response_digest` as the SHA-256 of the text, `is_live`). The call takes `instructions`, `inputs`, `model`, `max_output_tokens`, `request_digest` and an optional `effort`; any other key is refused. Failures are `PortFormatError` (`format`), `PortTooLarge` (`too_large`: over 200000 bytes of input or over 16000 output tokens), `PortRefused` (`refused`) and `PortUnavailable` (`unavailable`: no credentials, an SDK error, a response that is not a message); nothing is sent for an invalid call. The port is a transport boundary: it does not apply the oath, filter or grade, and the cite-or-drop rule stays specific to narration. It has never made a live call; `tests/test_port.py` uses fakes. Nothing in the circuit calls it.
+- `watcher/narrate.py`: `AnthropicNarrator.complete(system, prompt, model, effort, max_tokens)` returns the text with the model, stop reason and token counts the API reported. It and `narrate()` share one private method, `_message`, which holds the SDK call that `narrate()` held; `MAX_TOKENS` names the 16000 that call used. `narrate()` sends what it sent before and returns what it returned before, and no oath rule, CLI behaviour or pre-existing test changed.
+
 ## [0.3.16] - 2026-11-04, not tagged
 
 ### Changed

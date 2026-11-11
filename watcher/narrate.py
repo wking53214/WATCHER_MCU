@@ -31,6 +31,8 @@ log = logging.getLogger(__name__)
 #: The default model. Any current Claude model id works; pass --model to choose.
 DEFAULT_MODEL = "claude-fable-5-1"
 DEFAULT_EFFORT = "high"
+#: The output limit of a narration, in tokens; `watcher.port` caps what a caller may ask for at the same number.
+MAX_TOKENS = 16000
 
 SYSTEM = """You are the Watcher for a code-governance circuit. You see the record of one run and you \
 are sworn not to interfere: you describe, you never grade. Nothing you write reaches the governor, \
@@ -90,11 +92,28 @@ class AnthropicNarrator:
         return self._client
 
     def narrate(self, system: str, prompt: str, model: str, effort: str) -> str:
+        return self._message(system, prompt, model, effort, MAX_TOKENS)[0]
+
+    def complete(self, system: str | None, prompt: str, model: str, effort: str, max_tokens: int) -> dict[str, Any]:
+        """The same SDK call as `narrate`, for `watcher.port`: the text with what the API reported about it (the
+        model, the stop reason, the token counts; None where the response does not say). `system` None sends no
+        system prompt. Nothing here filters or grades the text."""
+        text, response = self._message(system, prompt, model, effort, max_tokens)
+        model_reported, stop = getattr(response, "model", None), getattr(response, "stop_reason", None)
+        used = getattr(response, "usage", None)
+        counts = {key: getattr(used, key, None) for key in ("input_tokens", "output_tokens")}
+        whole = all(isinstance(n, int) and not isinstance(n, bool) for n in counts.values())
+        return {"text": text, "model": model_reported if isinstance(model_reported, str) and model_reported else None,
+                "stop_reason": stop if isinstance(stop, str) and stop else None, "usage": counts if whole else None}
+
+    def _message(self, system: str | None, prompt: str, model: str, effort: str, max_tokens: int) -> tuple[str, Any]:
+        """One message from the SDK: (the text of its text blocks, the response). The only place a call is made."""
+        prompts = {} if system is None else {"system": system}
         try:
             response = self._get().beta.messages.create(
                 model=model,
-                max_tokens=16000,
-                system=system,
+                max_tokens=max_tokens,
+                **prompts,
                 messages=[{"role": "user", "content": prompt}],
                 output_config={"effort": effort},
                 betas=["server-side-fallback-2026-07-01"],
@@ -115,7 +134,7 @@ class AnthropicNarrator:
                 if not isinstance(text, str):
                     raise ModelResponseError("a text block of the response has no text")
                 texts.append(text)
-        return "\n".join(texts)
+        return "\n".join(texts), response
 
 
 def credentials_present() -> bool:
@@ -263,6 +282,7 @@ def narrate(evidence: Evidence, narrator: Narrator | None, model: str = DEFAULT_
 __all__ = [
     "DEFAULT_EFFORT",
     "DEFAULT_MODEL",
+    "MAX_TOKENS",
     "SYSTEM",
     "AnthropicNarrator",
     "ModelResponseError",
