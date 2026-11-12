@@ -9,9 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PIN = re.compile(r"cns @ git\+https://github\.com/wking53214/CNS\.git@(v\d+\.\d+\.\d+)\"\]")
-#: The commit the tag v3.0.0 peels to (an annotated tag; git ls-remote ... 'refs/tags/v3.0.0^{}').
+#: The commit the tag v4.0.0 peels to (a lightweight tag; git ls-remote ... 'refs/tags/v4.0.0^{}').
 #: The installed CNS must be this commit.
-CNS_COMMIT = "31cb6f568219ef62cf3748701c895aa086abf1b8"
+CNS_COMMIT = "eabe6c72d71557b6327b80b42b0afab572acce80"
 
 
 def _declared() -> tuple[str, str]:
@@ -23,10 +23,10 @@ def _declared() -> tuple[str, str]:
 
 def test_cns_is_pinned_by_its_release_tag():
     sha, tag = _declared()
-    assert tag == "v3.0.0" and len(sha) == 40
-    assert sha == "31cb6f568219ef62cf3748701c895aa086abf1b8"
+    assert tag == "v4.0.0" and len(sha) == 40
+    assert sha == "eabe6c72d71557b6327b80b42b0afab572acce80"
     deps = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["dependencies"]
-    assert "cns @ git+https://github.com/wking53214/CNS.git@v3.0.0" in deps
+    assert "cns @ git+https://github.com/wking53214/CNS.git@v4.0.0" in deps
 
 
 def test_the_installed_cns_is_the_pinned_one():
@@ -54,7 +54,7 @@ def test_every_ci_job_that_checks_out_warden_uses_one_full_commit_that_the_readm
 
 
 #: The tested Warden: Warden 0.16.6, not tagged (its warden/__init__.py says so here). Bump with the workflow.
-WARDEN_PIN = "b6d8ebb50f50c8c4d62a40a6bc66630f2c65d426"
+WARDEN_PIN = "0f84759675bb6f31329fd2302113aab6c5d87382"
 WARDEN_VERSION = "0.16.6"
 
 

@@ -42,13 +42,13 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout b6d8ebb50f50c8c4d62a40a6bc66630f2c65d426
+git -C WARDEN checkout 0f84759675bb6f31329fd2302113aab6c5d87382
 pip install -e . ./WARDEN
 pip check
 ```
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from its git URL
-pinned by the release tag `v3.0.0`
+pinned by the release tag `v4.0.0`
 (an annotated tag that peels to the commit `31cb6f568219ef62cf3748701c895aa086abf1b8`). Migration note: the pin moved from `v1.9.0` to
 `v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, when the circuit moved to one CNS release (the `cns` package at
 v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.run`, and the suite passes
@@ -56,7 +56,7 @@ against the installed 3.0.0 with no change to the Watcher's code. `tests/test_pi
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 0.16.6 (not tagged) at commit
-`b6d8ebb50f50c8c4d62a40a6bc66630f2c65d426` (the tested set; it may be one or more
+`0f84759675bb6f31329fd2302113aab6c5d87382` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.3.0`, `41592fb`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
