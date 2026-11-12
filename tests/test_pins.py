@@ -54,7 +54,7 @@ def test_every_ci_job_that_checks_out_warden_uses_one_full_commit_that_the_readm
 
 
 #: The tested Warden: Warden 0.16.6, not tagged (its warden/__init__.py says so here). Bump with the workflow.
-WARDEN_PIN = "4869ca3ccb5433cf6bb448e20e43042aadcf389c"
+WARDEN_PIN = "db210f94018575220ddebbd8e3139f4272d75ae0"
 WARDEN_VERSION = "0.16.6"
 
 
