@@ -42,7 +42,7 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout 4869ca3ccb5433cf6bb448e20e43042aadcf389c
+git -C WARDEN checkout db210f94018575220ddebbd8e3139f4272d75ae0
 pip install -e . ./WARDEN
 pip check
 ```
@@ -56,7 +56,7 @@ against the installed 3.0.0 with no change to the Watcher's code. `tests/test_pi
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 0.16.6 (not tagged) at commit
-`4869ca3ccb5433cf6bb448e20e43042aadcf389c` (the tested set; it may be one or more
+`db210f94018575220ddebbd8e3139f4272d75ae0` (the tested set; it may be one or more
 commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v2.3.0`, `41592fb`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
