@@ -53,9 +53,9 @@ def test_every_ci_job_that_checks_out_warden_uses_one_full_commit_that_the_readm
     assert refs[0] in (ROOT / "STACK.md").read_text(encoding="utf-8")
 
 
-#: The tested Warden: Warden 0.16.6, not tagged (its warden/__init__.py says so here). Bump with the workflow.
-WARDEN_PIN = "0f84759675bb6f31329fd2302113aab6c5d87382"
-WARDEN_VERSION = "0.16.6"
+#: The tested Warden: Warden 1.0.0, tagged v1.0.0 (its warden/__init__.py says so here). Bump with the workflow.
+WARDEN_PIN = "0339c09a69497be2d2fc34d71872c8c8616c6668"
+WARDEN_VERSION = "1.0.0"
 
 
 def test_the_pinned_warden_is_the_expected_commit_and_every_doc_names_its_version():
@@ -63,7 +63,7 @@ def test_the_pinned_warden_is_the_expected_commit_and_every_doc_names_its_versio
     assert refs == [WARDEN_PIN, WARDEN_PIN]
     for doc in ("README.md", "STACK.md"):
         text = (ROOT / doc).read_text(encoding="utf-8")
-        assert f"Warden {WARDEN_VERSION} (not tagged) at commit" in " ".join(text.split()), doc
+        assert f"Warden {WARDEN_VERSION} (tagged v1.0.0) at commit" in " ".join(text.split()), doc
 
 
 def test_the_warden_jobs_resolve_dependencies_and_are_blocking():
