@@ -1,6 +1,7 @@
 """The Groq, Gemini and Cloudflare narrators: request shape, reading, and failure, with no network."""
 
 from types import SimpleNamespace
+from typing import Any
 
 import openai
 import pytest
@@ -9,7 +10,7 @@ from watcher import rest_narrators as rn
 from watcher.narrate import ModelResponseError
 
 
-def _client(text="ok [R]", reason="stop", error=None, seen=None):
+def _client(text="ok [R]", reason="stop", error=None, seen: dict[str, Any] | None = None):
     def create(**kw):
         if seen is not None:
             seen.update(kw)
@@ -22,7 +23,7 @@ def _client(text="ok [R]", reason="stop", error=None, seen=None):
 
 @pytest.mark.parametrize("cls", [rn.GroqNarrator, rn.GeminiNarrator, rn.CloudflareNarrator])
 def test_request_and_reading(cls):
-    seen = {}
+    seen: dict[str, Any] = {}
     assert cls(_client(seen=seen)).narrate("sys", "prompt", "m", "high") == "ok [R]"
     assert seen["model"] == "m" and seen["messages"] == [{"role": "system", "content": "sys"},
                                                          {"role": "user", "content": "prompt"}]
@@ -52,8 +53,10 @@ def test_a_cut_off_or_empty_answer_is_an_error():
 
 
 def test_sdk_errors_are_sanitized():
-    err = RuntimeError("Bearer sk-topsecret leaked in text")
-    err.status_code = 401
+    class StatusError(RuntimeError):
+        status_code = 401
+
+    err = StatusError("Bearer sk-topsecret leaked in text")
     with pytest.raises(ModelResponseError) as info:
         rn.GroqNarrator(_client(error=err)).narrate("s", "p", "m", "high")
     assert "topsecret" not in str(info.value) and "HTTP 401" in str(info.value)
