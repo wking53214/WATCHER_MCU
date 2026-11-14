@@ -28,7 +28,8 @@ classifiers = [
 dependencies = ["anthropic>=1.14,<2", "cns @ git+https://github.com/wking53214/CNS.git@v4.0.0"]  # v4.0.0 = eabe6c72d71557b6327b80b42b0afab572acce80
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff==0.15.22", "mypy==1.20.2"]
+openai = ["openai>=1,<4"]
+dev = ["openai>=1,<4", "pytest>=8", "ruff==0.15.22", "mypy==1.20.2"]
 
 [project.scripts]
 watcher = "watcher.cli:main"

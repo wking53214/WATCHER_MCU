@@ -82,6 +82,9 @@ def _parser() -> argparse.ArgumentParser:
                    help="the folder that was governed, so an --out inside it is refused (the record does not "
                         "always name it)")
     n.add_argument("--model", default=DEFAULT_MODEL, help=f"the Claude model (default {DEFAULT_MODEL})")
+    n.add_argument("--provider", default="anthropic", choices=("anthropic", "groq", "gemini", "cloudflare"),
+                   help="who writes the account: Claude (default) or Groq, Gemini or Cloudflare Workers AI; "
+                        "the others need --model, and the same oath applies to every provider")
     n.add_argument("--effort", default=DEFAULT_EFFORT, choices=EFFORTS)
     n.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     n.add_argument("--no-model", action="store_true",
@@ -252,6 +255,17 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
             print(f"watcher: refused: the folder for --out ({args.out.parent}) does not exist; create it, or pass "
                   "--create-out-dir to have the Watcher create it", file=sys.stderr)
             return EXIT_USAGE
+    if args.provider != "anthropic" and not args.no_model and narrator is None:
+        if args.model == DEFAULT_MODEL:
+            print(f"watcher: refused: --provider {args.provider} needs --model; {DEFAULT_MODEL} is a Claude model",
+                  file=sys.stderr)
+            return EXIT_USAGE
+        from .rest_narrators import credentials_for, narrator_for  # imported here: the SDK is optional
+        if not credentials_for(args.provider):
+            print(f"watcher: no {args.provider} credentials in the environment. Pass --no-model for the template "
+                  "account.", file=sys.stderr)
+            return EXIT_NO_MODEL
+        narrator = narrator_for(args.provider)
     if args.no_model:
         narrator = None
     elif narrator is None:

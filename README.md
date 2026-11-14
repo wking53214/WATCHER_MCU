@@ -94,6 +94,13 @@ in part. The account is Markdown:
 4. **The oath.**
 
 The default model is the one `watcher narrate --help` shows. Credentials come from `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or an `ant auth login` profile.
+
+`--provider groq|gemini|cloudflare` has one of those write the account instead of Claude. It needs `--model` (the
+default is a Claude id) and the environment: `GROQ_API_KEY`, `GEMINI_API_KEY`, or `CLOUDFLARE_API_TOKEN` with
+`CLOUDFLARE_ACCOUNT_ID`. Each goes through the `openai` SDK (install the `openai` extra) at that provider's
+OpenAI-compatible address, makes one request with no retries, and treats an answer cut off at the output limit
+as an error. `--effort` is not sent. The same oath applies to every provider: sentences that cite nothing are dropped.
+No provider has any more authority than Claude has. Without credentials, `watcher` exits 3 as before.
 Without any, `watcher` exits 3 and says so; `--no-model` writes the same shape of account from the
 record alone, deterministically. What it says about what was not done, from the record only: the
 `unmeasured` list as the record gives it (`[U]`); the checks in `ghost_scan.declined` (`[G]`), named, with the
