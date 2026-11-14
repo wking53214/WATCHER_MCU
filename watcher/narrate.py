@@ -54,7 +54,11 @@ record says and cite it: the decision [R], the Judge's verdict [V], the suite li
 list [U].
 4. Prefer short sentences. Lead with what happened, then why, then what a person could do next, each \
 cited. Use a heading per section if you like (headings need no citation).
-5. Say what was NOT measured as plainly as what was."""
+5. Say what was NOT measured as plainly as what was. An empty unmeasured list [U] does not mean nothing was \
+skipped: whenever you mention the scan [G] or the unmeasured list, also name every check the record says was \
+declined, and say that a declined check was not run. Never say or imply that nothing was omitted.
+6. Report counts and results exactly as the record words them ("5 of 7"). Do not add a verdict word of your \
+own to a result, such as "confirming", "proving", "demonstrating" or "validating"."""
 
 
 class Refused(RuntimeError):
