@@ -77,3 +77,28 @@ def test_missing_key_and_credentials_for(monkeypatch):
     monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "t")
     with pytest.raises(ModelResponseError, match="plain"):
         rn.CloudflareNarrator().narrate("s", "p", "m", "high")
+
+
+def test_cli_provider_needs_a_model_and_credentials(monkeypatch, capsys):
+    from pathlib import Path
+
+    from watcher.cli import main
+    record = str(Path(__file__).parent / "fixtures" / "warden_0_13_2_record.json")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    assert main(["narrate", record, "--provider", "groq"]) == 2
+    assert "needs --model" in capsys.readouterr().err
+    assert main(["narrate", record, "--provider", "groq", "--model", "m"]) == 3
+    assert "no groq credentials" in capsys.readouterr().err
+
+
+def test_cli_provider_reaches_the_oath(monkeypatch, capsys):
+    from pathlib import Path
+
+    from watcher.cli import main
+    record = str(Path(__file__).parent / "fixtures" / "warden_0_13_2_record.json")
+    monkeypatch.setenv("GROQ_API_KEY", "k")
+    reply = "Held, unjudged [R].\nThis is production ready."
+    monkeypatch.setattr("watcher.rest_narrators.narrator_for", lambda p: rn.GroqNarrator(_client(text=reply)))
+    assert main(["narrate", record, "--provider", "groq", "--model", "m"]) == 0
+    out = capsys.readouterr().out
+    assert "Held, unjudged [R]." in out and "production ready" not in out.split("Dropped")[0]
