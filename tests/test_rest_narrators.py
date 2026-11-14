@@ -105,3 +105,10 @@ def test_cli_provider_reaches_the_oath(monkeypatch, capsys):
     assert main(["narrate", record, "--provider", "groq", "--model", "m"]) == 0
     out = capsys.readouterr().out
     assert "Held, unjudged [R]." in out and "production ready" not in out.split("Dropped")[0]
+
+
+def test_the_prompt_asks_for_declined_checks_and_no_verdict_words():
+    from watcher.narrate import SYSTEM
+    assert "name every check the record says was declined" in SYSTEM
+    assert "Never say or imply that nothing was omitted" in SYSTEM
+    assert "Do not add a verdict word" in SYSTEM
