@@ -94,13 +94,6 @@ in part. The account is Markdown:
 4. **The oath.**
 
 The default model is the one `watcher narrate --help` shows. Credentials come from `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or an `ant auth login` profile.
-
-`--provider groq|gemini|cloudflare` has one of those write the account instead of Claude. It needs `--model` (the
-default is a Claude id) and the environment: `GROQ_API_KEY`, `GEMINI_API_KEY`, or `CLOUDFLARE_API_TOKEN` with
-`CLOUDFLARE_ACCOUNT_ID`. Each goes through the `openai` SDK (install the `openai` extra) at that provider's
-OpenAI-compatible address, makes one request with no retries, and treats an answer cut off at the output limit
-as an error. `--effort` is not sent. The same oath applies to every provider: sentences that cite nothing are dropped.
-No provider has any more authority than Claude has. Without credentials, `watcher` exits 3 as before.
 Without any, `watcher` exits 3 and says so; `--no-model` writes the same shape of account from the
 record alone, deterministically. What it says about what was not done, from the record only: the
 `unmeasured` list as the record gives it (`[U]`); the checks in `ghost_scan.declined` (`[G]`), named, with the
@@ -120,6 +113,15 @@ failed, was skipped, was not run or was not enforced (for example a SWIZZLE proo
 `drafter_skipped` and `informational`, which Warden says are information and not gaps, are in a section of their own
 labelled so. It names the finding ids of `observed` (at the start) and `reobserved` (at the end), the first 20 of each
 and a count of the rest. `--model` chooses the Claude model; `--effort` is one of low, medium, high, xhigh, max.
+
+**Other providers.** `--provider groq|gemini|cloudflare` has one of those write the account instead of Claude. It
+needs `--model` (the default is a Claude id) and the environment: `GROQ_API_KEY`, `GEMINI_API_KEY`, or
+`CLOUDFLARE_API_TOKEN` with `CLOUDFLARE_ACCOUNT_ID`. Each goes through the `openai` SDK (install the `openai` extra)
+at that provider's OpenAI-compatible address, makes one request with no retries, and treats an answer cut off at the
+output limit as an error. `--effort` is not sent. Every provider's text goes through the same oath, and none has
+any more authority than Claude has. With no credentials for the chosen provider, `watcher` exits 3 as it does for
+Claude. The oath checks that a sentence cites the record, not that the account is complete: compare a model's
+account with the `--no-model` template (see KNOWN DEFECTS).
 
 Text the record supplies cannot add structure to the account. Every string taken from the record and shown (the
 declined checks, a joined path, a seat's role and spec, the Judge's decision, the notes, every citation) is reduced
@@ -208,6 +210,11 @@ another repository, and returns a mapping. It is in this branch for the owner's 
 Each line names the test file that shows it. The suite runs in the `check` CI job on Python 3.11, 3.12 and 3.13 beside
 `ruff` and `mypy` in strict mode.
 
+- `tests/test_rest_narrators.py`: the Groq, Gemini and Cloudflare narrators send the prompts to the provider's own
+  address with the key from the environment (Gemini's in a header, not the address), read one reply, refuse a reply
+  cut off at the output limit or without text, and turn an SDK error into "no model could be reached" carrying the
+  status and not the text of the error or the key. `--provider` without `--model`, or without credentials, is refused;
+  a provider's account reaches the oath; and the prompt carries the rules about declined checks and verdict words.
 - `tests/test_oath.py`: cited sentences survive; uncited, falsely cited and status-claiming ones are
   dropped with the reason, through emphasis, invisible characters (every default-ignorable character,
   the Hangul fillers and the braille blank), other Unicode dashes, lookalike letters (including the negative
@@ -325,8 +332,26 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   left out when `instructions` is empty, a caller's `max_output_tokens`), and that the real response has the `model`
   and `usage` fields the port reads, is not shown by any test here.
 
+- That a provider other than Claude writes a complete, honest account. The owner ran `watcher narrate` live on
+  2026-11-14 on one record, `tests/fixtures/warden_0_13_6_declined_record.json` (a rejected run, 27 findings, a suite
+  that did not run, seven declined checks, an empty `unmeasured` list). No test here shows this; it needs a key.
+  Before the prompt asked for it, Groq's `openai/gpt-oss-120b` wrote that the empty unmeasured list meant nothing was
+  omitted, and left out all seven declined checks. After it, five models named all seven as not run: gpt-oss-120b
+  and `qwen/qwen3.8-27b` on Groq, gpt-oss-120b and `llama-3.3-70b-instruct-fp8-fast` on Cloudflare, and
+  `gemini-3.1-flash-lite`. gpt-oss-120b on Groq still wrote "confirming" beside an ASSAY 5 of 7 result. That is one
+  record and mostly one run per model; only the lines about declined checks were read for several of the runs. Gemini's
+  `gemini-3.8-flash` and `gemini-3.7-flash` answered HTTP 503 and `gemini-3.5-flash` timed out, so they are not
+  tested. Model names retire: on that day `llama-3.3-70b-versatile` on Groq, `llama-3.1-8b-instruct` on Cloudflare and
+  `gemini-2.5-flash` were each refused as gone or closed to new users. The record is in the Reporting repository,
+  folder `watcher_providers`.
+
 ## KNOWN DEFECTS
 
+- The oath cannot tell an incomplete account from a complete one. Before the prompt change, a model wrote "the
+  unmeasured list is empty, meaning nothing was omitted" beside seven declined checks it left out, and every
+  sentence cited a real id, so the oath dropped nothing. The prompt now asks the narrator to name every declined
+  check and to add no verdict word to a result, and one model still added "confirming". No code checks the account
+  for the declined checks. Read a model's account beside the `--no-model` template, which always names them.
 - The oath checks sentences, not arguments. A kept sentence can cite the right id and still
   paraphrase it badly; the citations appendix exists so a reader can check.
 - A heading is kept without a citation when it is short and claims no status. A model that wants to
