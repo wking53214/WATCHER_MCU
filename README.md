@@ -42,22 +42,22 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout 0339c09a69497be2d2fc34d71872c8c8616c6668
+git -C WARDEN checkout 26d8128ecd75c841125128533812763385dc7497
 pip install -e . ./WARDEN
 pip check
 ```
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from its git URL
-pinned by the release tag `v4.0.0`
-(an annotated tag that peels to the commit `31cb6f568219ef62cf3748701c895aa086abf1b8`). Migration note: the pin moved from `v1.9.0` to
-`v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, when the circuit moved to one CNS release (the `cns` package at
+pinned by the release tag `v4.1.0`
+(an annotated tag that peels to the commit `c84ef8c60079aae1753f92d9169d89081c670c22`). Migration note: the pin moved from `v1.9.0` to
+`v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, and from `v3.0.0` to `v4.1.0` on 2026-11-16, when the circuit moved to one CNS release (the `cns` package at
 v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.run`, and the suite passes
 against the installed 3.0.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 1.0.0 (tagged v1.0.0) at commit
-`0339c09a69497be2d2fc34d71872c8c8616c6668` (the tested set; it may be one or more
-commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v4.0.0`, `eabe6c7`), so both jobs
+`26d8128ecd75c841125128533812763385dc7497` (the tested set; it may be one or more
+commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v4.1.0`, `c84ef8c`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
 `.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree.
