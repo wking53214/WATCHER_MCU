@@ -52,12 +52,12 @@ pinned by the release tag `v4.1.0`
 (an annotated tag that peels to the commit `c84ef8c60079aae1753f92d9169d89081c670c22`). Migration note: the pin moved from `v1.9.0` to
 `v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, and from `v3.0.0` to `v4.1.0` on 2026-11-16, when the circuit moved to one CNS release (the `cns` package at
 v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.run`, and the suite passes
-against the installed 3.0.0 with no change to the Watcher's code. `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
+against the installed 3.0.0 with no change to the Watcher's code. Checked 2026-11-17: the list above leaves out one step (the pin was `v4.0.0`, commit `eabe6c7`, from 2026-11-12 to 2026-11-16), and the suite passes against the installed 4.1.0 as well (EXECUTED). `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 1.0.0 (tagged v1.0.0) at commit
 `26d8128ecd75c841125128533812763385dc7497` (the tested set; it may be one or more
-commits behind WARDEN's branch head). That Warden commit pins the same CNS (`v4.1.0`, `c84ef8c`), so both jobs
+commits behind WARDEN's branch head). Checked 2026-11-17: in the WARDEN repository the tag `v1.0.0` points at `0339c09`, the commit tested here before 2026-11-16. `26d8128` is 12 commits after it, the tag was not moved, and the package version at `26d8128` is still 1.0.0. So read "tagged v1.0.0" as the version, not as a tag on this commit; `tests/test_pins.py` requires the phrase as written. `26d8128` is the head of WARDEN's main today. That Warden commit pins the same CNS (`v4.1.0`, `c84ef8c`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
 `.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree.
@@ -161,13 +161,22 @@ every sentence the oath dropped with its reason.
 | The promise | Where it is kept |
 |---|---|
 | It reads the run record and nothing else | `narrate.prompt_for` shows the model the citation index only. No file, no diff, no repository. |
-| It writes nothing into the governed folder or any checkout the record names | `cli.main` resolves `--out` against the governed folder (`--target`) and every instrument and joined path in `versions`, and refuses with exit 2. `tests/test_charter.py` reads the source: only `cli.py` writes, and only the account. |
+| It writes nothing into the governed folder or any checkout the record names, when it is told which folder was governed | `cli.main` resolves `--out` against the governed folder (`--target`) and every instrument and joined path in `versions`, and refuses with exit 2. The record does not name the governed folder, so that part of the guard exists only when the caller passes `--target`, and passes the right one: with no `--target`, or with one that names another folder, an account was written into the folder standing in for the governed one (EXECUTED 2026-11-17; refused, also through a symlinked path, once `--target` named it). See KNOWN DEFECTS. `tests/test_charter.py` reads the source: only `cli.py` writes, and only the account. |
 | It refuses to overwrite what it reads | `cli.main` refuses (exit 2) an `--out` that resolves to the record, through a symlink, a relative spelling or a hard link. |
 | Nothing in the circuit reads it | Warden, the Judge, Ghost, SWIZZLE and the seats have no input for it. Not ignored: structurally absent. The Watcher imports none of them (`test_charter.py`). |
 | Every kept sentence cites the record | `oath.enforce`: no citation, drop; unknown citation, drop. |
 | It claims no status of its own | `oath.status_claim`: "production ready", "production-grade", "ready for production", "battle-tested", "fully tested", "enterprise grade", "100% coverage", "safe", "bulletproof", "hardened", "mergeable" and their kin, and the sign-offs a reviewer gives ("approved", "LGTM", "looks good", "ship it", "good to go", "all clear", "no issues", "no blockers", "free of defects", "can go live", "rest easy", "OK for production use", "trustworthy", "reliable", "robust", check-mark and thumbs-up emoji, a short list in other languages), cited or not, drop. The sentence is read the way a person reads a rendered page: entities decoded, markup and emphasis removed, NFKC, case folded, accents and every Unicode default-ignorable character gone (the Hangul fillers and the braille blank are read both as nothing and as a gap), every Unicode dash a hyphen, lookalike letters folded to Latin (a table built from the Unicode names and the Unicode confusables data: Cyrillic, Greek, Armenian, Cherokee, small capitals, negative circled and squared letters, regional indicators, letters with hooks and strokes), digits used as letters read as letters, single letters set apart ("s a f e") joined up, an `[id]` citation tag set into the label taken out, text under a bidirectional override read in the order stored, in the order the algorithm displays it and in a cruder reversed order, and lines read at their seams (one bullet per letter, "production" at the end of one line and "ready" at the start of the next). A label is excused only where it is a description: plainly denied ("not production ready", "nothing was approved"), "no issues" reported by a named part of the circuit ("Ghost reported no issues"), "secure" before a technical noun ("secure hash call"), or one of Warden's own standard sentences by exact text. See WHAT DOES NOT WORK / NOT PROVEN for the limits. |
 | It is a description, never a grade | The system prompt says so; the filter makes an uncited grade vanish; the account's first line repeats the decision as recorded, cited. |
 | A refusal is an empty account, not a quiet one | A model that declines (safety classifier) exits 3 with no file written. An account the oath empties exits 4 and still shows what was dropped. |
+
+## ROLE IN THE AUTHORITY MATRIX, AND FAILURE BEHAVIOR
+
+- **What it does.** Mainly observability: it turns Warden's run record into a plain-words account for a person. It is released from the circuit and nothing in the circuit reads what it writes. Three smaller roles go with that. It enforces its own two rules on its own output and nothing else: the oath drops a sentence, and the command line refuses a write (the sections above). It checks the form of each sentence against the record (does it cite an id the record holds, does it carry a status label), which is a narrow kind of evaluation and not a judgement of the run. And `watcher.port` is a transport: it holds the model credentials and makes a model call for a caller in another repository, with no oath applied. It does not authorize or authenticate anyone, and it writes no evidence that anything else relies on.
+- **Depended on by.** Nothing in the circuit. Outside it (INSPECTED 2026-11-17): the Research repository's optional adapter (`research_lab/ai/watcher.py`) loads `watcher.port.complete` by name at call time, and CNS keeps a check of its own (`cns_composition/watcher_oath.py`, which compares the record before and after a narration) and records this repository's released commit in `contracts/released-seats.json`.
+- **Trust boundary.** The run record is its only input. Every sentence it keeps cites a measurement id from that record or is dropped. The optional model path sends the citable lines built from the record (its notes, findings and results, as text) to a model provider, so that content leaves the machine on that path: to Anthropic through the `anthropic` SDK, or to Groq, Gemini or Cloudflare through the `openai` SDK at each provider's address. Credentials are read from the environment. The template path uses no model and no network.
+- **Fail behavior.** A sentence that cannot cite a record id is dropped rather than shown. It cannot make a run pass or fail. A wrong account would mislead a reader but changes no decision.
+
+EXECUTED 2026-11-17 at `b46aea9`, Python 3.13, in fresh environments built the way each CI job builds its own. The `check` job: `ruff` and `mypy` clean; `pytest -q` gives 781 passed, 5 deselected; both `--no-model` narrations of the fixture records exit 0. The 5 deselected are the end-to-end tests, which `pyproject.toml` leaves out by default (`-m 'not e2e'`) because they need the real Warden, as HOW TO INSTALL AND RUN says. The `warden-e2e` job, with Warden at `26d8128` installed beside the Watcher: `pip check` clean, `tests/test_pins.py` 6 passed, the 5 end-to-end tests passed, and the record Warden printed for a missing target was narrated. The same 781 and 5 were measured at `1719860`, and with the README as it stood before this section was added. Not run: GitHub CI, Python 3.11 and 3.12, any model path against a real provider (no credentials here; with none, `watcher` exited 3 and wrote nothing, as the table says). The "701 passed" figure under self-hosting is a dated historical run and was left as written.
 
 ## WHAT IT IS NOT
 
@@ -192,7 +201,7 @@ The arrow into the Watcher is the only one. Nothing comes back.
 ## THE GENERIC PORT
 
 `watcher.port.complete(mapping)` sends one model call through the same SDK path the narrator uses, for a caller in
-another repository, and returns a mapping. It is in this branch for the owner's review; nothing in the circuit calls it.
+another repository, and returns a mapping. It is in this branch for the owner's review; nothing in the circuit calls it. Checked 2026-11-17: it is on main, and one repository outside the circuit is written to call it (Research, see the role section).
 
 - What it is: a transport boundary. The Watcher holds the credentials, makes the SDK call, limits the size (at most
   200000 bytes of UTF-8 in `instructions` and `inputs` together, at most 16000 output tokens), turns a refusal and a
@@ -203,7 +212,7 @@ another repository, and returns a mapping. It is in this branch for the owner's 
   unfiltered and uninterpreted. The cite-or-drop rule stays specific to narration (`watcher narrate`), where it is
   unchanged. The port takes no tools, does no streaming and reads no files.
 - The wire format is plain JSON-shaped mappings, written out in the docstring of `watcher/port.py`. A key the format
-  does not name is refused and nothing is sent. Neither side imports the other.
+  does not name is refused and nothing is sent. Neither side imports the other with an import statement; Research's adapter loads `watcher.port` by name at call time, only when a WATCHER_MCU checkout is on its path.
 
 ## WHAT WORKS
 
@@ -247,7 +256,10 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
   output tokens are refused before anything is sent; a refusal, an unusable response, an SDK error and missing
   credentials each carry their code; the text of an SDK error is not repeated; the text is not filtered.
 - `tests/test_charter.py`: the source imports nothing of the circuit, only `cli.py` writes, and only
-  the account; no subprocess, no network of its own.
+  the account; no subprocess, no network of its own. What that last check is, exactly: the test looks for the names
+  `subprocess`, `urllib`, `requests` and `httpx` in the source and finds none. It does not mean the Watcher stays off
+  the network. On the model path it calls a provider's API through an SDK (`anthropic`, or `openai` for Groq, Gemini
+  and Cloudflare, whose addresses are set in `watcher/rest_narrators.py`). With `--no-model` nothing is sent.
 - `tests/test_account_honesty.py`, `tests/test_account_completeness.py`, `tests/test_minor_fixes.py`: on real records, the
   template account names every declined check and says it was not run, names dirty parts, says when `converged` is not
   zero findings, lists every cycle, and says when `put_back`, `finished` or a failed SWIZZLE proof is in the record.
@@ -504,7 +516,7 @@ Where a fix was wrong or overstated and corrected later, the entry says so. Open
 The old circuit (before the owner's ruling of 2026-10-29 released the Drafter, Burnish and the Watcher from the roster; the Watcher itself was never a seat) governed a fresh clone of this repository, twice. This is a dated record. The record is the CNS repository's
 `docs/evidence/SELFHOSTING_2026-10-23.md`, which is on the CNS branch `claude/horsemen-production-status-5wsndb` until it
 is merged (https://github.com/wking53214/CNS/blob/claude/horsemen-production-status-5wsndb/docs/evidence/SELFHOSTING_2026-10-23.md);
-the run records are copied beside it. Both runs were at version 0.3.8, commit `b25d8522301005ba764783927f43abfeb9f18f5c`.
+the run records are copied beside it. Checked 2026-11-17: that branch is no longer on GitHub, so the link above does not open; the record is on CNS `main` (https://github.com/wking53214/CNS/blob/main/docs/evidence/SELFHOSTING_2026-10-23.md). The words "until it is merged" stay because `tests/test_readme_ledger.py` requires them. Both runs were at version 0.3.8, commit `b25d8522301005ba764783927f43abfeb9f18f5c`.
 Run 1 had Burnish 0.3.11 as the finisher and run 2 had Burnish 0.3.12. Each ended with decision ACCEPT: the suite was
 701 passed with 0 skipped, Ghost reported 41 findings at the start and 41 at the end with none new, and 7 checks were
 declined (mutate, kernel, structure, tests, project, secrets, correlate), which makes 7 gaps. The finisher's README edit
