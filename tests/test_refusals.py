@@ -269,7 +269,8 @@ def test_a_well_formed_response_is_still_an_account(tmp_path):
     response = SimpleNamespace(stop_reason="end_turn", content=[_block(type="text", text="Held [R].")])
     out = tmp_path / "account.md"
     assert main(
-        ["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out)], narrator=AnthropicNarrator(_client_that(response))
+        ["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out)],
+        narrator=AnthropicNarrator(_client_that(response)),
     ) == 0
     assert "Held [R]." in out.read_text(encoding="utf-8")
 
