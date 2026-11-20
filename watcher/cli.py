@@ -33,7 +33,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from . import __version__
-from .evidence import Evidence, UnreadableRecord, clean, load
+from .evidence import Evidence, UnreadableRecord, clean, load, target_refusal
 from .narrate import (
     DEFAULT_EFFORT,
     DEFAULT_MODEL,
@@ -79,8 +79,9 @@ def _parser() -> argparse.ArgumentParser:
                    help="create the folder of --out (and its parents) when it does not exist; without this a "
                         "missing folder is refused")
     n.add_argument("--target", type=Path, default=None,
-                   help="the folder that was governed, so an --out inside it is refused (the record does not "
-                        "always name it)")
+                   help="the folder that was governed, so an --out inside it is refused. Warden's record "
+                        "now names it (governed_folder): a --target that differs is refused, and an older "
+                        "record that names no folder needs --target when --out is given")
     n.add_argument("--model", default=DEFAULT_MODEL, help=f"the Claude model (default {DEFAULT_MODEL})")
     n.add_argument("--provider", default="anthropic", choices=("anthropic", "groq", "gemini", "cloudflare"),
                    help="who writes the account: Claude (default) or Groq, Gemini or Cloudflare Workers AI; "
@@ -235,6 +236,10 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
               "give the folder that was governed", file=sys.stderr)
         return EXIT_USAGE
     if args.out is not None:
+        why = target_refusal(evidence.run, args.target)
+        if why is not None:
+            print(f"watcher: refused: {why}", file=sys.stderr)
+            return EXIT_USAGE
         hit = _inside(args.out, evidence.forbidden_paths)
         if hit is not None:
             print(f"watcher: refused: --out {args.out} is inside {clean(hit)}, which the Watcher never writes into",

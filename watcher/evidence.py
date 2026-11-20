@@ -252,6 +252,9 @@ def forbidden_paths(run: Mapping[str, Any], target: Path | None = None) -> tuple
     out: list[Path] = []
     if target is not None:
         out.append(Path(target).expanduser().resolve())
+    governed = run.get("governed_folder")
+    if isinstance(governed, str) and governed:
+        out.append(Path(governed).expanduser().resolve())
     versions = run.get("versions")
     if isinstance(versions, Mapping):
         for name in ("ghost_tools", "swizzle", "assay"):
@@ -262,6 +265,22 @@ def forbidden_paths(run: Mapping[str, Any], target: Path | None = None) -> tuple
             if isinstance(join, Mapping) and join.get("path"):
                 out.append(Path(str(join["path"])).expanduser().resolve())
     return tuple(dict.fromkeys(out))
+
+
+def target_refusal(run: Mapping[str, Any], target: Path | None) -> str | None:
+    """Why the governed folder cannot be trusted, or None. Warden's record names the folder it governed
+    (`governed_folder`). A `--target` that points somewhere else is refused, and so is a record that names no
+    folder when no `--target` was given: a guard that does not know the folder guards nothing."""
+    named = run.get("governed_folder")
+    named = named if isinstance(named, str) and named else None
+    if (named is not None and target is not None
+            and Path(named).expanduser().resolve() != Path(target).expanduser().resolve()):
+        return (f"--target {target} is not the folder the record says was governed ({named}); "
+                "give the folder that was governed, or leave --target out")
+    if named is None and target is None:
+        return ("the record does not name the folder that was governed and no --target was given, so nothing "
+                "can be guarded; give --target with the folder that was governed")
+    return None
 
 
 def _bad(path: Any, what: str) -> UnreadableRecord:
@@ -292,6 +311,8 @@ def _check_shapes(run: Mapping[str, Any], path: Any) -> None:
         number = cycle.get("number")
         if not isinstance(number, int) or isinstance(number, bool):
             raise _bad(path, f"cycles[{n}].number is {type(number).__name__}, not a whole number")
+    if run.get("governed_folder") is not None and not isinstance(run["governed_folder"], str):
+        raise _bad(path, f"governed_folder is {type(run['governed_folder']).__name__}, not text")
     _list_of(run, "reobserved", str, "text", path)
     _list_of(run, "informational", str, "text", path)
     _list_of(run, "drafter_skipped", str, "text", path)
@@ -360,4 +381,5 @@ def load(path: Path, target: Path | None = None) -> Evidence:
 
 
 __all__ = ["DIRTY_MARK", "UNREADABLE_MARK", "Citation", "Evidence", "UnreadableRecord", "clean", "declined_checks",
-           "declined_phrase", "dirty_parts", "forbidden_paths", "index", "load", "unreadable_dirty_parts"]
+           "declined_phrase", "dirty_parts", "forbidden_paths", "index", "load", "target_refusal",
+           "unreadable_dirty_parts"]

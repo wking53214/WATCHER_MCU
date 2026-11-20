@@ -7,6 +7,10 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **The governed folder is checked.** Warden's record now names the folder it governed (`governed_folder`). `watcher narrate --out` refuses (exit 2) a `--target` that is not that folder, and a record that names no folder (any record from an older Warden) when no `--target` is given. With no `--out` nothing is written and no folder is needed. The recorded folder is also forbidden for `--out` on its own. Tests: `tests/test_governed_folder.py`; `tests/conftest.py` gives the older tests a governed folder of their own.
+
 ### Added
 
 - `watcher/rest_narrators.py` and `watcher narrate --provider groq|gemini|cloudflare`: narrators for Groq, Google Gemini and Cloudflare Workers AI, each the `openai` SDK pointed at the provider's OpenAI-compatible address (the charter test forbids `urllib` here, so the transport is an SDK). `--provider` needs `--model` and the provider's key in the environment; one request, no retries; an answer cut off at the output limit is an error, and any failure is exit 3. The text goes through the same oath as Claude's. `openai` is an optional dependency (the `openai` extra, also in `dev`); the Claude and `--no-model` paths do not import it. Tests: `tests/test_rest_narrators.py`. Pull request 13.

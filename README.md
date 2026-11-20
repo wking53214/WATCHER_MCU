@@ -161,7 +161,7 @@ every sentence the oath dropped with its reason.
 | The promise | Where it is kept |
 |---|---|
 | It reads the run record and nothing else | `narrate.prompt_for` shows the model the citation index only. No file, no diff, no repository. |
-| It writes nothing into the governed folder or any checkout the record names, when it is told which folder was governed | `cli.main` resolves `--out` against the governed folder (`--target`) and every instrument and joined path in `versions`, and refuses with exit 2. The record does not name the governed folder, so that part of the guard exists only when the caller passes `--target`, and passes the right one: with no `--target`, or with one that names another folder, an account was written into the folder standing in for the governed one (EXECUTED 2026-11-17; refused, also through a symlinked path, once `--target` named it). See KNOWN DEFECTS. `tests/test_charter.py` reads the source: only `cli.py` writes, and only the account. |
+| It writes nothing into the governed folder or any checkout the record names, when it is told which folder was governed | `cli.main` resolves `--out` against the governed folder (`--target`) and every instrument and joined path in `versions`, and refuses with exit 2. The record names the governed folder only from the Warden that added `governed_folder`; an older record does not name the governed folder, so for such a record the guard exists only when the caller passes `--target`, and a record that names no folder with no `--target` is refused when `--out` is given (before 2026-11-19 an account was written into the folder standing in for the governed one: EXECUTED 2026-11-17; EXECUTED 2026-11-19 that the refusal now happens, in `tests/test_governed_folder.py`). See KNOWN DEFECTS. `tests/test_charter.py` reads the source: only `cli.py` writes, and only the account. |
 | It refuses to overwrite what it reads | `cli.main` refuses (exit 2) an `--out` that resolves to the record, through a symlink, a relative spelling or a hard link. |
 | Nothing in the circuit reads it | Warden, the Judge, Ghost, SWIZZLE and the seats have no input for it. Not ignored: structurally absent. The Watcher imports none of them (`test_charter.py`). |
 | Every kept sentence cites the record | `oath.enforce`: no citation, drop; unknown citation, drop. |
@@ -176,7 +176,7 @@ every sentence the oath dropped with its reason.
 - **Trust boundary.** The run record is its only input. Every sentence it keeps cites a measurement id from that record or is dropped. The optional model path sends the citable lines built from the record (its notes, findings and results, as text) to a model provider, so that content leaves the machine on that path: to Anthropic through the `anthropic` SDK, or to Groq, Gemini or Cloudflare through the `openai` SDK at each provider's address. Credentials are read from the environment. The template path uses no model and no network.
 - **Fail behavior.** A sentence that cannot cite a record id is dropped rather than shown. It cannot make a run pass or fail. A wrong account would mislead a reader but changes no decision.
 
-EXECUTED 2026-11-17 at `b46aea9`, Python 3.13, in fresh environments built the way each CI job builds its own. The `check` job: `ruff` and `mypy` clean; `pytest -q` gives 781 passed, 5 deselected; both `--no-model` narrations of the fixture records exit 0. The 5 deselected are the end-to-end tests, which `pyproject.toml` leaves out by default (`-m 'not e2e'`) because they need the real Warden, as HOW TO INSTALL AND RUN says. The `warden-e2e` job, with Warden at `26d8128` installed beside the Watcher: `pip check` clean, `tests/test_pins.py` 6 passed, the 5 end-to-end tests passed, and the record Warden printed for a missing target was narrated. The same 781 and 5 were measured at `1719860`, and with the README as it stood before this section was added. Not run: GitHub CI, Python 3.11 and 3.12, any model path against a real provider (no credentials here; with none, `watcher` exited 3 and wrote nothing, as the table says). The "701 passed" figure under self-hosting is a dated historical run and was left as written.
+EXECUTED 2026-11-17 at `b46aea9`, Python 3.13, in fresh environments built the way each CI job builds its own. The `check` job: `ruff` and `mypy` clean; `pytest -q` gives 781 passed, 5 deselected; both `--no-model` narrations of the fixture records exit 0. EXECUTED 2026-11-19 after the governed-folder change: `pytest -q` gives 789 passed, 5 deselected; `ruff` and `mypy` clean. The 5 deselected are the end-to-end tests, which `pyproject.toml` leaves out by default (`-m 'not e2e'`) because they need the real Warden, as HOW TO INSTALL AND RUN says. The `warden-e2e` job, with Warden at `26d8128` installed beside the Watcher: `pip check` clean, `tests/test_pins.py` 6 passed, the 5 end-to-end tests passed, and the record Warden printed for a missing target was narrated. The same 781 and 5 were measured at `1719860`, and with the README as it stood before this section was added. Not run: GitHub CI, Python 3.11 and 3.12, any model path against a real provider (no credentials here; with none, `watcher` exited 3 and wrote nothing, as the table says). The "701 passed" figure under self-hosting is a dated historical run and was left as written.
 
 ## WHAT IT IS NOT
 
@@ -373,10 +373,10 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - A sentence that quotes a label without denying it (for example a finding named "robust", or the Judge's
   reason quoted as "safe to merge") is dropped, like any other use of it. A quoted denial ("cannot be shown
   safe") is kept.
-- `--target` is needed for the governed folder because Warden's record does not name it; the
+- Warden's record now names the governed folder (`governed_folder`, added 2026-11-19 in Warden; records from older Wardens do not have it), and the Watcher refuses to write into it without being told. A `--target` that is not the recorded folder is refused (exit 2). A record that names no folder is refused when `--out` is given and there is no `--target`; with no `--out` nothing is written and no folder is needed. The
   instrument and joined paths are refused from the record alone. A `--target` that does not exist, or is a file and not a folder, is refused
   (exit 2), because a guard on a folder that is not there would let `--out` into the real one under another name.
-  The Watcher does not check that `--target` is the folder that was governed, only that it exists and is a folder.
+  When the record names the governed folder, `--target` must be that folder. When it does not (a record from an older Warden), the Watcher cannot check `--target` against anything: it only checks that it exists and is a folder, so a wrong but real folder is accepted.
 - The status-claim filter is a denylist, so a paraphrase that is not listed passes if it cites the record (see
   WHAT DOES NOT WORK / NOT PROVEN for what it does and does not read). Each of these was tried with a citation and is
   kept today: "All green [R].", "Everything checks out, nothing left to do [R].", "This is solid [R].", "No further action
@@ -421,8 +421,8 @@ Where a fix was wrong or overstated and corrected later, the entry says so. Open
 - *The README's self-hosting text was stale* ("no fresh run is recorded yet") after the full circuit governed this
   repository twice. It now cites the recorded runs. Guard:
   `tests/test_readme_ledger.py::test_self_hosting_holds_the_recorded_numbers_and_says_what_the_record_does_not_mean`.
-- *One caveat was written twice* (that `--target` is not checked against the folder that was governed). One remains.
-  No test yet.
+- *One caveat was written twice* (that `--target` is not checked against the folder that was governed). Since 2026-11-19 it is checked when the record names the folder; for an older record it still is not.
+  Guard: `tests/test_governed_folder.py`.
 
 **0.3.7** (2026-10-22)
 - *`--out` replaced whatever stood at its path.* The atomic write added in 0.3.6 moved the account into place with
