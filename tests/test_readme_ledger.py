@@ -109,7 +109,7 @@ SELFHOSTING_DECLINED = ("mutate", "kernel", "structure", "tests", "project", "se
 
 def test_self_hosting_holds_the_recorded_numbers_and_says_what_the_record_does_not_mean():
     text = " ".join(section("SELF-HOSTING").split())
-    assert "docs/evidence/SELFHOSTING_2026-10-23.md" in text and "until it is merged" in text
+    assert "docs/evidence/SELFHOSTING_2026-10-23.md" in text and "which is on CNS `main`" in text
     assert SELFHOSTING_COMMIT in text and f"version {SELFHOSTING_VERSION}" in text
     assert SELFHOSTING_SUITE in text and SELFHOSTING_FINDINGS in text
     assert "7 checks were declined" in text and "7 gaps" in text
