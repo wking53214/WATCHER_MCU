@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from watcher.cli import main
 from tests.governed import GOVERNED
+from watcher.cli import main
 
 pytestmark = pytest.mark.e2e
 

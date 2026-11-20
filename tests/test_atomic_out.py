@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from watcher.cli import EXIT_USAGE, main
 from tests.governed import GOVERNED
+from watcher.cli import EXIT_USAGE, main
 
 FIXTURE = Path(__file__).parent / "fixtures" / "swizzle_joined_run.json"
 
@@ -153,7 +153,9 @@ def test_a_special_file_is_refused_before_the_missing_folder_or_the_model_matter
             raise AssertionError("the model must not be asked")
 
     os.mkfifo(tmp_path / "pipe")
-    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(tmp_path / "pipe")], narrator=Boom()) == EXIT_USAGE
+    assert main(
+        ["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(tmp_path / "pipe")], narrator=Boom()
+    ) == EXIT_USAGE
     _refused(capsys)
 
 

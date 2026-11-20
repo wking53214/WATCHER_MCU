@@ -15,11 +15,11 @@ from typing import Any
 
 import pytest
 
+from tests.governed import GOVERNED
 from watcher.cli import main
 from watcher.evidence import clean, load
 from watcher.narrate import prompt_for, template
 from watcher.oath import enforce, sentences
-from tests.governed import GOVERNED
 
 REAL = Path(__file__).parent / "fixtures" / "warden_0_13_6_declined_record.json"
 

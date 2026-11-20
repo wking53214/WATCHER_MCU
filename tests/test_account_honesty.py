@@ -16,11 +16,11 @@ from typing import Any
 
 import pytest
 
+from tests.governed import GOVERNED
 from watcher.cli import main
 from watcher.evidence import DIRTY_MARK, UnreadableRecord, load
 from watcher.narrate import prompt_for, template
 from watcher.oath import enforce
-from tests.governed import GOVERNED
 
 REAL = Path(__file__).parent / "fixtures" / "warden_0_13_6_declined_record.json"
 SEVEN = ["mutate", "kernel", "structure", "tests", "project", "secrets", "correlate"]
