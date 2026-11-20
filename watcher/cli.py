@@ -33,7 +33,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from . import __version__
-from .evidence import Evidence, UnreadableRecord, clean, load
+from .evidence import Evidence, UnreadableRecord, clean, load, recorded_target
 from .narrate import (
     DEFAULT_EFFORT,
     DEFAULT_MODEL,
@@ -223,6 +223,18 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
         evidence = load(args.record, args.target)
     except UnreadableRecord as err:
         print(f"watcher: {err}", file=sys.stderr)
+        return EXIT_USAGE
+    recorded = recorded_target(evidence.run)
+    if recorded is not None and args.target is not None and args.target.expanduser().resolve() != recorded:
+        # Two answers to "which folder was governed": the record's and the caller's. Guarding either one alone
+        # would let --out go into the other, so the Watcher does not choose between them.
+        print(f"watcher: refused: --target {args.target} is not the folder the record says was governed "
+              f"({clean(recorded)}); give the right one or leave --target out", file=sys.stderr)
+        return EXIT_USAGE
+    if recorded is None and args.target is None and args.out is not None:
+        # Nothing says which folder was governed, so nothing can be guarded and --out could land inside it.
+        print("watcher: refused: the record does not name the folder that was governed and no --target was "
+              "given, so --out cannot be checked; give --target", file=sys.stderr)
         return EXIT_USAGE
     if args.target is not None and not args.target.expanduser().exists():
         # A guard built on a folder that is not there protects nothing: --out could be inside the real one.

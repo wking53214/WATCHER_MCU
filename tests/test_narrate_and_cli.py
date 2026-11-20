@@ -11,6 +11,7 @@ from watcher.cli import main, write_account
 from watcher.evidence import load
 from watcher.narrate import SYSTEM, AnthropicNarrator, Refused, narrate, prompt_for, template
 from watcher.oath import enforce
+from tests.governed import GOVERNED
 
 FIXTURE = Path(__file__).parent / "fixtures" / "swizzle_joined_run.json"
 
@@ -68,7 +69,7 @@ def test_an_account_with_nothing_left_is_exit_4_not_a_pretty_blank():
 
 def test_cli_writes_the_template_account_without_a_model(tmp_path, capsys):
     out = tmp_path / "reports" / "account.md"
-    assert main(["narrate", str(FIXTURE), "--out", str(out), "--no-model", "--create-out-dir"]) == 0
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out), "--no-model", "--create-out-dir"]) == 0
     assert out.read_text(encoding="utf-8").startswith("# The Watcher's account")
     assert "the template (no model)" in out.read_text(encoding="utf-8")
     assert "account written to" in capsys.readouterr().err
@@ -82,7 +83,7 @@ def test_cli_refuses_to_write_into_the_governed_folder_or_a_named_checkout(tmp_p
     assert list(target.iterdir()) == []
     run = json.loads(FIXTURE.read_text(encoding="utf-8"))
     joined = Path(run["versions"]["joins"][0]["path"])
-    code = main(["narrate", str(FIXTURE), "--out", str(joined / "x.md"), "--no-model"])
+    code = main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(joined / "x.md"), "--no-model"])
     assert code == 2 and "never writes into" in capsys.readouterr().err
 
 
@@ -91,7 +92,7 @@ def test_cli_without_credentials_says_so_and_writes_nothing(tmp_path, monkeypatc
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path))
     out = tmp_path / "account.md"
-    assert main(["narrate", str(FIXTURE), "--out", str(out)]) == 3
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out)]) == 3
     assert "no model credentials" in capsys.readouterr().err and not out.exists()
 
 
@@ -171,6 +172,6 @@ def test_the_sdk_narrator_turns_a_refusal_into_an_error():
 def test_the_cli_narrates_a_real_0_13_2_record_with_an_assay_version(tmp_path):
     record = Path(__file__).parent / "fixtures" / "warden_0_13_2_record.json"
     out = tmp_path / "account.md"
-    assert main(["narrate", str(record), "--no-model", "--out", str(out)]) == 0
+    assert main(["narrate", str(record), "--no-model", "--target", str(GOVERNED), "--out", str(out)]) == 0
     text = out.read_text(encoding="utf-8")
     assert "assay 0.11.1" in text and "assay None" not in text
