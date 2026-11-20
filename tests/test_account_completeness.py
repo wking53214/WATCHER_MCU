@@ -12,11 +12,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+from tests.governed import GOVERNED
 from watcher.cli import main
 from watcher.evidence import load
 from watcher.narrate import FINDING_IDS_SHOWN, template
 from watcher.oath import enforce
-from tests.governed import GOVERNED
 
 FIXTURES = Path(__file__).parent / "fixtures"
 JOINED = FIXTURES / "swizzle_joined_run.json"

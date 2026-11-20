@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
+from tests.governed import GOVERNED
 from watcher import OATH
 from watcher.cli import main, write_account
 from watcher.evidence import load
 from watcher.narrate import SYSTEM, AnthropicNarrator, Refused, narrate, prompt_for, template
 from watcher.oath import enforce
-from tests.governed import GOVERNED
 
 FIXTURE = Path(__file__).parent / "fixtures" / "swizzle_joined_run.json"
 
@@ -69,7 +69,9 @@ def test_an_account_with_nothing_left_is_exit_4_not_a_pretty_blank():
 
 def test_cli_writes_the_template_account_without_a_model(tmp_path, capsys):
     out = tmp_path / "reports" / "account.md"
-    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out), "--no-model", "--create-out-dir"]) == 0
+    assert main(
+        ["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out), "--no-model", "--create-out-dir"]
+    ) == 0
     assert out.read_text(encoding="utf-8").startswith("# The Watcher's account")
     assert "the template (no model)" in out.read_text(encoding="utf-8")
     assert "account written to" in capsys.readouterr().err
