@@ -514,9 +514,9 @@ Where a fix was wrong or overstated and corrected later, the entry says so. Open
 ## SELF-HOSTING
 
 The old circuit (before the owner's ruling of 2026-10-29 released the Drafter, Burnish and the Watcher from the roster; the Watcher itself was never a seat) governed a fresh clone of this repository, twice. This is a dated record. The record is the CNS repository's
-`docs/evidence/SELFHOSTING_2026-10-23.md`, which is on the CNS branch `claude/horsemen-production-status-5wsndb` until it
-is merged (https://github.com/wking53214/CNS/blob/claude/horsemen-production-status-5wsndb/docs/evidence/SELFHOSTING_2026-10-23.md);
-the run records are copied beside it. Checked 2026-11-17: that branch is no longer on GitHub, so the link above does not open; the record is on CNS `main` (https://github.com/wking53214/CNS/blob/main/docs/evidence/SELFHOSTING_2026-10-23.md). The words "until it is merged" stay because `tests/test_readme_ledger.py` requires them. Both runs were at version 0.3.8, commit `b25d8522301005ba764783927f43abfeb9f18f5c`.
+`docs/evidence/SELFHOSTING_2026-10-23.md`, which is on CNS `main`
+(https://github.com/wking53214/CNS/blob/main/docs/evidence/SELFHOSTING_2026-10-23.md);
+the run records are copied beside it. Both runs were at version 0.3.8, commit `b25d8522301005ba764783927f43abfeb9f18f5c`.
 Run 1 had Burnish 0.3.11 as the finisher and run 2 had Burnish 0.3.12. Each ended with decision ACCEPT: the suite was
 701 passed with 0 skipped, Ghost reported 41 findings at the start and 41 at the end with none new, and 7 checks were
 declined (mutate, kernel, structure, tests, project, secrets, correlate), which makes 7 gaps. The finisher's README edit
