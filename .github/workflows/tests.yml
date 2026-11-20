@@ -25,8 +25,8 @@ jobs:
       - run: pytest -q
       # The template account on a real record, without a model and without credentials: the Watcher
       # must work where no key exists, and must refuse to write into any folder the record names.
-      - run: python -m watcher.cli narrate tests/fixtures/swizzle_joined_run.json --no-model --out "$RUNNER_TEMP/account.md"
-      - run: python -m watcher.cli narrate tests/fixtures/warden_tagteam_seats_run.json --no-model --out "$RUNNER_TEMP/account2.md"
+      - run: python -m watcher.cli narrate tests/fixtures/swizzle_joined_run.json --no-model --out "$RUNNER_TEMP/account.md" --target "$GITHUB_WORKSPACE"
+      - run: python -m watcher.cli narrate tests/fixtures/warden_tagteam_seats_run.json --no-model --out "$RUNNER_TEMP/account2.md" --target "$GITHUB_WORKSPACE"
 
   warden-e2e:
     name: the real Warden writes, the Watcher reads
@@ -52,7 +52,7 @@ jobs:
       # By hand, the same thing end to end: a record from Warden, then the account, exit 0.
       - run: |
           warden tagteam "$RUNNER_TEMP/no-such-folder" > "$RUNNER_TEMP/run.json" || test $? -eq 2
-          watcher narrate "$RUNNER_TEMP/run.json" --no-model --out "$RUNNER_TEMP/account.md"
+          watcher narrate "$RUNNER_TEMP/run.json" --no-model --out "$RUNNER_TEMP/account.md" --target "$GITHUB_WORKSPACE"
           grep -q 'USAGE_ERROR' "$RUNNER_TEMP/account.md"
 
   coinstall-warden:
