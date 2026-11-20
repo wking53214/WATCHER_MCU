@@ -246,6 +246,16 @@ def index(run: Mapping[str, Any]) -> dict[str, Citation]:
     return out
 
 
+def recorded_target(run: Mapping[str, Any]) -> Path | None:
+    """The folder the record says was governed (`versions.target.path`), resolved; None when the record does not
+    name one (a record from a Warden that predates the field)."""
+    versions = run.get("versions")
+    node = versions.get("target") if isinstance(versions, Mapping) else None
+    if isinstance(node, Mapping) and isinstance(node.get("path"), str) and node["path"]:
+        return Path(node["path"]).expanduser().resolve()
+    return None
+
+
 def forbidden_paths(run: Mapping[str, Any], target: Path | None = None) -> tuple[Path, ...]:
     """Where the Watcher must never write: the governed folder and every instrument or joined checkout
     the record names. Each is resolved; a path that does not exist is still forbidden by name."""
@@ -253,6 +263,9 @@ def forbidden_paths(run: Mapping[str, Any], target: Path | None = None) -> tuple
     if target is not None:
         out.append(Path(target).expanduser().resolve())
     versions = run.get("versions")
+    recorded = recorded_target(run)
+    if recorded is not None:
+        out.append(recorded)
     if isinstance(versions, Mapping):
         for name in ("ghost_tools", "swizzle", "assay"):
             v = versions.get(name)
@@ -360,4 +373,4 @@ def load(path: Path, target: Path | None = None) -> Evidence:
 
 
 __all__ = ["DIRTY_MARK", "UNREADABLE_MARK", "Citation", "Evidence", "UnreadableRecord", "clean", "declined_checks",
-           "declined_phrase", "dirty_parts", "forbidden_paths", "index", "load", "unreadable_dirty_parts"]
+           "declined_phrase", "dirty_parts", "forbidden_paths", "index", "load", "recorded_target", "unreadable_dirty_parts"]

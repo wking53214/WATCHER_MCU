@@ -16,6 +16,7 @@ from watcher.cli import main
 from watcher.evidence import load
 from watcher.narrate import FINDING_IDS_SHOWN, template
 from watcher.oath import enforce
+from tests.governed import GOVERNED
 
 FIXTURES = Path(__file__).parent / "fixtures"
 JOINED = FIXTURES / "swizzle_joined_run.json"
@@ -159,7 +160,7 @@ def test_an_id_that_cannot_be_cited_is_not_named(tmp_path):
 
 def test_the_whole_account_of_a_real_record_keeps_every_line_and_the_command_line_agrees(tmp_path, capsys):
     out = tmp_path / "account.md"
-    assert main(["narrate", str(JOINED), "--no-model", "--out", str(out)]) == 0
+    assert main(["narrate", str(JOINED), "--no-model", "--target", str(GOVERNED), "--out", str(out)]) == 0
     text = out.read_text(encoding="utf-8")
     assert "Nothing. Every sentence cited the record" in text
     assert "[PB]" in text and "[FN]" in text and "[D3]" in text

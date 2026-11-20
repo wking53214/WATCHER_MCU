@@ -14,6 +14,7 @@ import pytest
 
 from watcher.cli import EXIT_INTERNAL, EXIT_NO_MODEL, EXIT_USAGE, main
 from watcher.evidence import UnreadableRecord, load
+from tests.governed import GOVERNED
 
 FIXTURE = Path(__file__).parent / "fixtures" / "swizzle_joined_run.json"
 SEATS = Path(__file__).parent / "fixtures" / "warden_tagteam_seats_run.json"
@@ -196,7 +197,7 @@ def _errors() -> list[BaseException]:
 @pytest.mark.parametrize("error", _errors(), ids=lambda e: type(e).__name__)
 def test_an_unreachable_model_is_exit_3_with_the_documented_message(tmp_path, capsys, error):
     out = tmp_path / "account.md"
-    code = main(["narrate", str(FIXTURE), "--out", str(out)], narrator=Raises(error))
+    code = main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out)], narrator=Raises(error))
     err = capsys.readouterr().err
     assert code == EXIT_NO_MODEL
     assert "no model could be reached" in err and "No account was written" in err and "--no-model" in err
@@ -255,7 +256,7 @@ def test_a_200_the_sdk_cannot_decode_is_exit_3_and_nothing_is_written(tmp_path, 
 
     out = tmp_path / "account.md"
     narrator = AnthropicNarrator(_client_that(result))
-    code = main(["narrate", str(FIXTURE), "--out", str(out)], narrator=narrator)
+    code = main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out)], narrator=narrator)
     err = capsys.readouterr().err
     assert code == EXIT_NO_MODEL
     assert "no model could be reached" in err and "No account was written" in err and "--no-model" in err
@@ -267,7 +268,7 @@ def test_a_well_formed_response_is_still_an_account(tmp_path):
 
     response = SimpleNamespace(stop_reason="end_turn", content=[_block(type="text", text="Held [R].")])
     out = tmp_path / "account.md"
-    assert main(["narrate", str(FIXTURE), "--out", str(out)], narrator=AnthropicNarrator(_client_that(response))) == 0
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out)], narrator=AnthropicNarrator(_client_that(response))) == 0
     assert "Held [R]." in out.read_text(encoding="utf-8")
 
 
@@ -285,7 +286,7 @@ def test_an_unexpected_failure_is_exit_1_in_one_line_and_verbose_shows_why(capsy
 def test_out_may_not_be_the_record_itself(tmp_path, capsys):
     path = _write(tmp_path, _run())
     before = path.read_bytes()
-    assert main(["narrate", str(path), "--out", str(path), "--no-model"]) == EXIT_USAGE
+    assert main(["narrate", str(path), "--target", str(GOVERNED), "--out", str(path), "--no-model"]) == EXIT_USAGE
     assert "never overwrites what it reads" in capsys.readouterr().err
     assert path.read_bytes() == before
 
@@ -301,16 +302,16 @@ def test_out_may_not_reach_the_record_by_another_spelling(tmp_path, monkeypatch,
     hard = tmp_path / "hard.json"
     os.link(path, hard)
     for out in [*spellings, link, hard]:
-        assert main(["narrate", "run.json", "--out", str(out), "--no-model"]) == EXIT_USAGE, out
+        assert main(["narrate", "run.json", "--target", str(GOVERNED), "--out", str(out), "--no-model"]) == EXIT_USAGE, out
     assert path.read_bytes() == before
     assert "Traceback" not in capsys.readouterr().err
 
 
 def test_out_that_cannot_be_written_is_exit_2(tmp_path, capsys):
-    assert main(["narrate", str(FIXTURE), "--out", str(tmp_path), "--no-model"]) == EXIT_USAGE
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(tmp_path), "--no-model"]) == EXIT_USAGE
     blocker = tmp_path / "file"
     blocker.write_text("x", encoding="utf-8")
-    assert main(["narrate", str(FIXTURE), "--out", str(blocker / "a.md"), "--no-model"]) == EXIT_USAGE
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(blocker / "a.md"), "--no-model"]) == EXIT_USAGE
     assert "Traceback" not in capsys.readouterr().err
 
 
@@ -318,7 +319,7 @@ def test_a_different_out_is_still_written_and_the_record_untouched(tmp_path):
     path = _write(tmp_path, _run())
     before = path.read_bytes()
     out = tmp_path / "account.md"
-    assert main(["narrate", str(path), "--out", str(out), "--no-model"]) == 0
+    assert main(["narrate", str(path), "--target", str(GOVERNED), "--out", str(out), "--no-model"]) == 0
     assert out.is_file() and path.read_bytes() == before
 
 
@@ -326,7 +327,7 @@ def test_a_different_out_is_still_written_and_the_record_untouched(tmp_path):
 
 def test_a_missing_out_folder_is_refused_and_nothing_is_created(tmp_path, capsys):
     out = tmp_path / "no" / "such" / "account.md"
-    assert main(["narrate", str(FIXTURE), "--out", str(out), "--no-model"]) == EXIT_USAGE
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out), "--no-model"]) == EXIT_USAGE
     err = capsys.readouterr().err
     assert "does not exist" in err and "--create-out-dir" in err and "Traceback" not in err
     assert not (tmp_path / "no").exists()
@@ -335,13 +336,13 @@ def test_a_missing_out_folder_is_refused_and_nothing_is_created(tmp_path, capsys
 def test_a_missing_out_folder_is_refused_before_the_model_is_asked(tmp_path, capsys):
     narrator = Raises(RuntimeError("the model must not be asked"))
     out = tmp_path / "missing" / "account.md"
-    assert main(["narrate", str(FIXTURE), "--out", str(out)], narrator=narrator) == EXIT_USAGE
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out)], narrator=narrator) == EXIT_USAGE
     assert "internal error" not in capsys.readouterr().err and not out.parent.exists()
 
 
 def test_create_out_dir_creates_the_folder_and_its_parents(tmp_path):
     out = tmp_path / "a" / "b" / "account.md"
-    assert main(["narrate", str(FIXTURE), "--out", str(out), "--no-model", "--create-out-dir"]) == 0
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(out), "--no-model", "--create-out-dir"]) == 0
     assert out.read_text(encoding="utf-8").startswith("# The Watcher's account")
 
 
@@ -355,14 +356,14 @@ def test_create_out_dir_does_not_lift_the_forbidden_folders(tmp_path, capsys):
 
 
 def test_an_existing_out_folder_needs_no_flag(tmp_path):
-    assert main(["narrate", str(FIXTURE), "--out", str(tmp_path / "account.md"), "--no-model"]) == 0
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(tmp_path / "account.md"), "--no-model"]) == 0
 
 
 def test_an_out_folder_that_is_a_file_is_exit_2_with_or_without_the_flag(tmp_path, capsys):
     blocker = tmp_path / "file"
     blocker.write_text("x", encoding="utf-8")
     for extra in ([], ["--create-out-dir"]):
-        assert main(["narrate", str(FIXTURE), "--out", str(blocker / "a.md"), "--no-model", *extra]) == EXIT_USAGE
+        assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(blocker / "a.md"), "--no-model", *extra]) == EXIT_USAGE
     assert "Traceback" not in capsys.readouterr().err
 
 

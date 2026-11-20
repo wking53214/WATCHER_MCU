@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from watcher.cli import main
+from tests.governed import GOVERNED
 
 pytestmark = pytest.mark.e2e
 
@@ -49,7 +50,7 @@ def test_a_record_from_a_target_that_does_not_exist(tmp_path, capsys):
     record.write_text(result.stdout, encoding="utf-8")
     assert json.loads(result.stdout)["schema"] == "cns.run/1"
     out = tmp_path / "account.md"
-    assert main(["narrate", str(record), "--no-model", "--out", str(out)]) == 0
+    assert main(["narrate", str(record), "--no-model", "--target", str(GOVERNED), "--out", str(out)]) == 0
     text = out.read_text(encoding="utf-8")
     assert "**USAGE_ERROR** [R]" in text and "Nothing was run" in text
     assert "Traceback" not in capsys.readouterr().err

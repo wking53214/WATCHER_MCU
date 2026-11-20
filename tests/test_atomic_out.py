@@ -10,12 +10,13 @@ from pathlib import Path
 import pytest
 
 from watcher.cli import EXIT_USAGE, main
+from tests.governed import GOVERNED
 
 FIXTURE = Path(__file__).parent / "fixtures" / "swizzle_joined_run.json"
 
 
 def _args(out: Path) -> list[str]:
-    return ["narrate", str(FIXTURE), "--no-model", "--out", str(out)]
+    return ["narrate", str(FIXTURE), "--no-model", "--target", str(GOVERNED), "--out", str(out)]
 
 
 def test_a_write_that_fails_half_way_leaves_no_partial_file_and_no_temporary(tmp_path, monkeypatch, capsys):
@@ -152,7 +153,7 @@ def test_a_special_file_is_refused_before_the_missing_folder_or_the_model_matter
             raise AssertionError("the model must not be asked")
 
     os.mkfifo(tmp_path / "pipe")
-    assert main(["narrate", str(FIXTURE), "--out", str(tmp_path / "pipe")], narrator=Boom()) == EXIT_USAGE
+    assert main(["narrate", str(FIXTURE), "--target", str(GOVERNED), "--out", str(tmp_path / "pipe")], narrator=Boom()) == EXIT_USAGE
     _refused(capsys)
 
 

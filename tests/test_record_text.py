@@ -19,6 +19,7 @@ from watcher.cli import main
 from watcher.evidence import clean, load
 from watcher.narrate import prompt_for, template
 from watcher.oath import enforce, sentences
+from tests.governed import GOVERNED
 
 REAL = Path(__file__).parent / "fixtures" / "warden_0_13_6_declined_record.json"
 
@@ -54,7 +55,7 @@ def _account(run: dict[str, Any], tmp_path: Path) -> str:
     record = tmp_path / "run.json"
     record.write_text(json.dumps(run), encoding="utf-8")
     out = tmp_path / "account.md"
-    assert main(["narrate", str(record), "--no-model", "--out", str(out)]) == 0
+    assert main(["narrate", str(record), "--no-model", "--target", str(GOVERNED), "--out", str(out)]) == 0
     return out.read_text(encoding="utf-8")
 
 

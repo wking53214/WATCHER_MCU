@@ -20,6 +20,7 @@ from watcher.cli import main
 from watcher.evidence import DIRTY_MARK, UnreadableRecord, load
 from watcher.narrate import prompt_for, template
 from watcher.oath import enforce
+from tests.governed import GOVERNED
 
 REAL = Path(__file__).parent / "fixtures" / "warden_0_13_6_declined_record.json"
 SEVEN = ["mutate", "kernel", "structure", "tests", "project", "secrets", "correlate"]
@@ -138,7 +139,7 @@ def test_a_flag_that_is_not_true_is_not_reported_as_dirty(tmp_path):
 
 def test_the_command_line_account_says_it_too(tmp_path, capsys):
     out = tmp_path / "account.md"
-    assert main(["narrate", str(REAL), "--no-model", "--out", str(out)]) == 0
+    assert main(["narrate", str(REAL), "--no-model", "--target", str(GOVERNED), "--out", str(out)]) == 0
     text = out.read_text(encoding="utf-8")
     assert "Ghost declined 7 check(s)" in text and "converged is not zero findings" in text
     assert "Nothing. Every sentence cited the record" in text

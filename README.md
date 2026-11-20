@@ -161,7 +161,7 @@ every sentence the oath dropped with its reason.
 | The promise | Where it is kept |
 |---|---|
 | It reads the run record and nothing else | `narrate.prompt_for` shows the model the citation index only. No file, no diff, no repository. |
-| It writes nothing into the governed folder or any checkout the record names, when it is told which folder was governed | `cli.main` resolves `--out` against the governed folder (`--target`) and every instrument and joined path in `versions`, and refuses with exit 2. The record does not name the governed folder, so that part of the guard exists only when the caller passes `--target`, and passes the right one: with no `--target`, or with one that names another folder, an account was written into the folder standing in for the governed one (EXECUTED 2026-11-17; refused, also through a symlinked path, once `--target` named it). See KNOWN DEFECTS. `tests/test_charter.py` reads the source: only `cli.py` writes, and only the account. |
+| It writes nothing into the governed folder or any checkout the record names, when it is told which folder was governed | `cli.main` resolves `--out` against the governed folder (`--target`) and every instrument and joined path in `versions`, and refuses with exit 2. A record from a Warden that writes `versions.target.path` names the governed folder, and the Watcher guards that folder with no `--target`; a `--target` that is a different folder is refused (exit 2). A record that predates the field does not name one, so with `--out` and no `--target` it is refused (exit 2); give `--target` there, and give the right one (an older record guards only what `--target` names; EXECUTED 2026-11-17 on the version before this change, where a wrong or missing `--target` let an account be written into the governed folder). See KNOWN DEFECTS for the older-record case. `tests/test_charter.py` reads the source: only `cli.py` writes, and only the account. |
 | It refuses to overwrite what it reads | `cli.main` refuses (exit 2) an `--out` that resolves to the record, through a symlink, a relative spelling or a hard link. |
 | Nothing in the circuit reads it | Warden, the Judge, Ghost, SWIZZLE and the seats have no input for it. Not ignored: structurally absent. The Watcher imports none of them (`test_charter.py`). |
 | Every kept sentence cites the record | `oath.enforce`: no citation, drop; unknown citation, drop. |
@@ -373,10 +373,11 @@ Each line names the test file that shows it. The suite runs in the `check` CI jo
 - A sentence that quotes a label without denying it (for example a finding named "robust", or the Judge's
   reason quoted as "safe to merge") is dropped, like any other use of it. A quoted denial ("cannot be shown
   safe") is kept.
-- `--target` is needed for the governed folder because Warden's record does not name it; the
-  instrument and joined paths are refused from the record alone. A `--target` that does not exist, or is a file and not a folder, is refused
-  (exit 2), because a guard on a folder that is not there would let `--out` into the real one under another name.
-  The Watcher does not check that `--target` is the folder that was governed, only that it exists and is a folder.
+- A record from a Warden that writes `versions.target.path` names the governed folder, and the Watcher guards it. A record from an
+  older Warden does not: with `--out` it needs `--target` (exit 2 otherwise), and the Watcher cannot check that this `--target` is the folder
+  that was governed, only that it exists and is a folder. The instrument and joined paths are refused from the record alone. A `--target`
+  that does not exist, or is a file and not a folder, is refused (exit 2), because a guard on a folder that is not there would let `--out`
+  into the real one under another name. When the record does name a folder and `--target` is a different one, that is refused too.
 - The status-claim filter is a denylist, so a paraphrase that is not listed passes if it cites the record (see
   WHAT DOES NOT WORK / NOT PROVEN for what it does and does not read). Each of these was tried with a citation and is
   kept today: "All green [R].", "Everything checks out, nothing left to do [R].", "This is solid [R].", "No further action
