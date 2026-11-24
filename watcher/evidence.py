@@ -297,6 +297,16 @@ def _object_or_none(value: Any, name: str, path: Any) -> None:
         raise _bad(path, f"{name} is {type(value).__name__}, not an object")
 
 
+def _list_or_none(value: Any, name: str, path: Any) -> None:
+    if value is not None and not isinstance(value, list):
+        raise _bad(path, f"{name} is {type(value).__name__}, not a list")
+
+
+def _text_or_none(value: Any, name: str, path: Any) -> None:
+    if value is not None and not isinstance(value, str):
+        raise _bad(path, f"{name} is {type(value).__name__}, not text")
+
+
 def _check_shapes(run: Mapping[str, Any], path: Any) -> None:
     """The fields cns.run/1 does not describe, but the Watcher reads: each must have the shape the index
     expects, or the record is refused by name. Missing and null are fine; wrong is not."""
@@ -309,36 +319,30 @@ def _check_shapes(run: Mapping[str, Any], path: Any) -> None:
     _list_of(run, "informational", str, "text", path)
     _list_of(run, "drafter_skipped", str, "text", path)
     for key in ("attacks", "swizzle_proofs"):
-        if run.get(key) is not None and not isinstance(run[key], list):
-            raise _bad(path, f"{key} is {type(run[key]).__name__}, not a list")
+        _list_or_none(run.get(key), key, path)
     _object_or_none(run.get("ghost_baseline"), "ghost_baseline", path)
     _object_or_none(run.get("assay"), "assay", path)
     verdict = run.get("verdict") or {}
-    if verdict.get("reasons") is not None and not isinstance(verdict["reasons"], list):
-        raise _bad(path, f"verdict.reasons is {type(verdict['reasons']).__name__}, not a list")
+    _list_or_none(verdict.get("reasons"), "verdict.reasons", path)
     scan = run.get("ghost_scan") or {}
-    if scan.get("gaps") is not None and not isinstance(scan["gaps"], list):
-        raise _bad(path, f"ghost_scan.gaps is {type(scan['gaps']).__name__}, not a list")
-    if scan.get("declined") is not None and not isinstance(scan["declined"], list):
-        raise _bad(path, f"ghost_scan.declined is {type(scan['declined']).__name__}, not a list")
+    _list_or_none(scan.get("gaps"), "ghost_scan.gaps", path)
+    _list_or_none(scan.get("declined"), "ghost_scan.declined", path)
     versions = run.get("versions") or {}
     for name in ("warden", "ghost_tools", "swizzle", "assay"):
         entry = versions.get(name)
         _object_or_none(entry, f"versions.{name}", path)
-        if isinstance(entry, Mapping) and entry.get("path") is not None and not isinstance(entry["path"], str):
-            raise _bad(path, f"versions.{name}.path is {type(entry['path']).__name__}, not text")
+        if isinstance(entry, Mapping):
+            _text_or_none(entry.get("path"), f"versions.{name}.path", path)
     seats = versions.get("seats")
     _object_or_none(seats, "versions.seats", path)
     for role, seat in (seats or {}).items():
         _object_or_none(seat, f"versions.seats.{role}", path)
     joins = versions.get("joins")
-    if joins is not None and not isinstance(joins, list):
-        raise _bad(path, f"versions.joins is {type(joins).__name__}, not a list")
+    _list_or_none(joins, "versions.joins", path)
     for n, join in enumerate(joins or ()):
         if not isinstance(join, Mapping):
             raise _bad(path, f"versions.joins[{n}] is {type(join).__name__}, not an object")
-        if join.get("path") is not None and not isinstance(join["path"], str):
-            raise _bad(path, f"versions.joins[{n}].path is {type(join['path']).__name__}, not text")
+        _text_or_none(join.get("path"), f"versions.joins[{n}].path", path)
 
 
 def load(path: Path, target: Path | None = None) -> Evidence:

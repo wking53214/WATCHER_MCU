@@ -218,60 +218,56 @@ def write_account(evidence: Evidence, narrator: Narrator | None, model: str, eff
     return text, (EXIT_OK if enforced.kept else EXIT_NOTHING_KEPT)
 
 
+def _refuse(message: str) -> int:
+    """Print a refusal on standard error and give the usage exit code."""
+    print(message, file=sys.stderr)
+    return EXIT_USAGE
+
+
 def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
     try:
         evidence = load(args.record, args.target)
     except UnreadableRecord as err:
-        print(f"watcher: {err}", file=sys.stderr)
-        return EXIT_USAGE
+        return _refuse(f"watcher: {err}")
     recorded = recorded_target(evidence.run)
     if recorded is not None and args.target is not None and args.target.expanduser().resolve() != recorded:
         # Two answers to "which folder was governed": the record's and the caller's. Guarding either one alone
         # would let --out go into the other, so the Watcher does not choose between them.
-        print(f"watcher: refused: --target {args.target} is not the folder the record says was governed "
-              f"({clean(recorded)}); give the right one or leave --target out", file=sys.stderr)
-        return EXIT_USAGE
+        return _refuse(f"watcher: refused: --target {args.target} is not the folder the record says was governed "
+              f"({clean(recorded)}); give the right one or leave --target out")
     if recorded is None and args.target is None and args.out is not None:
         # Nothing says which folder was governed, so nothing can be guarded and --out could land inside it.
-        print("watcher: refused: the record does not name the folder that was governed and no --target was "
-              "given, so --out cannot be checked; give --target", file=sys.stderr)
-        return EXIT_USAGE
+        return _refuse("watcher: refused: the record does not name the folder that was governed and no --target was "
+              "given, so --out cannot be checked; give --target")
     if args.target is not None and not args.target.expanduser().exists():
         # A guard built on a folder that is not there protects nothing: --out could be inside the real one.
-        print(f"watcher: refused: --target {args.target} does not exist, so it cannot be guarded; "
-              "give the folder that was governed", file=sys.stderr)
-        return EXIT_USAGE
+        return _refuse(f"watcher: refused: --target {args.target} does not exist, so it cannot be guarded; "
+              "give the folder that was governed")
     if args.target is not None and not args.target.expanduser().is_dir():
         # The guard is a folder: --out is refused when it is inside it. A file guards nothing.
-        print(f"watcher: refused: --target {args.target} is not a folder, so it cannot be guarded; "
-              "give the folder that was governed", file=sys.stderr)
-        return EXIT_USAGE
+        return _refuse(f"watcher: refused: --target {args.target} is not a folder, so it cannot be guarded; "
+              "give the folder that was governed")
     if args.out is not None:
         hit = _inside(args.out, evidence.forbidden_paths)
         if hit is not None:
-            print(f"watcher: refused: --out {args.out} is inside {clean(hit)}, which the Watcher never writes into",
-                  file=sys.stderr)
-            return EXIT_USAGE
+            return _refuse(f"watcher: refused: --out {args.out} is inside {clean(hit)}, "
+                           "which the Watcher never writes into")
         source = _is_input(args.out, [args.record])
         if source is not None:
-            print(f"watcher: refused: --out {args.out} is the record it was asked to read ({source}); "
-                  "the Watcher never overwrites what it reads", file=sys.stderr)
-            return EXIT_USAGE
+            return _refuse(f"watcher: refused: --out {args.out} is the record it was asked to read ({source}); "
+                  "the Watcher never overwrites what it reads")
         kind = _not_regular(Path(os.path.realpath(args.out)))
         if kind:
-            print(f"watcher: refused: --out {args.out} is {kind}, not a regular file, and the Watcher replaces "
-                  "its target when it writes; name a regular file or a path that does not exist yet",
-                  file=sys.stderr)
-            return EXIT_USAGE
+            return _refuse(f"watcher: refused: --out {args.out} is {kind}, not a regular file, and the Watcher "
+                           "replaces its target when it writes; name a regular file or a path that does not "
+                           "exist yet")
         if not args.out.parent.is_dir() and not args.create_out_dir:
-            print(f"watcher: refused: the folder for --out ({args.out.parent}) does not exist; create it, or pass "
-                  "--create-out-dir to have the Watcher create it", file=sys.stderr)
-            return EXIT_USAGE
+            return _refuse(f"watcher: refused: the folder for --out ({args.out.parent}) does not exist; "
+                           "create it, or pass --create-out-dir to have the Watcher create it")
     if args.provider != "anthropic" and not args.no_model and narrator is None:
         if args.model == DEFAULT_MODEL:
-            print(f"watcher: refused: --provider {args.provider} needs --model; {DEFAULT_MODEL} is a Claude model",
-                  file=sys.stderr)
-            return EXIT_USAGE
+            return _refuse(f"watcher: refused: --provider {args.provider} needs --model; "
+                           f"{DEFAULT_MODEL} is a Claude model")
         from .rest_narrators import credentials_for, narrator_for  # imported here: the SDK is optional
         if not credentials_for(args.provider):
             print(f"watcher: no {args.provider} credentials in the environment. Pass --no-model for the template "
@@ -310,8 +306,7 @@ def _narrate(args: argparse.Namespace, narrator: Narrator | None) -> int:
                 args.out.parent.mkdir(parents=True, exist_ok=True)
             _write_atomically(args.out, text)
         except OSError as err:
-            print(f"watcher: cannot write {args.out}: {type(err).__name__}: {err}", file=sys.stderr)
-            return EXIT_USAGE
+            return _refuse(f"watcher: cannot write {args.out}: {type(err).__name__}: {err}")
         print(f"watcher: account written to {args.out}" + (" (nothing survived the oath)" if code == 4 else ""),
               file=sys.stderr)
     return code
