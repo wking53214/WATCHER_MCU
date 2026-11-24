@@ -297,6 +297,16 @@ def _object_or_none(value: Any, name: str, path: Any) -> None:
         raise _bad(path, f"{name} is {type(value).__name__}, not an object")
 
 
+def _object_required(value: Any, name: str, path: Any) -> None:
+    if not isinstance(value, Mapping):
+        raise _bad(path, f"{name} is {type(value).__name__}, not an object")
+
+
+def _whole_number_required(value: Any, name: str, path: Any) -> None:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise _bad(path, f"{name} is {type(value).__name__}, not a whole number")
+
+
 def _list_or_none(value: Any, name: str, path: Any) -> None:
     if value is not None and not isinstance(value, list):
         raise _bad(path, f"{name} is {type(value).__name__}, not a list")
@@ -312,9 +322,7 @@ def _check_shapes(run: Mapping[str, Any], path: Any) -> None:
     expects, or the record is refused by name. Missing and null are fine; wrong is not."""
     _list_of(run, "cycles", Mapping, "an object", path)
     for n, cycle in enumerate(run.get("cycles") or ()):
-        number = cycle.get("number")
-        if not isinstance(number, int) or isinstance(number, bool):
-            raise _bad(path, f"cycles[{n}].number is {type(number).__name__}, not a whole number")
+        _whole_number_required(cycle.get("number"), f"cycles[{n}].number", path)
     _list_of(run, "reobserved", str, "text", path)
     _list_of(run, "informational", str, "text", path)
     _list_of(run, "drafter_skipped", str, "text", path)
@@ -340,8 +348,7 @@ def _check_shapes(run: Mapping[str, Any], path: Any) -> None:
     joins = versions.get("joins")
     _list_or_none(joins, "versions.joins", path)
     for n, join in enumerate(joins or ()):
-        if not isinstance(join, Mapping):
-            raise _bad(path, f"versions.joins[{n}] is {type(join).__name__}, not an object")
+        _object_required(join, f"versions.joins[{n}]", path)
         _text_or_none(join.get("path"), f"versions.joins[{n}].path", path)
 
 
