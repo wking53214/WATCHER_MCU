@@ -48,11 +48,11 @@ pip check
 ```
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from its git URL
-pinned by the release tag `v4.1.0`
-(an annotated tag that peels to the commit `c84ef8c60079aae1753f92d9169d89081c670c22`). Migration note: the pin moved from `v1.9.0` to
+pinned by the release tag `v4.2.0`
+(an annotated tag that peels to the commit `670246fe5006ae15757f90e48350f57b53c56414`). Migration note: the pin moved from `v1.9.0` to
 `v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, and from `v3.0.0` to `v4.1.0` on 2026-11-16, when the circuit moved to one CNS release (the `cns` package at
 v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.run`, and the suite passes
-against the installed 3.0.0 with no change to the Watcher's code. Checked 2026-11-17: the list above leaves out one step (the pin was `v4.0.0`, commit `eabe6c7`, from 2026-11-12 to 2026-11-16), and the suite passes against the installed 4.1.0 as well (EXECUTED). `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
+against the installed 3.0.0 with no change to the Watcher's code. Checked 2026-11-17: the list above leaves out one step (the pin was `v4.0.0`, commit `eabe6c7`, from 2026-11-12 to 2026-11-16), and the suite passes against the installed 4.1.0 as well (EXECUTED). On 2026-11-27 the pin moved from `v4.1.0` to `v4.2.0` (the circuit moved together again; 4.2.0 adds `Evidence.edit_sources`, which the Watcher does not import). `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 1.0.0 (tagged v1.0.0) at commit

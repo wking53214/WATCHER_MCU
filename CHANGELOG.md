@@ -7,6 +7,7 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ## [Unreleased]
 
+
 ### Added
 
 - The Watcher reads `versions.target.path` from the run record (written by a Warden that has the matching change) and refuses to write into that folder. A `--target` that is not that folder is refused (exit 2). A record that does not name a folder, given with `--out` and no `--target`, is refused (exit 2); with no `--out` it is narrated as before. `tests/test_recorded_target.py` covers each case; older tests that give `--out` now give `--target` too.
@@ -16,6 +17,7 @@ All notable changes to the Watcher are recorded here. The format follows
 
 ### Changed
 
+- CNS pin `v4.1.0` -> `v4.2.0` (`670246fe5006ae15757f90e48350f57b53c56414`), which adds `Evidence.edit_sources`; the circuit and the repositories released from it move together. No code change here.
 - `watcher.narrate.SYSTEM` gains two rules. Whenever the account mentions the scan or the unmeasured list it must also name every declined check and say a declined check was not run, and it must never say or imply that nothing was omitted; and it must report counts as the record words them, without a verdict word of its own such as "confirming". Seen live on 2026-11-14: Groq's `openai/gpt-oss-120b` wrote that an empty unmeasured list meant nothing was omitted, beside seven declined checks it left out, and the oath dropped nothing because every sentence cited a real id. The rules are in the prompt only; no code enforces them (README, KNOWN DEFECTS). Pull request 14.
 - The CNS pin moves from the tag `v4.0.0` (`eabe6c72d71557b6327b80b42b0afab572acce80`) to the tag `v4.1.0` (an annotated tag that peels to `c84ef8c60079aae1753f92d9169d89081c670c22`), and the Warden pin of the tested set moves from `0339c09a69497be2d2fc34d71872c8c8616c6668` to `26d8128ecd75c841125128533812763385dc7497`, the head of Warden's `main` after its ghost_tools re-pin (Warden 1.0.0, CNS `v4.1.0`). Files: `pyproject.toml`, both CI jobs, `README.md`, `STACK.md`. Reason: the CNS `stack` job needs every repository to name the same CNS and the same Warden, and Warden 1.0.0 at the old commit pins CNS `v4.0.0`, which pip cannot install beside CNS `v4.1.0`. The constants in `tests/test_pins.py` that hold the two pins (and the assertions that name the CNS tag, commit and dependency line) were edited to the new values, nothing else about them changed. No Watcher code changed; the version stays 0.3.17, as with the earlier CNS pin moves.
 - The Warden pin of the tested set moves from 0.16.6 (`0f84759675bb6f31329fd2302113aab6c5d87382`) to 1.0.0 (tagged `v1.0.0`, `0339c09a69497be2d2fc34d71872c8c8616c6668`), in both CI jobs, `README.md`, `STACK.md` and `tests/test_pins.py`. Warden 1.0.0 pins the same CNS `v4.0.0` (`eabe6c72d71557b6327b80b42b0afab572acce80`) as the Watcher.
