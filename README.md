@@ -42,22 +42,22 @@ named below and install both in one command, which is what the CI jobs do (`pip 
 
 ```
 git clone https://github.com/wking53214/WARDEN
-git -C WARDEN checkout 26d8128ecd75c841125128533812763385dc7497
+git -C WARDEN checkout a0a8e36d8d672fe3f7f5be12445a18dd343e0ac0
 pip install -e . ./WARDEN
 pip check
 ```
 
 The one dependency on the circuit is the `cns.run/1` contract from the CNS repository, installed from its git URL
-pinned by the release tag `v4.1.0`
-(an annotated tag that peels to the commit `c84ef8c60079aae1753f92d9169d89081c670c22`). Migration note: the pin moved from `v1.9.0` to
-`v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, and from `v3.0.0` to `v4.1.0` on 2026-11-16, when the circuit moved to one CNS release (the `cns` package at
+pinned by the release tag `v4.2.0`
+(an annotated tag that peels to the commit `670246fe5006ae15757f90e48350f57b53c56414`). Migration note: the pin moved from `v1.9.0` to
+`v2.0.0` in 0.3.8, from `v2.0.0` to `v2.1.0` in 0.3.11, from `v2.1.0` to `v2.2.0` in 0.3.12, from `v2.2.0` to `v2.3.0` on 2026-10-31, and from `v2.3.0` to `v3.0.0` on 2026-11-11, and from `v3.0.0` to `v4.1.0` on 2026-11-16, and from `v4.1.0` to `v4.2.0` on 2026-11-28, when the circuit moved to one CNS release (the `cns` package at
 v2.2.0 equals v2.1.0 except its version string). The Watcher imports only `cns.run`, and the suite passes
-against the installed 3.0.0 with no change to the Watcher's code. Checked 2026-11-17: the list above leaves out one step (the pin was `v4.0.0`, commit `eabe6c7`, from 2026-11-12 to 2026-11-16), and the suite passes against the installed 4.1.0 as well (EXECUTED). `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
+against the installed 3.0.0 with no change to the Watcher's code. Checked 2026-11-17: the list above leaves out one step (the pin was `v4.0.0`, commit `eabe6c7`, from 2026-11-12 to 2026-11-16), and the suite passes against the installed 4.1.0 as well (EXECUTED). Checked 2026-11-28: the suite passes against the installed 4.2.0 (EXECUTED). `tests/test_pins.py` fails if the installed CNS is not the pinned one. CNS is a public repository:
 https://github.com/wking53214/CNS.
 
 CI runs the end-to-end job and the co-install job against Warden 1.0.0 (tagged v1.0.0) at commit
-`26d8128ecd75c841125128533812763385dc7497` (the tested set; it may be one or more
-commits behind WARDEN's branch head). Checked 2026-11-17: in the WARDEN repository the tag `v1.0.0` points at `0339c09`, the commit tested here before 2026-11-16. `26d8128` is 12 commits after it, the tag was not moved, and the package version at `26d8128` is still 1.0.0. So read "tagged v1.0.0" as the version, not as a tag on this commit; `tests/test_pins.py` requires the phrase as written. `26d8128` is the head of WARDEN's main today. That Warden commit pins the same CNS (`v4.1.0`, `c84ef8c`), so both jobs
+`a0a8e36d8d672fe3f7f5be12445a18dd343e0ac0` (the tested set; it may be one or more
+commits behind WARDEN's branch head). Checked 2026-11-17: in the WARDEN repository the tag `v1.0.0` points at `0339c09`, the commit tested here before 2026-11-16. `26d8128` is 12 commits after it, the tag was not moved, and the package version at `26d8128` is still 1.0.0. So read "tagged v1.0.0" as the version, not as a tag on this commit; `tests/test_pins.py` requires the phrase as written. On 2026-11-28 the pin moved from `26d8128` to `a0a8e36`, the WARDEN commit whose ghost_tools pin uses CNS `v4.2.0` (its package version is still 1.0.0). That Warden commit pins the same CNS (`v4.2.0`, `670246f`), so both jobs
 install the Watcher and Warden together with full dependency resolution, then run `pip check`; exactly one CNS is
 installed, the pinned one. To bump Warden, change the commit in both jobs of
 `.github/workflows/tests.yml` and here; `tests/test_pins.py` fails if they disagree.
